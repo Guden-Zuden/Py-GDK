@@ -75,7 +75,7 @@ def get_viewport(map_w: int, map_h: int, offset_x: float, offset_y: float, surf_
     return start_mx, end_mx, start_my, end_my
 
 # ===== Tilemap =====
-class Tilemap(Components.ComponentBase):
+class Tilemap(Components.SceneComponentBase):
     def __init__(self, sprite: Sprite.Sprite = Sprite.Sprite(), start_pos: tuple[int, int] = (0, 0)) -> None:
         super().__init__(0, 0)
         self.map_data: MapData
@@ -115,11 +115,11 @@ class Tilemap(Components.ComponentBase):
         self.map_sprite = sprite
 
     def updateViewport(self, offset_x: float, offset_y: float):
-        assert Profile.screen is not None
+        assert Profile.surface is not None
         self.viewport.start_x   ,\
         self.viewport.end_x     ,\
         self.viewport.start_y   ,\
-        self.viewport.end_y     = get_viewport(self.map_data.width, self.map_data.height, offset_x, offset_y, Profile.screen.get_width(), Profile.screen.get_height())
+        self.viewport.end_y     = get_viewport(self.map_data.width, self.map_data.height, offset_x, offset_y, Profile.surface.get_width(), Profile.surface.get_height())
 
     def draw_collision(self, offset_x: float, offset_y: float):
         assert Profile.sprite_size is not None

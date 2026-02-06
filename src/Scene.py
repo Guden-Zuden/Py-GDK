@@ -1,4 +1,4 @@
-from . import Entity, Text
+from . import Entity
 from . import Components
 from . import Tilemap
 from .Log import *
@@ -10,22 +10,22 @@ import pygame as _pygame
 
 class Scene:
     def __init__(self) -> None:
-        self.adaptedComponent: Components.ComponentBase = Components.ComponentBase(0, 0)
+        self.adaptedComponent: Components.SceneComponentBase = Components.SceneComponentBase(0, 0)
         self._offset_x: float = 0
         self._offset_y: float = 0
         self._tilemap: Tilemap.Tilemap = Tilemap.Tilemap()
         self._entity_stack: list[Entity.Entity] = []
-        self._component_stack: list[Components.ComponentBase] = []
+        self._component_stack: list[Components.SceneComponentBase] = []
 
-    def attach(self, component: Components.ComponentBase):
+    def attach(self, component: Components.SceneComponentBase):
         if type(component) == Tilemap.Tilemap:
             self._tilemap = component
         elif type(component) == Entity.Entity:
             self._entity_stack.append(component)
-        elif type(component) == Text.Text:
-            self._component_stack.append(component)
+        else:
+            Log.warn("Scene", f"{type(component)} is not allowed to attach to Scenes.")
 
-    def adaptCameraOn(self, component: Components.ComponentBase):
+    def adaptCameraOn(self, component: Components.SceneComponentBase):
         if (self._tilemap != component
             and component not in self._entity_stack
             and component not in self._component_stack):

@@ -1,6 +1,5 @@
 import time as _time
 import colorama
-from typing import Any
 
 __all__ = ["Log"]
 
@@ -58,7 +57,7 @@ class Log:
         raise Exception(f"[**CRITICAL**] [{title}]: {message}")
 
     @staticmethod
-    def debug(*args: tuple[Any]):
+    def debug(*args):
         print("[DEBUG]", colorama.Back.GREEN, end="")
         for arg in args:
             print(arg, end="")

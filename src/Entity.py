@@ -75,14 +75,21 @@ class MovementModelDisabled(MovementModelBase):
         pass
 
 # ===== Entity =====
-class Entity(Components.ComponentBase):
-    def __init__(self, x: float, y: float, sprite: Sprite.Sprite, movement_model: MovementModelBase, animator: Optional[Animator] = None) -> None:
+class Entity(Components.SceneComponentBase):
+    def __init__(self,
+                 x: float,
+                 y: float,
+                 sprite: Sprite.Sprite,
+                 movement_model: MovementModelBase,
+                 animator: Optional[Animator] = None,
+                 sprite_index: int = 0) -> None:
         super().__init__(x, y)
         self.vx: float = 0
         self.vy: float = 0
         self.sprite: Sprite.Sprite = sprite
         self.movement_model = movement_model
         self.animator: Optional[Animator] = animator
+        self.sprite_index = sprite_index
     
     def update(self):
         self.movement_model.update()
@@ -102,4 +109,4 @@ class Entity(Components.ComponentBase):
         if self.animator:
             self.sprite.draw(self.animator.get_frame(), x, y, anchor=Utils.Anchor.bottom)
         else:
-            self.sprite.draw(0, x, y, anchor=Utils.Anchor.bottom)
+            self.sprite.draw(self.sprite_index, x, y, anchor=Utils.Anchor.bottom)

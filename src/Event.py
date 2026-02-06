@@ -1,4 +1,4 @@
-from . import Key
+from . import Key, Mouse
 from . import Utils
 
 import pygame as _pygame
@@ -18,10 +18,17 @@ class InputPermission(Flag):
 # ===== Global value in this file =====
 pressedKeys: _pygame.key.ScancodeWrapper = _pygame.key.ScancodeWrapper()
 pressedKeymods: int = 0
+pressedMousebuttons: Mouse.MouseButtonData = Mouse.MouseButtonData(False, False, False, False, False)
+
 def _updateKeyEvents():
     global pressedKeys, pressedKeymods
     pressedKeys = _pygame.key.get_pressed()
     pressedKeymods = _pygame.key.get_mods()
+
+def _updateMouseEvents():
+    global pressedMousebuttons
+    b = _pygame.mouse.get_pressed(5)
+    pressedMousebuttons = Mouse.MouseButtonData(b[0], b[1], b[2], b[3], b[4])
 
 # ===== KeyData included some funcs =====
 @dataclass
@@ -103,12 +110,36 @@ def OnMousemove():
         return wrapper
     return decorator
 
+def OnMousebuttonDown(button: Mouse.MouseButtonType):
+    def decorator(func):
+        EventManager.register_mousebuttondown(button, func)
+    
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            return func(*args, **kwargs)
+        
+        return wrapper
+    return decorator
+
+def OnMousebuttonUp(button: Mouse.MouseButtonType):
+    def decorator(func):
+        EventManager.register_mousebuttonup(button, func)
+        
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            return func(*args, **kwargs)
+        
+        return wrapper
+    return decorator
+
 class EventManager:
-    eventQueue: list[_pygame.event.Event] = []
-    _update_handlers: list[Callable] = []
-    _keydown_handlers = {}
-    _keyup_handlers = {}
-    _mousemove_handlers: list[Callable] = []
+    eventQueue:                 list[_pygame.event.Event]   = []
+    _update_handlers:           list[Callable]              = []
+    _keydown_handlers:          dict[int, list[Callable]]   = {}
+    _keyup_handlers:            dict[int, list[Callable]]   = {}
+    _mousebuttondown_handlers:  dict[int, list[Callable]]   = {}
+    _mousebuttonup_handlers:    dict[int, list[Callable]]   = {}
+    _mousemove_handlers:        list[Callable]              = []
 
     @staticmethod
     def register_update(func: Callable):
@@ -125,6 +156,14 @@ class EventManager:
     @staticmethod
     def register_mousemove(func: Callable):
         EventManager._mousemove_handlers.append(func)
+
+    @staticmethod
+    def register_mousebuttondown(button: Mouse.MouseButtonType, func: Callable):
+        EventManager._mousebuttondown_handlers.setdefault(button.buttonType, []).append(func)
+
+    @staticmethod
+    def register_mousebuttonup(button: Mouse.MouseButtonType, func: Callable):
+        EventManager._mousebuttonup_handlers.setdefault(button.buttonType, []).append(func)
 
     @staticmethod
     def update(events: list[_pygame.event.Event]):
@@ -156,6 +195,16 @@ class EventManager:
                     
             if e.type == _pygame.MOUSEMOTION:
                 for h in EventManager._mousemove_handlers:
+                    h(e)
+
+            if e.type == _pygame.MOUSEBUTTONDOWN:
+                handlers = EventManager._mousebuttondown_handlers.get(e.button, [])
+                for h in handlers:
+                    h(e)
+            
+            if e.type == _pygame.MOUSEBUTTONUP:
+                handlers = EventManager._mousebuttonup_handlers.get(e.button, [])
+                for h in handlers:
                     h(e)
 
 

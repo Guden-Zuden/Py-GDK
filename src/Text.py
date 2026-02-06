@@ -21,16 +21,26 @@ class TextAttribute:
         return font
 
 # ===== Text =====
-class Text(Components.ComponentBase):
-    def __init__(self, textAttribute: TextAttribute, text: str, x: float, y: float, anchor: Utils.Anchor=Utils.Anchor.default) -> None:
-        super().__init__(x, y)
+class Text(Components.LayerComponentBase):
+    def __init__(self,
+                 textAttribute: TextAttribute,
+                 text: str,
+                 u: float,
+                 v: float,
+                 anchor: Utils.Anchor=Utils.Anchor.default) -> None:
+        super().__init__(u, v)
         self.textAttr = textAttribute
         self.font = self.textAttr.createFont()
         self.text = text
         self.anchor: Utils.Anchor = anchor
 
-    def draw(self, offset_x: float, offset_y: float):
-        assert Profile.screen is not None
-        x, y = self.x - offset_x, self.y - offset_y
+    def draw(self):
+        assert Profile.surface is not None
         surf = self.font.render(self.text, self.textAttr.antialias, self.textAttr.text_color, self.textAttr.background_color)
-        Profile.screen.blit(surf, Utils.applyAnchor(x, y, surf.get_width(), surf.get_height(), self.anchor))
+        Profile.surface.blit(surf, Utils.applyAnchor(self.x, self.y, surf.get_width(), surf.get_height(), self.anchor))
+
+    def _draw(self, x: float, y: float):
+        assert Profile.surface is not None
+        surf = self.font.render(self.text, self.textAttr.antialias, self.textAttr.text_color, self.textAttr.background_color)
+        Profile.surface.blit(surf, Utils.applyAnchor(x, y, surf.get_width(), surf.get_height(), self.anchor))
+        

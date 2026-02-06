@@ -4,6 +4,7 @@ from . import Key
 from . import Scene, Entity, Text
 from . import Sprite
 from .Timer import ScopedTimer
+from . import Layer
 
 import pygame as _pygame
 import sys as _sys
@@ -23,6 +24,7 @@ def run():
         # a = ScopedTimer()
 
         Event._updateKeyEvents()
+        Event._updateMouseEvents()
         Event.Input.update()
 
         Event.EventManager.update(_pygame.event.get())
@@ -32,6 +34,9 @@ def run():
 
         Scene.SceneManager.update()
         Scene.SceneManager.draw()
+
+        Layer.LayerManager.update()
+        Layer.LayerManager.draw()
 
         Profile.screen.fill((0, 0, 0))
         Profile.screen.blit(Profile.surface, (0, 0), _pygame.Rect(-Profile.window_width/2+Profile.width/2, -Profile.window_height/2+Profile.height/2, Profile.window_width, Profile.window_height))
