@@ -1,10 +1,12 @@
 from . import Entity, Text
 from . import Components
 from . import Tilemap
-from . import Log
+from .Log import *
 from . import Profile
+from . import Collision
 
 import pygame as _pygame
+
 
 class Scene:
     def __init__(self) -> None:
@@ -35,6 +37,7 @@ class Scene:
         self._offset_x, self._offset_y = self.adaptedComponent.x - Profile.width/2, self.adaptedComponent.y - Profile.height/2
         for entity in self._entity_stack:
             entity.update()
+            Collision._update(entity, self._tilemap)
 
     def draw(self):
         self._tilemap.draw(self._offset_x, self._offset_y)
@@ -55,13 +58,15 @@ class SceneManager:
 
     @staticmethod
     def update():
-        assert SceneManager._current_scene is not None
-        SceneManager._current_scene.update()
+        # assert SceneManager._current_scene is not None
+        if SceneManager._current_scene is not None:
+            SceneManager._current_scene.update()
 
     @staticmethod
     def draw():
-        assert SceneManager._current_scene is not None
-        SceneManager._current_scene.draw()
+        if SceneManager._current_scene is None:
+            Log.warn("SceneManager", "Any scene has not been set. So, there are nothing to draw.")
+        else: SceneManager._current_scene.draw()
 
 
 def createScene() -> Scene:

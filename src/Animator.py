@@ -31,16 +31,17 @@ class Animator:
             return self.animation_datas[state_name]
 
     def set_state(self, state_name: str):
+        self._timer.reset()
         self.state_name = state_name
 
-    def push(self, state_name: str, animation_data: AnimationData):
+    def push(self, animation_data: AnimationData):
         try:
-            self.animation_datas[state_name]
-            Log.error("Animator", f"{state_name} has already existed.")
+            self.animation_datas[animation_data.name]
+            Log.error("Animator", f"{animation_data.name} has already existed.")
         except KeyError:
             pass
         
-        self.animation_datas[state_name] = animation_data
+        self.animation_datas[animation_data.name] = animation_data
 
     def update(self) -> None:
         self._timer.update()

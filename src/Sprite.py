@@ -31,19 +31,19 @@ class Sprite:
         Log.info("Sprite", f"Loaded {count} tiles from '{img_filepath}'.")
 
     def draw(self, sprite_num: int, x: float, y: float, anchor: Utils.Anchor = Utils.Anchor.default):
-        assert Profile.screen is not None
+        assert Profile.surface is not None
         sprite_num = sprite_num % len(self.sprites)
         sprite = self.sprites[sprite_num]
         pos = Utils.applyAnchor(x, y, sprite.get_width(), sprite.get_height(), anchor)
 
-        Profile.screen.blit(sprite, pos)
+        Profile.surface.blit(sprite, pos)
 
     def draw_border(self, sprite_num: int, x: float, y: float, anchor: Utils.Anchor = Utils.Anchor.default):
         assert Profile.sprite_size is not None
-        assert Profile.screen is not None
+        assert Profile.surface is not None
         pos = Utils.applyAnchor(Profile.sprite_size, Profile.sprite_size, x, y, anchor)
-        if Profile.screen == None:
+        if Profile.surface == None:
             Log.critical("Sprite", "Screen is missing.")
         
         if sprite_num > 0:
-            _pygame.draw.rect(Profile.screen, (255, 255, 255), _pygame.Rect(pos, [Profile.sprite_size, Profile.sprite_size]), 1)
+            _pygame.draw.rect(Profile.surface, (255, 255, 255), _pygame.Rect(pos, [Profile.sprite_size, Profile.sprite_size]), 1)

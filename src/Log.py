@@ -1,5 +1,6 @@
 import time as _time
 import colorama
+from typing import Any
 
 __all__ = ["Log"]
 
@@ -35,28 +36,30 @@ class Log:
     Info: 0 Warn: 1 Error: 2 Critical Error: 3"""
 
     @staticmethod
-    def _get_time():
-        time = _time.ctime().split()
-        return " ".join(time[:-1])
-
-    @staticmethod
     def info(title: str, message: str):
         if Log.log_level < 0: return
-        print(f"{{{Log._get_time()}}} [INFO] [{title}]: {message}")
+        print(f"[INFO] [{title}]: {message}")
         
     @staticmethod
     def warn(title: str, message: str):
         if Log.log_level < 0: return
-        print(colorama.Fore.YELLOW + f"{{{Log._get_time()}}} [WARN] [{title}]: {message}" + colorama.Fore.RESET)
+        print(colorama.Fore.YELLOW + f"[WARN] [{title}]: {message}" + colorama.Fore.RESET)
 
     @staticmethod
     def error(title: str, message: str):
         if Log.log_level < 0: return
-        print(colorama.Fore.RED + f"{{{Log._get_time()}}} [ERROR] [{title}]: {message}" + colorama.Fore.RESET)
-        raise Exception(f"{{{Log._get_time()}}} [ERROR] [{title}]: {message}")
+        print(colorama.Fore.RED + f"[ERROR] [{title}]: {message}" + colorama.Fore.RESET)
+        raise Exception(f"[ERROR] [{title}]: {message}")
 
     @staticmethod
     def critical(title: str, message: str):
         if Log.log_level < 0: return
-        print(colorama.Style.BRIGHT + colorama.Back.RED + f"{{{Log._get_time()}}} [**CRITICAL**] [{title}]: {message}" + colorama.Style.RESET_ALL + colorama.Fore.RESET)
-        raise Exception(f"{{{Log._get_time()}}} [**CRITICAL**] [{title}]: {message}")
+        print(colorama.Style.BRIGHT + colorama.Back.RED + f"[**CRITICAL**] [{title}]: {message}" + colorama.Style.RESET_ALL + colorama.Fore.RESET)
+        raise Exception(f"[**CRITICAL**] [{title}]: {message}")
+
+    @staticmethod
+    def debug(*args: tuple[Any]):
+        print("[DEBUG]", colorama.Back.GREEN, end="")
+        for arg in args:
+            print(arg, end="")
+        print(colorama.Back.RESET)

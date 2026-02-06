@@ -2,6 +2,7 @@ from . import Sprite
 from . import Profile
 from . import Components
 from .Log import *
+from . import Entity
 
 import pygame as _pygame
 import json
@@ -34,28 +35,46 @@ class Viewport:
 
 def get_viewport(map_w: int, map_h: int, offset_x: float, offset_y: float, surf_w: int, surf_h: int):
     assert Profile.sprite_size is not None
-    if offset_x < 0:
+    
+    halfsize = Profile.sprite_size/2
+
+    # start of map X
+    if (halfsize < offset_x):
         start_mx = 0
+    elif (offset_x <= halfsize and offset_x + map_w*Profile.sprite_size > 0):
+        start_mx = int(abs(offset_x)) // Profile.sprite_size
     else:
-        start_mx = int(offset_x) // Profile.sprite_size
+        start_mx = map_w-1
+    # right of maptile
+    _offset_x = offset_x + (map_w - 1)*Profile.sprite_size
+    # end of map X
+    if (Profile.width - halfsize > _offset_x):
+        end_mx = map_w-1
+    elif (_offset_x >= Profile.width - halfsize and offset_x < Profile.width - halfsize):
+        end_mx = (map_w-1) - int(abs(Profile.width - _offset_x)) // Profile.sprite_size
+    else:
+        end_mx = 0
 
-    if offset_y < 0:
+    # start of map Y
+    if (halfsize < offset_y):
         start_my = 0
+    elif (offset_y <= halfsize and offset_y + map_h*Profile.sprite_size > 0):
+        start_my = int(abs(offset_y)) // Profile.sprite_size
     else:
-        start_my = int(offset_y) // Profile.sprite_size
-
-    if offset_x + surf_w > map_w * Profile.sprite_size:
-        end_mx = map_w
+        start_my = map_h-1
+    # left of maptile
+    _offset_y = offset_y + (map_h-1)*Profile.sprite_size
+    # end of map Y
+    if (Profile.height - halfsize > _offset_y):
+        end_my = map_h-1
+    elif (_offset_y >= Profile.height - halfsize and offset_y < Profile.height - halfsize):
+        end_my = (map_h-1) - int(abs(Profile.height - _offset_y)) // Profile.sprite_size
     else:
-        end_mx = int(offset_x + surf_w) // Profile.sprite_size + 1
-
-    if offset_y + surf_h > map_h * Profile.sprite_size:
-        end_my = map_h
-    else:
-        end_my = int(offset_y + surf_h) // Profile.sprite_size + 1
+        end_my = 0
 
     return start_mx, end_mx, start_my, end_my
 
+# ===== Tilemap =====
 class Tilemap(Components.ComponentBase):
     def __init__(self, sprite: Sprite.Sprite = Sprite.Sprite(), start_pos: tuple[int, int] = (0, 0)) -> None:
         super().__init__(0, 0)
@@ -63,6 +82,11 @@ class Tilemap(Components.ComponentBase):
         self.map_sprite = sprite
         self.start_pos = start_pos
         self.viewport = Viewport(0, 0, 0, 0)
+
+        self.collision_data: list[list[int]] = []
+
+        self.__loaded = False
+        self.__warned = False
 
     def load(self, filepath: str | os.PathLike):
         """Load the map data file."""
@@ -75,6 +99,11 @@ class Tilemap(Components.ComponentBase):
                     bufData.append(MapLayer(layer["name"], layer["data"]))
 
                 self.map_data = MapData(data["width"], data["height"], bufData)
+                for map_data in self.map_data.mapDatas:
+                    if map_data.name == "collision":
+                        self.collision_data = map_data.data
+
+                self.__loaded = True
 
             except KeyError as e:
                 raise Exception(f"The format went wrong! Please look at the documents.")
@@ -94,6 +123,8 @@ class Tilemap(Components.ComponentBase):
 
     def draw_collision(self, offset_x: float, offset_y: float):
         assert Profile.sprite_size is not None
+        if self.__loaded == False:
+            return
         self.updateViewport(offset_x, offset_y)
 
         for x in range(self.viewport.get_width()):
@@ -113,7 +144,13 @@ class Tilemap(Components.ComponentBase):
 
     def draw(self, offset_x, offset_y):
         assert Profile.sprite_size is not None
-        self.updateViewport(offset_x, offset_y)
+        if self.__loaded == False:
+            if self.__warned == False:
+                Log.warn("Tilemap", "There are not map data.")
+            self.__warned = True
+            return
+
+        self.updateViewport(-offset_x, -offset_y)
         for x in range(self.viewport.get_width()):
             for y in range(self.viewport.get_height()):
                 _x = x + self.viewport.start_x

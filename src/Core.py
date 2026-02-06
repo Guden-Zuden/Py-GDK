@@ -13,12 +13,14 @@ def init():
     _pygame.display.set_caption(Profile.title)
     Profile.clock = _pygame.time.Clock()
     Profile.default_font = _pygame.font.Font(None, Profile.default_fontsize)
-    Profile.screen = _pygame.display.set_mode((Profile.width, Profile.height))
+    Profile.surface = _pygame.Surface((Profile.width, Profile.height))
+    Profile.screen = _pygame.display.set_mode((Profile.window_width, Profile.window_height))
 
 def run():
+    assert Profile.surface is not None
     assert Profile.screen is not None
     while True:
-        a = ScopedTimer()
+        # a = ScopedTimer()
 
         Event._updateKeyEvents()
         Event.Input.update()
@@ -26,10 +28,14 @@ def run():
         Event.EventManager.update(_pygame.event.get())
         Event.EventManager.dispatch()
             
-        Profile.screen.fill((0, 0, 0))
+        Profile.surface.fill((0, 0, 0))
 
         Scene.SceneManager.update()
         Scene.SceneManager.draw()
+
+        Profile.screen.fill((0, 0, 0))
+        Profile.screen.blit(Profile.surface, (0, 0), _pygame.Rect(-Profile.window_width/2+Profile.width/2, -Profile.window_height/2+Profile.height/2, Profile.window_width, Profile.window_height))
+        _pygame.draw.rect(Profile.screen, (255, 255, 255), _pygame.Rect(Profile.window_width/2-Profile.width/2-1, Profile.window_height/2-Profile.height/2-1, Profile.width+2, Profile.height+2), 1)
 
         _pygame.display.update()
         Profile.clock.tick(Profile.fps)

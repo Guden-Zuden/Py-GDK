@@ -21,7 +21,7 @@ class MovementModelBase:
     def update(self) -> None:
         self.timer.update()
 
-class PhysicMoventModel(MovementModelBase):
+class MovementModelPhysic(MovementModelBase):
     def __init__(self, accelaration: float, max_speed: float, friction: float) -> None:
         super().__init__(accelaration, max_speed, friction)
 
@@ -43,7 +43,7 @@ class PhysicMoventModel(MovementModelBase):
         self.vx = max(-self.max_speed, min(self.max_speed, self.vx))
         self.vy = max(-self.max_speed, min(self.max_speed, self.vy))
 
-class InstantMovementModel(MovementModelBase):
+class MovementModelInstant(MovementModelBase):
     def __init__(self, accelaration: float, max_speed: float, friction: float) -> None:
         super().__init__(accelaration, max_speed, friction)
 
@@ -52,7 +52,7 @@ class InstantMovementModel(MovementModelBase):
         self.vx = Event.Input.horizontal * self.max_speed
         self.vy = Event.Input.vertical * self.max_speed
 
-class MobMovementModel(MovementModelBase):
+class MovementModelMob(MovementModelBase):
     def __init__(self, accelaration: float, max_speed: float, friction: float) -> None:
         super().__init__(accelaration, max_speed, friction)
         self.horizontal = 0
@@ -64,16 +64,17 @@ class MobMovementModel(MovementModelBase):
         self.vy = self.vertical * self.max_speed
 
     def move(self, horizontal: int, vertical: int):
-        self.horizontal = horizontal / abs(horizontal)
-        self.vertical = vertical / abs(vertical)
+        if horizontal != 0: self.horizontal = horizontal / abs(horizontal)
+        if vertical != 0: self.vertical = vertical / abs(vertical)
 
-class DisabledMovementModel(MovementModelBase):
+class MovementModelDisabled(MovementModelBase):
     def __init__(self, accelaration: float, max_speed: float, friction: float) -> None:
         super().__init__(accelaration, max_speed, friction)
 
     def update(self) -> None:
         pass
 
+# ===== Entity =====
 class Entity(Components.ComponentBase):
     def __init__(self, x: float, y: float, sprite: Sprite.Sprite, movement_model: MovementModelBase, animator: Optional[Animator] = None) -> None:
         super().__init__(x, y)
@@ -87,13 +88,13 @@ class Entity(Components.ComponentBase):
         self.movement_model.update()
         self.vx = self.movement_model.vx
         self.vy = self.movement_model.vy
-        self.x += self.vx
-        self.y += self.vy
+        # self.x += self.vx
+        # self.y += self.vy
         if self.animator:
             self.animator.update()
 
     def draw(self, offset_x: float, offset_y: float):
-        assert Profile.screen is not None
+        assert Profile.surface is not None
         
         x, y = self.x - offset_x, self.y - offset_y
 
