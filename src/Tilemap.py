@@ -76,6 +76,7 @@ def get_viewport(map_w: int, map_h: int, offset_x: float, offset_y: float, surf_
 
 # ===== Tilemap =====
 class Tilemap(Components.SceneComponentBase):
+    """Allow to attach: Scene"""
     def __init__(self, sprite: Sprite.Sprite = Sprite.Sprite(), start_pos: tuple[int, int] = (0, 0)) -> None:
         super().__init__(0, 0)
         self.map_data: MapData
@@ -136,7 +137,7 @@ class Tilemap(Components.SceneComponentBase):
                 rect_y = _y*Profile.sprite_size - offset_y
 
                 for layer in self.map_data.mapDatas:
-                    if layer.name == "collition":
+                    if layer.name == "collision":
                         self.map_sprite.draw_border(layer.data[_y][_x], rect_x, rect_y)
 
     def update(self):pass

@@ -2,6 +2,10 @@ import pygame as _pygame
 import sys as _sys
 from enum import Enum
 
+__all__ = ["gdk_color", "Anchor", "applyAnchor", "quit"]
+
+type gdk_color = _pygame.Color | tuple[int, int, int, int] | tuple[int, int, int]
+
 # ===== types ======
 class Anchor(Enum):
     center      = 0

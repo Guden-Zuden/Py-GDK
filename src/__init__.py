@@ -1,19 +1,22 @@
-from . import Core
-from . import Profile
-from . import Timer
-from . import Event
-from . import Entity, Components, Scene
+from . import Core, Profile, Timer, Event
+from . import Entity
+from . import Components
+from . import Scene
 from . import Sprite
+from . import Tilemap
 from .Log import *
 from .Animator import *
-from . import Tilemap
-from . import Layer, Button, Text, Box
+from . import Layer
+from .TextAttribute import TextAttribute
+from . import GUI
 from .Utils import Anchor
 
 import pygame
 from typing import Optional
+from os import PathLike
 
 def init(title: str = "GameDeveloperKits", fps: int = 60, width: int = 600, height: int = 400, mapSprite_size: int = 32, window_width: Optional[int] = None, window_height: Optional[int] = None):
+    print("This Game Developer Kits is using pygame.")
     Profile.title = title
     Profile.fps = fps
     Profile.width = width
@@ -33,3 +36,38 @@ def get_availableFonts():
 
 def run():
     Core.run()
+
+# ====== Create Functions ======
+
+def createSprite(img_filepath: str | PathLike, sprite_size: int, sprite_padding: int, offset_x: int = 0, offset_y: int = 0):
+    sprite = Sprite.Sprite()
+    sprite.load_tile(img_filepath, sprite_size, sprite_padding, offset_x, offset_y)
+    return sprite
+
+def createTilemap(sprite: Sprite.Sprite, start_pos: tuple[int, int] = (0, 0)):
+    return Tilemap.Tilemap(sprite, start_pos)
+
+def createEntity(x: float, y: float, sprite: Sprite.Sprite, movement_model: Entity.MovementModelBase, animator: Animator | None = None, sprite_index: int = 0):
+    return Entity.Entity(x, y, sprite, movement_model, animator, sprite_index)
+
+def createBox(u: float,
+              v: float,
+              width: float,
+              height: float,
+              color: pygame.Color | tuple[int, int, int, int] | tuple[int, int, int],
+              border_width: int = 0,
+              border_color: pygame.Color | tuple[int, int, int, int] | tuple[int, int, int] = (0, 0, 0),
+              padding: int = 0,
+              anchor: Utils.Anchor = Utils.Anchor.center):
+    return GUI.Box(u, v, width, height, color, border_width, border_color, padding, anchor)
+
+def createSpriteBox(u: float,
+                    v: float,
+                    sprite: Sprite.Sprite,
+                    width: Optional[float] = None,
+                    height: Optional[float] = None,
+                    animator: Optional[Animator] = None,
+                    padding: int = 0,
+                    anchor: Utils.Anchor = Utils.Anchor.center,
+                    sprite_index: int = 0):
+    return GUI.SpriteBox(u, v, sprite, width, height, animator, padding, anchor, sprite_index)

@@ -77,6 +77,17 @@ def OnUpdate():
         return wrapper
     return decorator
 
+def OnWindowResized():
+    def decorator(func):
+        EventManager.register_windowresized(func)
+
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            return func(*args, **kwargs)
+        
+        return wrapper
+    return decorator
+
 def OnKeydown(key: Key.KeyType):
     def decorator(func):
         EventManager.register_keydown(key, func)
@@ -135,6 +146,7 @@ def OnMousebuttonUp(button: Mouse.MouseButtonType):
 class EventManager:
     eventQueue:                 list[_pygame.event.Event]   = []
     _update_handlers:           list[Callable]              = []
+    _windowresized_handlers:    list[Callable]              = []
     _keydown_handlers:          dict[int, list[Callable]]   = {}
     _keyup_handlers:            dict[int, list[Callable]]   = {}
     _mousebuttondown_handlers:  dict[int, list[Callable]]   = {}
@@ -144,6 +156,10 @@ class EventManager:
     @staticmethod
     def register_update(func: Callable):
         EventManager._update_handlers.append(func)
+
+    @staticmethod
+    def register_windowresized(func: Callable):
+        EventManager._windowresized_handlers.append(func)
 
     @staticmethod
     def register_keydown(key: Key.KeyType, func: Callable):
@@ -182,6 +198,11 @@ class EventManager:
                 for h in handlers:
                     h(e)
                 updated = True
+
+            if e.type == _pygame.WINDOWRESIZED:
+                handlers = EventManager._windowresized_handlers
+                for h in handlers:
+                    h(e)
 
             if e.type == _pygame.KEYDOWN:
                 handlers = EventManager._keydown_handlers.get(e.key, [])

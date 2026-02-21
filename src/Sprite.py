@@ -47,3 +47,11 @@ class Sprite:
         
         if sprite_num > 0:
             _pygame.draw.rect(Profile.surface, (255, 255, 255), _pygame.Rect(pos, [Profile.sprite_size, Profile.sprite_size]), 1)
+
+    def transform(self, width: float, height: float):
+        transformed_sprites: list[_pygame.Surface] = []
+        for sprite in self.sprites:
+            transformed_sprites.append(_pygame.transform.scale(sprite, [width, height]))
+        sprite_obj = Sprite()
+        sprite_obj.sprites = transformed_sprites
+        return sprite_obj

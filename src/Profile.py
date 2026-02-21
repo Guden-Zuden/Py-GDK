@@ -20,3 +20,5 @@ default_fontsize: int = 20
 default_font: _pygame.font.Font
 
 sprite_size: int = 32
+
+isCalcPerformance: bool = False

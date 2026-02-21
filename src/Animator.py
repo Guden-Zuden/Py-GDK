@@ -11,9 +11,10 @@ class AnimationData:
     name: str
     data: list[int]
     fps: int = Profile.fps
+    isLoop: bool = True
     current_index: int = 0
-    
-    def get_length(self): return len(self.data)
+    @property
+    def length(self): return len(self.data)
     def update(self, timer: Timer.Timer):
         timer.update()
 
@@ -22,6 +23,7 @@ class Animator:
         self.animation_datas: dict[str, AnimationData] = {}
         self.state_name: str = ""
         self._timer = Timer.Timer()
+        self.endLoop_flag = False
 
     def _get_animData(self, state_name: str) -> AnimationData:
         try:
@@ -47,7 +49,11 @@ class Animator:
         self._timer.update()
         if self.state_name == "": return
         anim_data = self._get_animData(self.state_name)
-        anim_data.current_index = int(anim_data.fps * self._timer.time) % anim_data.get_length()
+        anim_data.current_index = int(anim_data.fps * self._timer.time) % anim_data.length
+        print(anim_data.current_index)
+        if anim_data.current_index == anim_data.length-1:
+            self.endLoop_flag = True
+            print(self.endLoop_flag)
 
     def get_frame(self) -> int:
         if self.state_name == "": return 0

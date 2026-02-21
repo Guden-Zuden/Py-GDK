@@ -7,8 +7,9 @@ from . import Timer
 from . import Animator
 
 import pygame as _pygame
-from typing import Optional
+from typing import Optional, Callable
 
+# ===== Movement Model ======
 class MovementModelBase:
     def __init__(self, accelaration: float, max_speed: float, friction: float) -> None:
         self.accelaration = accelaration
@@ -76,6 +77,7 @@ class MovementModelDisabled(MovementModelBase):
 
 # ===== Entity =====
 class Entity(Components.SceneComponentBase):
+    """Allow to attach: Scene"""
     def __init__(self,
                  x: float,
                  y: float,
@@ -90,8 +92,16 @@ class Entity(Components.SceneComponentBase):
         self.movement_model = movement_model
         self.animator: Optional[Animator] = animator
         self.sprite_index = sprite_index
+
+        self._update_func: list[Callable] = []
+
+    def regist_update(self, func: Callable):
+        self._update_func.append(func)
     
     def update(self):
+        for func in self._update_func:
+            func()
+
         self.movement_model.update()
         self.vx = self.movement_model.vx
         self.vy = self.movement_model.vy

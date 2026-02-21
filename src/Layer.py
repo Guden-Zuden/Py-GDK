@@ -1,6 +1,6 @@
 from typing import Optional
 
-from . import Text, Button, Box
+from . import GUI
 from . import Components
 from . import Event
 from .Log import *
@@ -8,24 +8,32 @@ from .Log import *
 class Layer:
     def __init__(self) -> None:
         self._layerComponent_stack: list[Components.LayerComponentBase] = []
+        self._panel_stack: list[GUI.Panel] = []
 
     def attach(self, component: Components.LayerComponentBase):
-        if type(component) == Button.Button:
+        if type(component) == GUI.Button:
             self._layerComponent_stack.append(component)
-        elif type(component) == Text.Text:
+        elif type(component) == GUI.Text:
             self._layerComponent_stack.append(component)
-        elif type(component) == Box.Box:
+        elif type(component) == GUI.Box:
             self._layerComponent_stack.append(component)
+        elif type(component) == GUI.SpriteBox:
+            self._layerComponent_stack.append(component)
+        elif type(component) == GUI.Panel:
+            self._panel_stack.append(component)
         else:
             Log.warn("Layer", f"{type(component)} is not allowed to attach to Layers.")
 
     def update(self):
-        for component in self._layerComponent_stack:
+        GUI.Button.reset()
+        for component in reversed(self._layerComponent_stack):
             component.update()
 
     def draw(self):
         for component in self._layerComponent_stack:
             component.draw()
+        for panel in self._panel_stack:
+            panel.draw()
 
 class LayerManager:
     _current_layer: Optional[Layer] = None
