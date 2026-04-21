@@ -27,12 +27,13 @@ def run():
     assert Profile.surface is not None
     assert Profile.screen is not None
     while True:
-        waeurifawiueflaushdflkjahsdflkjhsdfaweurjhfakjsdhfliausdhfliuzcviuy = None
+        fps_clock = None
         if Profile.isCalcPerformance:
-            waeurifawiueflaushdflkjahsdflkjhsdfaweurjhfakjsdhfliausdhfliuzcviuy = ScopedTimer()
+            fps_clock = ScopedTimer()
 
         Event._updateKeyEvents()
         Event._updateMouseEvents()
+        Event._updateMousePos()
         Event.Input.update()
 
         Event.EventManager.update(_pygame.event.get())

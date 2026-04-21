@@ -1,10 +1,25 @@
+"""
+GUI Components:
+    AttachComponent:
+        DraggableObj
+    LayerComponent:
+        Box
+        SpriteBox
+        Button
+        Text
+        Panel
+        
+        VerticalAlignment
+        VerticalSplitter
+
+"""
+
 import pygame as _pygame
 from typing import Optional, Callable, Any
 from functools import singledispatchmethod
 
 from . import Profile
 # from .Base import VerticalAlignment
-from . import Components
 from . import Animator
 from .Log import *
 from .Utils import *
@@ -13,19 +28,58 @@ from . import Sprite
 from . import Constants
 from . import TextAttribute
 from . import Event
+from . import Mouse
+from . import Base
 
 # TODO : More flexible Splitter.
+# TODO : dealing with changing gui component classes
 
 # ===== Draggable object =====
-class DraggableObj:
-    def __init__(self, component: Components.LayerComponentBase | Components.SceneComponentBase) -> None:
-        self._comp = component
+class DraggableObj(Base.AttachComponentBase):
+    _dragging_pos: Base.Pos = Base.Pos(0, 0)
+    _clicked_flag: bool = False
+    _leaved_flag: bool = False
+    def __init__(self) -> None:
+        super().__init__()
+        self._dragging_relpos: Base.Pos = Base.Pos(0, 0)
+        self._dragging_flag: bool = False
 
-    # def update(self):
-        # self._comp.
+    def update(self):
+        assert self.component is not None
+        mp = Mouse.get_pos()
+        mx, my = mp.x - (Profile.window_width - Profile.width)/2, mp.y - (Profile.window_height - Profile.height)/2
+        if DraggableObj._clicked_flag:
+            if _pygame.Rect(self.component.x, self.component.y, self.component.width, self.component.height).collidepoint(mx, my):
+                self._dragging_relpos = DraggableObj._dragging_pos - Base.Pos(self.component.x, self.component.y) - Base.Pos((Profile.window_width - Profile.width)/2, (Profile.window_height - Profile.height)/2)
+                self._dragging_flag = True
+
+            DraggableObj._clicked_flag = False
+        if self._dragging_flag:
+            self.component.x, self.component.y = (Base.Pos(mx, my) - self._dragging_relpos).pos
+
+        if DraggableObj._leaved_flag:
+            self._dragging_flag = False
+            DraggableObj._leaved_flag = False
+            pass
+
+@Event.OnMousebuttonDown(Mouse.left)
+def on_click(e):
+    DraggableObj._clicked_flag = True
+    DraggableObj._dragging_pos = Mouse.get_pos()
+
+@Event.OnMousebuttonUp(Mouse.left)
+def on_mousebuttonup(e):
+    DraggableObj._leaved_flag = True
+
+# ===== Dockable object =====
+# class DockableObj(Base.LayerComponentBase, DraggableObj):
+    # def __init__(self, component: Base.LayerComponentBase) -> None:
+        # Base.LayerComponentBase.__init__(self, component.u, component.v, component.width, component.height)
+        # DraggableObj.__init__(self, component)
+        # self.component = component
 
 # ===== Box =====
-class Box(Components.LayerComponentBase):
+class Box(Base.LayerComponentBase):
     """Allow to attach: Layer"""
     def __init__(self,
                  u: float,
@@ -62,6 +116,7 @@ class Box(Components.LayerComponentBase):
         Profile.surface.blit(self._border_surf, [self.x - self.border_width, self.y - self.border_width])
         Profile.surface.blit(self._surf, [self.x, self.y])
     
+    """
     def _draw(self, x: float, y: float):
         assert Profile.surface is not None
 
@@ -85,9 +140,9 @@ class Box(Components.LayerComponentBase):
         #     _pygame.draw.rect(self._surf, self.border_color, self._surf.get_rect(), self.border_width)
 
         # Profile.surface.blit(self._surf, [x, y])
-
+    """
 # ===== SpriteBox =====
-class SpriteBox(Components.LayerComponentBase):
+class SpriteBox(Base.LayerComponentBase):
     """Allow to attach: Layer"""
     def __init__(self,
                  u: float,
@@ -121,13 +176,11 @@ class SpriteBox(Components.LayerComponentBase):
             self.sprite.draw(self.sprite_index, self.x, self.y, Anchor.default)
 
 # ===== Button =====
-class Button(Components.LayerComponentBase):
+class Button(Base.LayerComponentBase):
     """Allow to attach: Layer"""
     g_NEUTRAL_COLOR: int =  0
     g_HOVERED_COLOR: int = 48
     g_CLICKED_COLOR: int = 64
-    g_mouseX: float = 0
-    g_mouseY: float = 0
 
     g_isHovered: bool = False
     g_isClicked: bool = False
@@ -174,9 +227,14 @@ class Button(Components.LayerComponentBase):
         Button.g_isHovered = False
 
     def update(self):
+        super().update()
+
         self.isHovered = False
         self.isPressed = False
-        hovered = self.box_obj.rect.collidepoint(Button.g_mouseX - (Profile.window_width - Profile.width)/2, Button.g_mouseY - (Profile.window_height - Profile.height)/2)
+
+        mp = Mouse.get_pos()
+
+        hovered = self.box_obj.rect.collidepoint(mp.x - (Profile.window_width - Profile.width)/2, mp.y - (Profile.window_height - Profile.height)/2)
 
         if not Button.g_isHovered and hovered:
             self.isHovered = True
@@ -185,7 +243,7 @@ class Button(Components.LayerComponentBase):
             self.isHovered = False
             Button.g_isHovered = False
 
-        if Event.pressedMousebuttons.left and self.isHovered:
+        if Mouse.get_pressed().left and self.isHovered:
             self.isPressed = True
 
         if Button.g_eventExecuted and self.isPressed:
@@ -236,7 +294,7 @@ class Button(Components.LayerComponentBase):
 
         self._text_obj.draw()#self.x, self.y)
         # self._text_obj._draw(self.x, self.y)
-
+"""
     def _draw(self, x: float, y: float):
         assert Profile.surface is not None
 
@@ -279,17 +337,17 @@ class Button(Components.LayerComponentBase):
         self._text_obj._draw(x + (self._text_obj.x - self.x), y + (self._text_obj.y - self.y))
 
         # _pygame.draw.line(Profile.surface, (255, 128, 255), [x, y], [x, y+self.height], 4)
-
-@Event.OnMousemove()
-def updateMousePos(e):
-    Button.g_mouseX, Button.g_mouseY = e.pos[0], e.pos[1]
+"""
+# @Event.OnMousemove()
+# def updateMousePos(e):
+    # Button.g_mouseX, Button.g_mouseY = e.pos[0], e.pos[1]
 
 @Event.OnMousebuttonUp(Event.Mouse.left)
 def updateMousebuttonUp(e):
     Button.g_eventExecuted = True
 
 # ===== Text =====
-class Text(Components.LayerComponentBase):
+class Text(Base.LayerComponentBase):
     """Allow to attach: Scene, Layer"""
     def __init__(self,
                  textAttribute: TextAttribute,
@@ -309,18 +367,18 @@ class Text(Components.LayerComponentBase):
         assert Profile.surface is not None
         surf = self.font.render(self.text, self.textAttr.antialias, self.textAttr.text_color, self.textAttr.background_color)
         Profile.surface.blit(surf, (self.x, self.y))#applyAnchor(self.x, self.y, surf.get_width(), surf.get_height(), self.anchor))
-
+"""
     def _draw(self, x: float, y: float):
         assert Profile.surface is not None
         Profile.surface.blit(self._surf, (x, y))#applyAnchor(x, y, self._surf.get_width(), self._surf.get_height(), Anchor.default))
         # _pygame.draw.line(Profile.surface, (255, 128, 255), [x, y], [x, y+self.height], 4)
-        
+        """
 # ===== Vertical alignment =====
 class VerticalAlignment:
     def __init__(self, padding: float = Constants.dflt_padding, space: float = Constants.dflt_space) -> None:
         self.padding = padding
         self.space = space
-        self._items: list[tuple[Components.LayerComponentBase, float]] = []
+        self._items: list[tuple[Base.LayerComponentBase, float]] = []
 
     @singledispatchmethod
     def pushItem(self, component: Any) -> None:
@@ -340,7 +398,9 @@ class VerticalAlignment:
         current_x = x + self.padding
         current_y = y + self.padding
         for item in self._items:
-            item[0]._draw(current_x, current_y)
+            item[0].x, item[0].y = current_x, current_y
+            # item[0]._draw(current_x, current_y)
+            item[0].draw()
             l_y = current_y
             current_y += item[1] + self.space
             n_y = current_y
@@ -348,9 +408,15 @@ class VerticalAlignment:
         Profile.surface.set_clip(None)
 
 # ===== Panel =====
-class Panel(Components.LayerComponentBase):
+class Panel(Base.LayerComponentBase):
     """Allow to attach: Layer"""
-    def __init__(self, u: float, v: float, width: float, height: float, background_color: gdk_color, padding: float = Constants.dflt_padding, space: float = Constants.dflt_space, components: list[Components.LayerComponentBase] = []) -> None:
+    def __init__(self, 
+                 u: float, v: float, 
+                 width: float, height: float, 
+                 background_color: gdk_color, 
+                 padding: float = Constants.dflt_padding, 
+                 space: float = Constants.dflt_space, 
+                 components: list[Base.LayerComponentBase] = []) -> None:
         super().__init__(u, v, width, height)
         self.width, self.height = width, height
         self._box = Box(u, v, width, height, background_color, 1, (255, 255, 255))
@@ -361,17 +427,26 @@ class Panel(Components.LayerComponentBase):
         for comp in components:
             self._itemAlignment.pushItem(comp)
     
+    def update(self):
+        super().update()
+        self._box.x, self._box.y = self.x, self.y
+        # self._itemAlignment.
+
     def draw(self):
+        assert Profile.surface is not None
+
         self._box.draw()
+        # self._box._draw(self.x, self.y)
+        _pygame.draw.circle(Profile.surface, (255,255,0), (self.x, self.y), 10)
         # _pygame.draw.rect(Profile.surface, (128, 255, 128), self.panel_rect)
         for child in self.children:
             child.draw()
         self._itemAlignment.draw(self.panel_rect, self.x, self.y)
-        
+        """
     def _draw(self, x: float, y: float):
         self._box._draw(x, y)
         self._itemAlignment.draw(_pygame.Rect(x, y, self.width, self.height), x, y)
-
+"""""
     def get_pos(self) -> tuple[float, float]:
         return self.x, self.y
 

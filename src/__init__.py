@@ -1,6 +1,5 @@
 from . import Core, Profile, Timer, Event
 from . import Entity
-from . import Components
 from . import Scene
 from . import Sprite
 from . import Tilemap
@@ -39,9 +38,19 @@ def run():
 
 # ====== Create Functions ======
 
-def createSprite(img_filepath: str | PathLike, sprite_size: int, sprite_padding: int, offset_x: int = 0, offset_y: int = 0):
+def createScene() -> Scene.Scene:
+    scene = Scene.Scene()
+    Scene.SceneManager.pushScene(scene)
+    return scene
+
+def createLayer() -> Layer.Layer:
+    layer = Layer.Layer()
+    Layer.LayerManager.pushLayer(layer)
+    return layer
+
+def createSprite(img_filepath: str | PathLike, sprite_size: int, sprite_padding: int, offset_x: int = 0, offset_y: int = 0, isAntialias: bool = False):
     sprite = Sprite.Sprite()
-    sprite.load_tile(img_filepath, sprite_size, sprite_padding, offset_x, offset_y)
+    sprite.load_tile(img_filepath, sprite_size, sprite_padding, offset_x, offset_y, isAntialias)
     return sprite
 
 def createTilemap(sprite: Sprite.Sprite, start_pos: tuple[int, int] = (0, 0)):

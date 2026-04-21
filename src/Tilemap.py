@@ -1,6 +1,6 @@
 from . import Sprite
 from . import Profile
-from . import Components
+from . import Base
 from .Log import *
 from . import Entity
 
@@ -75,7 +75,7 @@ def get_viewport(map_w: int, map_h: int, offset_x: float, offset_y: float, surf_
     return start_mx, end_mx, start_my, end_my
 
 # ===== Tilemap =====
-class Tilemap(Components.SceneComponentBase):
+class Tilemap(Base.SceneComponentBase):
     """Allow to attach: Scene"""
     def __init__(self, sprite: Sprite.Sprite = Sprite.Sprite(), start_pos: tuple[int, int] = (0, 0)) -> None:
         super().__init__(0, 0)
@@ -148,7 +148,7 @@ class Tilemap(Components.SceneComponentBase):
         if self.__loaded == False:
             if self.__warned == False:
                 Log.warn("Tilemap", "There are not map data.")
-            self.__warned = True
+                self.__warned = True
             return
 
         self.updateViewport(-offset_x, -offset_y)

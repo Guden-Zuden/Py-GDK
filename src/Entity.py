@@ -1,10 +1,10 @@
 from . import Profile
-from . import Components
 from . import Sprite
 from . import Utils
 from . import Event
 from . import Timer
 from . import Animator
+from . import Base
 
 import pygame as _pygame
 from typing import Optional, Callable
@@ -76,7 +76,7 @@ class MovementModelDisabled(MovementModelBase):
         pass
 
 # ===== Entity =====
-class Entity(Components.SceneComponentBase):
+class Entity(Base.SceneComponentBase):
     """Allow to attach: Scene"""
     def __init__(self,
                  x: float,

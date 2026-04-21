@@ -7,7 +7,7 @@ from typing import Optional
 
 screen: Optional[_pygame.Surface] = None
 surface: Optional[_pygame.Surface] = None
-clock: _pygame.time.Clock
+clock: Optional[_pygame.time.Clock] = None
 
 title: str = "GameDeveloperKits"
 fps: int = 60
@@ -17,7 +17,7 @@ window_width: int = 400
 window_height: int = 300
 
 default_fontsize: int = 20
-default_font: _pygame.font.Font
+default_font: Optional[_pygame.font.Font] = None
 
 sprite_size: int = 32
 

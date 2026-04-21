@@ -1,5 +1,6 @@
 from . import Key, Mouse
 from . import Utils
+from .Base import *
 
 import pygame as _pygame
 import sys as _sys
@@ -10,6 +11,8 @@ from typing import Optional, Any, Callable
 
 __all__ = ["InputPermission", "getKey"]
 
+# TODO Fix OnUpdate function (maybe misunderstanding) (Execute per frame)
+
 # ===== Permissions =====
 class InputPermission(Flag):
     WASD = auto()
@@ -18,7 +21,8 @@ class InputPermission(Flag):
 # ===== Global value in this file =====
 pressedKeys: _pygame.key.ScancodeWrapper = _pygame.key.ScancodeWrapper()
 pressedKeymods: int = 0
-pressedMousebuttons: Mouse.MouseButtonData = Mouse.MouseButtonData(False, False, False, False, False)
+# pressedMousebuttons: Mouse.MouseButtonData = Mouse.MouseButtonData(False, False, False, False, False)
+# mousePos: tuple[int, int] = (0, 0)
 
 def _updateKeyEvents():
     global pressedKeys, pressedKeymods
@@ -26,9 +30,12 @@ def _updateKeyEvents():
     pressedKeymods = _pygame.key.get_mods()
 
 def _updateMouseEvents():
-    global pressedMousebuttons
     b = _pygame.mouse.get_pressed(5)
-    pressedMousebuttons = Mouse.MouseButtonData(b[0], b[1], b[2], b[3], b[4])
+    Mouse._pressedButton = Mouse.MouseButtonData(b[0], b[1], b[2], b[3], b[4])
+
+def _updateMousePos():
+    x, y = _pygame.mouse.get_pos()
+    Mouse._pos = Pos(x, y)
 
 # ===== KeyData included some funcs =====
 @dataclass
@@ -229,11 +236,10 @@ class EventManager:
                     h(e)
 
 
-# ===== Global Function used anywhere =====
+# ===== User Function ======
 def getKey(key_data: Key.KeyType) -> KeyEventData:
     keyStatus = KeyEventData(key_data, pressedKeys[key_data.keyCode], pressedKeymods)
     return keyStatus
-
 
 # ===== Input producing like Movements =====
 class Input:
@@ -266,4 +272,6 @@ class Input:
 
 
 # def set_event(key_status: KeyEventData):
-    
+
+
+

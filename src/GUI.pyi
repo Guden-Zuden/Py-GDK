@@ -2,7 +2,6 @@ import pygame as _pygame
 from typing import Optional, Callable
 
 from . import Profile
-from . import Components
 from . import Animator
 from .Log import *
 from .Utils import *
@@ -11,17 +10,18 @@ from . import Sprite
 from . import Constants
 from . import TextAttribute
 from . import Event
+from . import Base
 
 # TODO : More flexible Splitter.
 
 # ===== Draggable object =====
-class DraggableObj:
-    def __init__(self, component: Components.LayerComponentBase | Components.SceneComponentBase) -> None: ...
+class DraggableObj(Base.AttachComponentBase):
+    def __init__(self) -> None: ...
 
     # def update(self): ...
 
 # ===== Box =====
-class Box(Components.LayerComponentBase):
+class Box(Base.LayerComponentBase):
     """Allow to attach: Layer"""
     def __init__(self,
                  u: float,
@@ -39,7 +39,7 @@ class Box(Components.LayerComponentBase):
     def _draw(self, x: float, y: float): ...
 
 # ===== SpriteBox =====
-class SpriteBox(Components.LayerComponentBase):
+class SpriteBox(Base.LayerComponentBase):
     """Allow to attach: Layer"""
     def __init__(self,
                  u: float,
@@ -55,7 +55,7 @@ class SpriteBox(Components.LayerComponentBase):
     def draw(self): ...
 
 # ===== Button =====
-class Button(Components.LayerComponentBase):
+class Button(Base.LayerComponentBase):
     """Allow to attach: Layer"""
 
     def __init__(
@@ -83,7 +83,7 @@ class Button(Components.LayerComponentBase):
     def _draw(self, x: float, y: float): ...
 
 # ===== Text =====
-class Text(Components.LayerComponentBase):
+class Text(Base.LayerComponentBase):
     """Allow to attach: Scene, Layer"""
     def __init__(self,
                  textAttribute: TextAttribute,
@@ -96,7 +96,7 @@ class Text(Components.LayerComponentBase):
     def _draw(self, x: float, y: float): ...
         
 # ===== Panel =====
-class Panel(Components.LayerComponentBase):
+class Panel(Base.LayerComponentBase):
     """Allow to attach: Layer"""
     def __init__(self, 
                  u: float, 
@@ -106,7 +106,7 @@ class Panel(Components.LayerComponentBase):
                  background_color: gdk_color, 
                  padding: float = Constants.dflt_padding, 
                  space: float = Constants.dflt_space, 
-                 components: list[Components.LayerComponentBase] = []) -> None: ...
+                 components: list[Base.LayerComponentBase] = []) -> None: ...
     
     def draw(self): ...
         

@@ -10,7 +10,7 @@ class Sprite:
     def __init__(self) -> None:
         self.sprites: list[_pygame.Surface] = []
     
-    def load_tile(self, img_filepath: str | os.PathLike, sprite_size: int, sprite_padding: int, offset_x: int = 0, offset_y: int = 0):
+    def load_tile(self, img_filepath: str | os.PathLike, sprite_size: int, sprite_padding: int, offset_x: int = 0, offset_y: int = 0, isAntialias: bool = False):
         """If there are spaces around image, set offsets."""
         assert Profile.sprite_size is not None
 
@@ -24,7 +24,10 @@ class Sprite:
                 start_py = sprite_size*h + sprite_padding*h + offset_y
 
                 trim_img = img.subsurface((start_px, start_py), (sprite_size, sprite_size))
-                trim_img = _pygame.transform.smoothscale(trim_img, (Profile.sprite_size, Profile.sprite_size))
+                if isAntialias:
+                    trim_img = _pygame.transform.smoothscale(trim_img, (Profile.sprite_size, Profile.sprite_size))
+                else:
+                    trim_img = _pygame.transform.scale(trim_img, (Profile.sprite_size, Profile.sprite_size))
                 self.sprites.append(trim_img)
                 count += 1
 
