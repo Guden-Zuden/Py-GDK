@@ -13,10 +13,11 @@ GUI Components:
         VerticalSplitter
 
 """
-
+from __future__ import annotations
 import pygame as _pygame
 from typing import Optional, Callable, Any
 from functools import singledispatchmethod
+from dataclasses import dataclass
 
 from . import Profile
 # from .Base import VerticalAlignment
@@ -26,19 +27,22 @@ from .Utils import *
 from . import Timer
 from . import Sprite
 from . import Constants
-from . import TextAttribute
 from . import Event
 from . import Mouse
 from . import Base
 
 # TODO : More flexible Splitter.
 # TODO : dealing with changing gui component classes
+# TODO : fix the bugs: DraggableObj
 
 # ===== Draggable object =====
 class DraggableObj(Base.AttachComponentBase):
     _dragging_pos: Base.Pos = Base.Pos(0, 0)
     _clicked_flag: bool = False
     _leaved_flag: bool = False
+    _dragging_obj: Optional[Base.LayerComponentBase] = None
+    _get_front_flag: bool = False
+
     def __init__(self) -> None:
         super().__init__()
         self._dragging_relpos: Base.Pos = Base.Pos(0, 0)
@@ -46,21 +50,30 @@ class DraggableObj(Base.AttachComponentBase):
 
     def update(self):
         assert self.component is not None
+
         mp = Mouse.get_pos()
         mx, my = mp.x - (Profile.window_width - Profile.width)/2, mp.y - (Profile.window_height - Profile.height)/2
+        
         if DraggableObj._clicked_flag:
-            if _pygame.Rect(self.component.x, self.component.y, self.component.width, self.component.height).collidepoint(mx, my):
-                self._dragging_relpos = DraggableObj._dragging_pos - Base.Pos(self.component.x, self.component.y) - Base.Pos((Profile.window_width - Profile.width)/2, (Profile.window_height - Profile.height)/2)
-                self._dragging_flag = True
+            isCollide = _pygame.Rect(self.component.x, self.component.y, self.component.width, self.component.height).collidepoint(mx, my)
 
-            DraggableObj._clicked_flag = False
+            if isCollide:
+                if DraggableObj._dragging_obj == None:
+                    self._dragging_relpos = DraggableObj._dragging_pos - Base.Pos(self.component.x, self.component.y) - Base.Pos((Profile.window_width - Profile.width)/2, (Profile.window_height - Profile.height)/2)
+                    self._dragging_flag = True
+                    DraggableObj._dragging_obj = self.component
+
         if self._dragging_flag:
             self.component.x, self.component.y = (Base.Pos(mx, my) - self._dragging_relpos).pos
 
         if DraggableObj._leaved_flag:
             self._dragging_flag = False
-            DraggableObj._leaved_flag = False
-            pass
+            DraggableObj._dragging_obj = None
+
+    @staticmethod
+    def _reset_flag():
+        DraggableObj._clicked_flag = False
+        DraggableObj._leaved_flag = False
 
 @Event.OnMousebuttonDown(Mouse.left)
 def on_click(e):
@@ -70,6 +83,7 @@ def on_click(e):
 @Event.OnMousebuttonUp(Mouse.left)
 def on_mousebuttonup(e):
     DraggableObj._leaved_flag = True
+    DraggableObj._get_front_flag = False
 
 # ===== Dockable object =====
 # class DockableObj(Base.LayerComponentBase, DraggableObj):
@@ -105,6 +119,11 @@ class Box(Base.LayerComponentBase):
         self._surf = _pygame.Surface([width, height], flags=_pygame.SRCALPHA)
         self._border_surf = _pygame.Surface([width + self.border_width*2, height + self.border_width*2], flags=_pygame.SRCALPHA)
 
+        self.child: Optional[Base.LayerComponentBase] = None
+
+    def set_child(self, child_obj: Base.LayerComponentBase):
+        self.child = child_obj
+
     def draw(self):
         assert Profile.surface is not None
 
@@ -115,6 +134,12 @@ class Box(Base.LayerComponentBase):
 
         Profile.surface.blit(self._border_surf, [self.x - self.border_width, self.y - self.border_width])
         Profile.surface.blit(self._surf, [self.x, self.y])
+
+        if self.child:
+            self.child.x = self.x + self.width/2
+            self.child.y = self.y + self.height/2
+
+            self.child.draw()
     
     """
     def _draw(self, x: float, y: float):
@@ -204,7 +229,6 @@ class Button(Base.LayerComponentBase):
         self.name = name
         self.textAttr = textAttr
         self.text = text
-        self._text_obj = Text(self.textAttr, self.text, u, v)
 
         self.width = width
         self.height = height
@@ -214,6 +238,9 @@ class Button(Base.LayerComponentBase):
         self.border_color = border_color
 
         self.box_obj = Box(u, v, width, height, background_color, border_width, border_color)
+        self._text_obj = Text(self.textAttr, self.text, u, v)
+        
+        self.box_obj.set_child(self._text_obj)
 
         self.isHovered = False
         self.isPressed = False
@@ -228,6 +255,9 @@ class Button(Base.LayerComponentBase):
 
     def update(self):
         super().update()
+
+        self.box_obj.x, self.box_obj.y = self.x, self.y
+        self._text_obj.x, self._text_obj.y = self.x, self.y
 
         self.isHovered = False
         self.isPressed = False
@@ -292,7 +322,7 @@ class Button(Base.LayerComponentBase):
 
         _pygame.Surface.blit(Profile.surface, self.overlay, self.box_obj.rect)
 
-        self._text_obj.draw()#self.x, self.y)
+        # self._text_obj.draw()#self.x, self.y)
         # self._text_obj._draw(self.x, self.y)
 """
     def _draw(self, x: float, y: float):
@@ -346,6 +376,20 @@ class Button(Base.LayerComponentBase):
 def updateMousebuttonUp(e):
     Button.g_eventExecuted = True
 
+@dataclass
+class TextAttribute:
+    font: str
+    size: int
+    text_color: gdk_color
+    background_color: gdk_color | None = None
+    antialias: bool = True
+    bold: bool = False
+    italic: bool = False
+
+    def createFont(self) -> _pygame.font.Font:
+        font = _pygame.font.SysFont(self.font, self.size, self.bold, self.italic)
+        return font
+
 # ===== Text =====
 class Text(Base.LayerComponentBase):
     """Allow to attach: Scene, Layer"""
@@ -366,7 +410,7 @@ class Text(Base.LayerComponentBase):
     def draw(self):
         assert Profile.surface is not None
         surf = self.font.render(self.text, self.textAttr.antialias, self.textAttr.text_color, self.textAttr.background_color)
-        Profile.surface.blit(surf, (self.x, self.y))#applyAnchor(self.x, self.y, surf.get_width(), surf.get_height(), self.anchor))
+        Profile.surface.blit(surf, (self.x - self.width/2, self.y - self.height/2))#applyAnchor(self.x, self.y, surf.get_width(), surf.get_height(), self.anchor))
 """
     def _draw(self, x: float, y: float):
         assert Profile.surface is not None

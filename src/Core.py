@@ -38,6 +38,7 @@ def run():
 
         Event.EventManager.update(_pygame.event.get())
         Event.EventManager.dispatch()
+        Event.EventManager.dispatch_onUpdate()
             
         Profile.surface.fill((0, 0, 0))
 

@@ -49,13 +49,13 @@ class LayerComponentBase:
         self.x = Profile.width/2 + Profile.width/2 * u - width/2
         self.y = Profile.height/2 + Profile.height/2 * v - height/2
         self.width, self.height = width, height
-        self.parent: Optional[LayerComponentBase] = None
 
         self._attachments: list[AttachComponentBase] = []
 
     def attach(self, attachment: AttachComponentBase):
         self._attachments.append(attachment)
         attachment.component = self
+        return self
 
     def update(self):
         for attachment in self._attachments:

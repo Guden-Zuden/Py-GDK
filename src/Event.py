@@ -193,18 +193,17 @@ class EventManager:
         EventManager.eventQueue = events
 
     @staticmethod
+    def dispatch_onUpdate():
+        handlers = EventManager._update_handlers
+        for h in handlers:
+            h()
+
+    @staticmethod
     def dispatch():
-        updated = False
         for e in EventManager.eventQueue:
             if e.type == _pygame.QUIT:
                 _pygame.quit()
                 _sys.exit()
-
-            if updated == False:
-                handlers = EventManager._update_handlers
-                for h in handlers:
-                    h(e)
-                updated = True
 
             if e.type == _pygame.WINDOWRESIZED:
                 handlers = EventManager._windowresized_handlers

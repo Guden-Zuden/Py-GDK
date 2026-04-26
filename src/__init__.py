@@ -6,9 +6,9 @@ from . import Tilemap
 from .Log import *
 from .Animator import *
 from . import Layer
-from .TextAttribute import TextAttribute
 from . import GUI
 from .Utils import Anchor
+from . import Key
 
 import pygame
 from typing import Optional

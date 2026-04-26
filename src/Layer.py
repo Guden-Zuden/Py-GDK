@@ -35,10 +35,18 @@ class Layer:
 
     def update(self):
         GUI.Button.reset()
+
         for component in reversed(self._layerComponent_stack):
             component.update()
         for panel in self._panel_stack:
             panel.update()
+        GUI.DraggableObj._reset_flag()
+
+        # dragging object goes front
+        if GUI.DraggableObj._dragging_obj and GUI.DraggableObj._get_front_flag == False:
+            GUI.DraggableObj._get_front_flag = True
+            self._layerComponent_stack.remove(GUI.DraggableObj._dragging_obj)
+            self._layerComponent_stack.append(GUI.DraggableObj._dragging_obj)
 
     def draw(self):
         for component in self._layerComponent_stack:
