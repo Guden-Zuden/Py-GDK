@@ -2,6 +2,8 @@
 GUI Components:
     AttachComponent:
         DraggableObj
+        DockableObj
+        
     LayerComponent:
         Box
         SpriteBox
@@ -18,6 +20,7 @@ import pygame as _pygame
 from typing import Optional, Callable, Any
 from functools import singledispatchmethod
 from dataclasses import dataclass
+from enum import Enum
 
 from . import Profile
 # from .Base import VerticalAlignment
@@ -36,7 +39,8 @@ from . import Base
 # TODO : fix the bugs: DraggableObj
 
 # ===== Draggable object =====
-class DraggableObj(Base.AttachComponentBase):
+class Draggable(Base.AttachComponentBase):
+    _clicked_pos: Base.Pos = Base.Pos(0, 0)
     _dragging_pos: Base.Pos = Base.Pos(0, 0)
     _clicked_flag: bool = False
     _leaved_flag: bool = False
@@ -50,47 +54,89 @@ class DraggableObj(Base.AttachComponentBase):
 
     def update(self):
         assert self.component is not None
-
         mp = Mouse.get_pos()
         mx, my = mp.x - (Profile.window_width - Profile.width)/2, mp.y - (Profile.window_height - Profile.height)/2
-        
-        if DraggableObj._clicked_flag:
+
+        if Draggable._clicked_flag:
             isCollide = _pygame.Rect(self.component.x, self.component.y, self.component.width, self.component.height).collidepoint(mx, my)
 
             if isCollide:
-                if DraggableObj._dragging_obj == None:
-                    self._dragging_relpos = DraggableObj._dragging_pos - Base.Pos(self.component.x, self.component.y) - Base.Pos((Profile.window_width - Profile.width)/2, (Profile.window_height - Profile.height)/2)
+                if Draggable._dragging_obj == None:
+                    self._dragging_relpos = Draggable._clicked_pos - Base.Pos(self.component.x, self.component.y) - Base.Pos((Profile.window_width - Profile.width)/2, (Profile.window_height - Profile.height)/2)
                     self._dragging_flag = True
-                    DraggableObj._dragging_obj = self.component
+                    Draggable._dragging_obj = self.component
 
         if self._dragging_flag:
             self.component.x, self.component.y = (Base.Pos(mx, my) - self._dragging_relpos).pos
 
-        if DraggableObj._leaved_flag:
+        if Draggable._leaved_flag:
             self._dragging_flag = False
-            DraggableObj._dragging_obj = None
+            Draggable._dragging_obj = None
 
     @staticmethod
     def _reset_flag():
-        DraggableObj._clicked_flag = False
-        DraggableObj._leaved_flag = False
+        Draggable._clicked_flag = False
+        Draggable._leaved_flag = False
 
 @Event.OnMousebuttonDown(Mouse.left)
-def on_click(e):
-    DraggableObj._clicked_flag = True
-    DraggableObj._dragging_pos = Mouse.get_pos()
+def draggable_on_click(e):
+    Draggable._clicked_flag = True
+    Draggable._clicked_pos = Mouse.get_pos()
+    Draggable._dragging_pos = Mouse.get_pos()
+
+@Event.OnMousemove()
+def draggable_on_mousemove(e):
+    Draggable._dragging_pos = Mouse.get_pos()
+
+@Event.OnMousebuttonUp(Mouse.left)
+def draggable_on_mousebuttonup(e):
+    Draggable._leaved_flag = True
+    Draggable._get_front_flag = False
+
+# Dockable Direction
+class DockDirection(Enum):
+    TOP = 0
+    RIGHT = 1
+    BOTTOM = 2
+    LEFT = 3
+    FULL = 4
+    NONE = 5
+
+# ===== Dockable object =====
+class Dockable(Draggable):
+    """This Dockable class makes Vertical/Horizontal splitter on the panel automatically."""
+    _mouseup_flag: bool = False
+
+    def __init__(self) -> None:
+        Draggable.__init__(self)
+
+        self._docking_dir: DockDirection = DockDirection.NONE
+        self._pre_docking_dir: DockDirection = DockDirection.NONE
+
+    def update(self) -> None:
+        assert self.component is not None
+        super().update()
+        
+        if Dockable._dragging_pos.x < Profile.width * 0.2:
+            self._pre_docking_dir = DockDirection.LEFT
+        elif Dockable._dragging_pos.x > (Profile.width - Profile.width * 0.2):
+            self._pre_docking_dir = DockDirection.RIGHT
+        elif Dockable._dragging_pos.y < Profile.height * 0.2:
+            self._pre_docking_dir = DockDirection.TOP
+        elif Dockable._dragging_pos.y > (Profile.height - Profile.height * 0.2):
+            self._pre_docking_dir = DockDirection.BOTTOM
+        else:
+            self._pre_docking_dir = DockDirection.NONE
+
+        if Dockable._mouseup_flag:
+            self._docking_dir = self._pre_docking_dir
+            Dockable._mouseup_flag = False
+
+        # if self._docking_dir 
 
 @Event.OnMousebuttonUp(Mouse.left)
 def on_mousebuttonup(e):
-    DraggableObj._leaved_flag = True
-    DraggableObj._get_front_flag = False
-
-# ===== Dockable object =====
-# class DockableObj(Base.LayerComponentBase, DraggableObj):
-    # def __init__(self, component: Base.LayerComponentBase) -> None:
-        # Base.LayerComponentBase.__init__(self, component.u, component.v, component.width, component.height)
-        # DraggableObj.__init__(self, component)
-        # self.component = component
+    Dockable._mouseup_flag = True
 
 # ===== Box =====
 class Box(Base.LayerComponentBase):
@@ -116,24 +162,25 @@ class Box(Base.LayerComponentBase):
 
         x, y = applyAnchor(self.x, self.y, self.width, self.height, self.anchor)
         self.rect = _pygame.Rect(x, y, self.width, self.height)
-        self._surf = _pygame.Surface([width, height], flags=_pygame.SRCALPHA)
-        self._border_surf = _pygame.Surface([width + self.border_width*2, height + self.border_width*2], flags=_pygame.SRCALPHA)
+        self.border_rect = _pygame.Rect(x - self.border_width, y - self.border_width, self.width + self.border_width*2, self.height + self.width*2)
 
         self.child: Optional[Base.LayerComponentBase] = None
 
     def set_child(self, child_obj: Base.LayerComponentBase):
         self.child = child_obj
 
+    def update(self):
+        super().update()
+        self.rect = _pygame.Rect(self.x, self.y, self.width, self.height)
+        self.border_rect = _pygame.Rect(self.x - self.border_width, self.y - self.border_width, self.width + self.border_width*2, self.height + self.border_width*2)
+
     def draw(self):
         assert Profile.surface is not None
 
-        self.rect = _pygame.Rect(self.x, self.y, self.width, self.height)
-        _pygame.draw.rect(self._surf, self.color, self._surf.get_rect())
         if self.border_width > 0:
-            _pygame.draw.rect(self._border_surf, self.border_color, self._border_surf.get_rect())
+            _pygame.draw.rect(Profile.surface, self.border_color, self.border_rect)
 
-        Profile.surface.blit(self._border_surf, [self.x - self.border_width, self.y - self.border_width])
-        Profile.surface.blit(self._surf, [self.x, self.y])
+        _pygame.draw.rect(Profile.surface, self.color, self.rect)
 
         if self.child:
             self.child.x = self.x + self.width/2
@@ -141,31 +188,6 @@ class Box(Base.LayerComponentBase):
 
             self.child.draw()
     
-    """
-    def _draw(self, x: float, y: float):
-        assert Profile.surface is not None
-
-        self.rect = _pygame.Rect(x, y, self.width, self.height)
-        _pygame.draw.rect(self._surf, self.color, self._surf.get_rect())
-        # if self.border_width > 0:
-            # _pygame.draw.rect(self._border_surf, self.border_color, self._border_surf.get_rect(), 1)
-
-        # _pygame.draw.rect(self.)
-
-        Profile.surface.blit(self._border_surf, [x - self.border_width, y - self.border_width])
-        Profile.surface.blit(self._surf, [x, y])
-
-
-        # self.rect = _pygame.Rect(x, y, self.width, self.height)
-        # border_width = self.width + 2*self.border_width + 2*self.padding
-        # border_height = self.height + 2*self.border_width + 2*self.padding
-        # x, y, = applyAnchor(x, y, border_width, border_height, Anchor.default)
-        # _pygame.draw.rect(self._surf, self.color, self._surf.get_rect())
-        # if self.border_width > 0:
-        #     _pygame.draw.rect(self._surf, self.border_color, self._surf.get_rect(), self.border_width)
-
-        # Profile.surface.blit(self._surf, [x, y])
-    """
 # ===== SpriteBox =====
 class SpriteBox(Base.LayerComponentBase):
     """Allow to attach: Layer"""
@@ -193,7 +215,6 @@ class SpriteBox(Base.LayerComponentBase):
 
     def draw(self):
         assert Profile.surface is not None
-        # x, y = applyAnchor(self.x, self.y, self.width, self.height, self.anchor)
 
         if self.animator:
             self.sprite.draw(self.animator.get_frame(), self.x, self.y, Anchor.default)
@@ -221,7 +242,7 @@ class Button(Base.LayerComponentBase):
             width: float,
             height: float,
             background_color: gdk_color,
-            clickFunc: Callable,
+            clickFunc: Optional[Callable] = None,
             flags: int = 0,
             border_width: int = 0,
             border_color: gdk_color = (0, 0, 0)) -> None:
@@ -237,10 +258,10 @@ class Button(Base.LayerComponentBase):
         self.border_width = border_width
         self.border_color = border_color
 
-        self.box_obj = Box(u, v, width, height, background_color, border_width, border_color)
-        self._text_obj = Text(self.textAttr, self.text, u, v)
+        self._box = Box(u, v, width, height, background_color, border_width, border_color)
+        self._text = Text(self.textAttr, self.text, u, v, True)
         
-        self.box_obj.set_child(self._text_obj)
+        self._box.set_child(self._text)
 
         self.isHovered = False
         self.isPressed = False
@@ -256,15 +277,17 @@ class Button(Base.LayerComponentBase):
     def update(self):
         super().update()
 
-        self.box_obj.x, self.box_obj.y = self.x, self.y
-        self._text_obj.x, self._text_obj.y = self.x, self.y
+        self._box.x, self._box.y = self.x, self.y
+        self._text.x, self._text.y = self.x, self.y
+        self._box.update()
+        self._text.update()
 
         self.isHovered = False
         self.isPressed = False
 
         mp = Mouse.get_pos()
 
-        hovered = self.box_obj.rect.collidepoint(mp.x - (Profile.window_width - Profile.width)/2, mp.y - (Profile.window_height - Profile.height)/2)
+        hovered = self._box.rect.collidepoint(mp.x - (Profile.window_width - Profile.width)/2, mp.y - (Profile.window_height - Profile.height)/2)
 
         if not Button.g_isHovered and hovered:
             self.isHovered = True
@@ -277,11 +300,9 @@ class Button(Base.LayerComponentBase):
             self.isPressed = True
 
         if Button.g_eventExecuted and self.isPressed:
-            
-            # self.isHovered = hovered
-
             if self.isHovered:
-                self.clickFunc()
+                if self.clickFunc: self.clickFunc()
+
             self.isPressed = False
             Button.g_eventExecuted = False
 
@@ -307,7 +328,7 @@ class Button(Base.LayerComponentBase):
         else:
             color = (255, 255, 255, plus)
 
-        self.box_obj.draw()
+        self._box.draw()
 
         self.overlay.fill((0, 0, 0, 0))
 
@@ -320,57 +341,7 @@ class Button(Base.LayerComponentBase):
             ):
                     self.overlay.fill(color)
 
-        _pygame.Surface.blit(Profile.surface, self.overlay, self.box_obj.rect)
-
-        # self._text_obj.draw()#self.x, self.y)
-        # self._text_obj._draw(self.x, self.y)
-"""
-    def _draw(self, x: float, y: float):
-        assert Profile.surface is not None
-
-        color = (0, 0, 0, 0)
-
-        if self.isPressed:
-            plus = self.g_CLICKED_COLOR
-        elif self.isHovered:
-            plus = self.g_HOVERED_COLOR
-        else:
-            plus = self.g_NEUTRAL_COLOR
-
-        is_darken = False
-
-        if (self.background_color[0] + self.background_color[1] + self.background_color[2])/3 >= 128:
-            is_darken = True
-
-        if is_darken:
-            color = (0, 0, 0, plus)
-        else:
-            color = (255, 255, 255, plus)
-
-        # self.box_obj.draw()
-        self.box_obj._draw(x, y)
-
-        self.overlay.fill((0, 0, 0, 0))
-
-        if (self.isHovered
-            and not self.flags & Constants.DIS_HOVERFEED
-            and not self.isPressed
-            ) or (
-            self.isPressed
-            and not self.flags & Constants.DIS_CLICKFEED
-            ):
-                    self.overlay.fill(color)
-
-        _pygame.Surface.blit(Profile.surface, self.overlay, _pygame.Rect(x, y, self.width, self.height))
-
-        # self._text_obj.draw()#self.x, self.y)
-        self._text_obj._draw(x + (self._text_obj.x - self.x), y + (self._text_obj.y - self.y))
-
-        # _pygame.draw.line(Profile.surface, (255, 128, 255), [x, y], [x, y+self.height], 4)
-"""
-# @Event.OnMousemove()
-# def updateMousePos(e):
-    # Button.g_mouseX, Button.g_mouseY = e.pos[0], e.pos[1]
+        _pygame.Surface.blit(Profile.surface, self.overlay, self._box.rect)
 
 @Event.OnMousebuttonUp(Event.Mouse.left)
 def updateMousebuttonUp(e):
@@ -397,26 +368,27 @@ class Text(Base.LayerComponentBase):
                  textAttribute: TextAttribute,
                  text: str,
                  u: float,
-                 v: float) -> None:
+                 v: float,
+                 is_centered: bool = False) -> None:
         self.textAttr = textAttribute
         self.font = self.textAttr.createFont()
         self.text = text
-        # self.anchor: Anchor = anchor
 
         self._surf = self.font.render(self.text, self.textAttr.antialias, self.textAttr.text_color, self.textAttr.background_color)
         self.width, self.height = self._surf.get_size()
         super().__init__(u, v, self.width, self.height)
+        
+        self.is_centered = is_centered
 
     def draw(self):
         assert Profile.surface is not None
         surf = self.font.render(self.text, self.textAttr.antialias, self.textAttr.text_color, self.textAttr.background_color)
-        Profile.surface.blit(surf, (self.x - self.width/2, self.y - self.height/2))#applyAnchor(self.x, self.y, surf.get_width(), surf.get_height(), self.anchor))
-"""
-    def _draw(self, x: float, y: float):
-        assert Profile.surface is not None
-        Profile.surface.blit(self._surf, (x, y))#applyAnchor(x, y, self._surf.get_width(), self._surf.get_height(), Anchor.default))
-        # _pygame.draw.line(Profile.surface, (255, 128, 255), [x, y], [x, y+self.height], 4)
-        """
+
+        if self.is_centered:
+            Profile.surface.blit(surf, (self.x - self.width/2, self.y - self.height/2))
+        else:
+            Profile.surface.blit(surf, (self.x, self.y))
+
 # ===== Vertical alignment =====
 class VerticalAlignment:
     def __init__(self, padding: float = Constants.dflt_padding, space: float = Constants.dflt_space) -> None:
@@ -441,14 +413,14 @@ class VerticalAlignment:
         Profile.surface.set_clip(clip_rect)
         current_x = x + self.padding
         current_y = y + self.padding
-        for item in self._items:
-            item[0].x, item[0].y = current_x, current_y
-            # item[0]._draw(current_x, current_y)
-            item[0].draw()
+        for item, y in self._items:
+            item.x, item.y = current_x, current_y
+            item.update()
+            item.draw()
             l_y = current_y
-            current_y += item[1] + self.space
+            current_y += y + self.space
             n_y = current_y
-            # _pygame.draw.line(Profile.surface, (255, 255, 128), [current_x, l_y+item[1]], [current_x, n_y], 4)
+
         Profile.surface.set_clip(None)
 
 # ===== Panel =====
@@ -464,8 +436,7 @@ class Panel(Base.LayerComponentBase):
         super().__init__(u, v, width, height)
         self.width, self.height = width, height
         self._box = Box(u, v, width, height, background_color, 1, (255, 255, 255))
-        self.panel_rect = _pygame.Rect(self.x, self.y, self.width, self.height)
-        self.children: list[VerticalSplitter] = []
+        self.splitter: Optional[SplitterBase] = None
 
         self._itemAlignment = VerticalAlignment(padding, space)
         for comp in components:
@@ -474,23 +445,19 @@ class Panel(Base.LayerComponentBase):
     def update(self):
         super().update()
         self._box.x, self._box.y = self.x, self.y
-        # self._itemAlignment.
+        self._box.width, self._box.height = self.width, self.height
+        self._box.update()
 
     def draw(self):
         assert Profile.surface is not None
 
         self._box.draw()
-        # self._box._draw(self.x, self.y)
-        _pygame.draw.circle(Profile.surface, (255,255,0), (self.x, self.y), 10)
-        # _pygame.draw.rect(Profile.surface, (128, 255, 128), self.panel_rect)
-        for child in self.children:
-            child.draw()
-        self._itemAlignment.draw(self.panel_rect, self.x, self.y)
-        """
-    def _draw(self, x: float, y: float):
-        self._box._draw(x, y)
-        self._itemAlignment.draw(_pygame.Rect(x, y, self.width, self.height), x, y)
-"""""
+        
+        if self.splitter:
+            self.splitter.draw()
+
+        self._itemAlignment.draw(self._box.rect, self.x, self.y)
+
     def get_pos(self) -> tuple[float, float]:
         return self.x, self.y
 
@@ -500,12 +467,14 @@ class SplitterBase:
         self.parent_panel = parent_panel
         self.first_panel = first_panel
         self.second_panel = second_panel
+    
+    def draw(self) -> None: pass
 
 class VerticalSplitter(SplitterBase):
     """This is not an object to attach. This object has not be stored in a variable. Conected to parent_panel, this object's draw function was called and two panel were drawn."""
     def __init__(self, parent_panel: Panel, left_panel: Panel, right_panel: Panel) -> None:
         super().__init__(parent_panel, left_panel, right_panel)
-        self.parent_panel.children.append(self)
+        self.parent_panel.splitter = self
         self._split_ratio: float = 0.5
         self._min_split_ratio: float = 0.05
 
@@ -518,6 +487,47 @@ class VerticalSplitter(SplitterBase):
         left_panel_pos = (left_panel_pos[0], left_panel_pos[1])
         right_panel_pos = (left_panel_pos[0] + self.parent_panel.width * self._split_ratio, left_panel_pos[1])
 
-        self.first_panel._draw(*left_panel_pos)
-        self.second_panel._draw(*right_panel_pos)
+        self.first_panel.x, self.first_panel.y = left_panel_pos
+        self.first_panel.width = self.parent_panel.width * self._split_ratio
+
+        self.second_panel.x, self.second_panel.y = right_panel_pos
+        self.second_panel.width = self.parent_panel.width * (1 - self._split_ratio)
+
+        self.first_panel.update()
+        self.second_panel.update()
+
+        self.first_panel.draw()
+        self.second_panel.draw()
+
         _pygame.draw.line(Profile.surface, self.split_line_color, right_panel_pos, (right_panel_pos[0], right_panel_pos[1] + self.parent_panel.height))
+
+class HorizontalSplitter(SplitterBase):
+    """This is not an object to attach. This object has not be stored in a variable. Conected to parent_panel, this object's draw function was called and two panel were drawn."""
+    def __init__(self, parent_panel: Panel, top_panel: Panel, bottom_panel: Panel) -> None:
+        super().__init__(parent_panel, top_panel, bottom_panel)
+        self.parent_panel.splitter = self
+        self._split_ratio: float = 0.5
+        self._min_split_ratio: float = 0.05
+
+        self.split_line_color: gdk_color = (255, 255, 255)
+
+    def draw(self) -> None:
+        assert Profile.surface is not None
+        top_panel_pos = self.parent_panel.get_pos()
+
+        top_panel_pos = (top_panel_pos[0], top_panel_pos[1])
+        bottom_panel_pos = (top_panel_pos[0], top_panel_pos[1] + self.parent_panel.height * self._split_ratio)
+
+        self.first_panel.x, self.first_panel.y = top_panel_pos
+        self.first_panel.height = self.parent_panel.height * self._split_ratio
+
+        self.second_panel.x, self.second_panel.y = bottom_panel_pos
+        self.second_panel.height = self.parent_panel.height * (1 - self._split_ratio)
+
+        self.first_panel.update()
+        self.second_panel.update()
+
+        self.first_panel.draw()
+        self.second_panel.draw()
+
+        _pygame.draw.line(Profile.surface, self.split_line_color, bottom_panel_pos, (bottom_panel_pos[0] + self.parent_panel.width, bottom_panel_pos[1]))

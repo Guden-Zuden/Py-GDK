@@ -60,7 +60,6 @@ class LayerComponentBase:
     def update(self):
         for attachment in self._attachments:
             attachment.update()
-        # Log.debug(self)
     
     def draw(self):
         """drawing centered position"""

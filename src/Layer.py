@@ -1,5 +1,8 @@
 from typing import Optional
 
+import pygame as _pygame
+from . import Profile
+
 from . import GUI
 from . import Base
 from . import Event
@@ -15,7 +18,6 @@ class MouseProcedure:
 class Layer:
     def __init__(self) -> None:
         self._layerComponent_stack: list[Base.LayerComponentBase] = []
-        self._panel_stack: list[GUI.Panel] = []
 
     def attach(self, component: Base.LayerComponentBase):
         if type(component) == GUI.Button:
@@ -27,8 +29,8 @@ class Layer:
         elif type(component) == GUI.SpriteBox:
             self._layerComponent_stack.append(component)
         elif type(component) == GUI.Panel:
-            self._panel_stack.append(component)
-        elif type(component) == GUI.DraggableObj:
+            self._layerComponent_stack.append(component)
+        elif type(component) == GUI.Draggable:
             self._layerComponent_stack.append(component)
         else:
             Log.warn("Layer", f"{type(component)} is not allowed to attach to Layers.")
@@ -38,21 +40,18 @@ class Layer:
 
         for component in reversed(self._layerComponent_stack):
             component.update()
-        for panel in self._panel_stack:
-            panel.update()
-        GUI.DraggableObj._reset_flag()
+            
+        GUI.Draggable._reset_flag()
 
         # dragging object goes front
-        if GUI.DraggableObj._dragging_obj and GUI.DraggableObj._get_front_flag == False:
-            GUI.DraggableObj._get_front_flag = True
-            self._layerComponent_stack.remove(GUI.DraggableObj._dragging_obj)
-            self._layerComponent_stack.append(GUI.DraggableObj._dragging_obj)
+        if GUI.Draggable._dragging_obj and GUI.Draggable._get_front_flag == False:
+            GUI.Draggable._get_front_flag = True
+            self._layerComponent_stack.remove(GUI.Draggable._dragging_obj)
+            self._layerComponent_stack.append(GUI.Draggable._dragging_obj)
 
     def draw(self):
         for component in self._layerComponent_stack:
             component.draw()
-        for panel in self._panel_stack:
-            panel.draw()
 
 class LayerManager:
     _current_layer: Optional[Layer] = None

@@ -23,9 +23,13 @@ def init():
         Log.debug(e)
         Profile.window_width, Profile.window_height = e.x, e.y
 
+def recreate_surface():
+    Profile.surface = _pygame.Surface([Profile.window_width, Profile.window_height], flags=_pygame.SRCALPHA)
+
 def run():
     assert Profile.surface is not None
     assert Profile.screen is not None
+    assert Profile.clock is not None
     while True:
         fps_clock = None
         if Profile.isCalcPerformance:
