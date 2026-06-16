@@ -3,7 +3,7 @@ There are values to be used globally.
 """
 
 import pygame as _pygame
-from typing import Optional
+from typing import Optional, Any
 
 screen: Optional[_pygame.Surface] = None
 surface: Optional[_pygame.Surface] = None
@@ -15,6 +15,8 @@ width: int = 400
 height: int = 300
 window_width: int = 400
 window_height: int = 300
+
+user_instance: Optional[Any] = None
 
 default_fontsize: int = 20
 default_font: Optional[_pygame.font.Font] = None

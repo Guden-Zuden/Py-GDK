@@ -8,6 +8,7 @@ from pygame import constants as _cst
 from dataclasses import dataclass
 from enum import Flag, auto
 from typing import Optional, Any, Callable
+from inspect import ismethod
 
 __all__ = ["InputPermission", "getKey"]
 
@@ -160,33 +161,62 @@ class EventManager:
     _mousebuttonup_handlers:    dict[int, list[Callable]]   = {}
     _mousemove_handlers:        list[Callable]              = []
 
+    _update_inst_handlers:           list[Callable]              = []
+    _windowresized_inst_handlers:    list[Callable]              = []
+    _keydown_inst_handlers:          dict[int, list[Callable]]   = {}
+    _keyup_inst_handlers:            dict[int, list[Callable]]   = {}
+    _mousebuttondown_inst_handlers:  dict[int, list[Callable]]   = {}
+    _mousebuttonup_inst_handlers:    dict[int, list[Callable]]   = {}
+    _mousemove_inst_handlers:        list[Callable]              = []
+
     @staticmethod
     def register_update(func: Callable):
-        EventManager._update_handlers.append(func)
+        if ismethod(func):
+            EventManager._update_inst_handlers.append(func)
+        else:
+            EventManager._update_handlers.append(func)
 
     @staticmethod
     def register_windowresized(func: Callable):
-        EventManager._windowresized_handlers.append(func)
+        if ismethod(func):
+            EventManager._windowresized_inst_handlers.append(func)
+        else:
+            EventManager._windowresized_handlers.append(func)
 
     @staticmethod
     def register_keydown(key: Key.KeyType, func: Callable):
-        EventManager._keydown_handlers.setdefault(key.keyCode, []).append(func)
+        if ismethod(func):
+            EventManager._keydown_inst_handlers.setdefault(key.keyCode, []).append(func)
+        else:
+            EventManager._keydown_handlers.setdefault(key.keyCode, []).append(func)
 
     @staticmethod
     def register_keyup(key: Key.KeyType, func: Callable):
-        EventManager._keyup_handlers.setdefault(key.keyCode, []).append(func)
+        if ismethod(func):
+            EventManager._keyup_inst_handlers.setdefault(key.keyCode, []).append(func)
+        else:
+            EventManager._keyup_handlers.setdefault(key.keyCode, []).append(func)
 
     @staticmethod
     def register_mousemove(func: Callable):
-        EventManager._mousemove_handlers.append(func)
+        if ismethod(func):
+            EventManager._mousemove_inst_handlers.append(func)
+        else:
+            EventManager._mousemove_handlers.append(func)
 
     @staticmethod
     def register_mousebuttondown(button: Mouse.MouseButtonType, func: Callable):
-        EventManager._mousebuttondown_handlers.setdefault(button.buttonType, []).append(func)
+        if ismethod(func):
+            EventManager._mousebuttondown_inst_handlers.setdefault(button.buttonType, []).append(func)
+        else:
+            EventManager._mousebuttondown_handlers.setdefault(button.buttonType, []).append(func)
 
     @staticmethod
     def register_mousebuttonup(button: Mouse.MouseButtonType, func: Callable):
-        EventManager._mousebuttonup_handlers.setdefault(button.buttonType, []).append(func)
+        if ismethod(func):
+            EventManager._mousebuttonup_inst_handlers.setdefault(button.buttonType, []).append(func)
+        else:
+            EventManager._mousebuttonup_handlers.setdefault(button.buttonType, []).append(func)
 
     @staticmethod
     def update(events: list[_pygame.event.Event]):
@@ -194,9 +224,10 @@ class EventManager:
 
     @staticmethod
     def dispatch_onUpdate():
-        handlers = EventManager._update_handlers
-        for h in handlers:
+        for h in EventManager._update_handlers:
             h()
+        for h in EventManager._update_inst_handlers:
+            h(Profile.user_instance)        
 
     @staticmethod
     def dispatch():
@@ -205,35 +236,78 @@ class EventManager:
                 _pygame.quit()
                 _sys.exit()
 
+            handlers: list[Callable] = []
+            inst_handlers: list[Callable] = []
+
             if e.type == _pygame.WINDOWRESIZED:
-                handlers = EventManager._windowresized_handlers
-                for h in handlers:
-                    h(e)
+                handlers += EventManager._windowresized_handlers
+                inst_handlers += EventManager._windowresized_inst_handlers
+                # for h in handlers:
+                #     h(e)
 
             if e.type == _pygame.KEYDOWN:
-                handlers = EventManager._keydown_handlers.get(e.key, [])
-                for h in handlers:
-                    h(e)
+                handlers += EventManager._keydown_handlers.get(e.key, [])
+                inst_handlers += EventManager._keydown_inst_handlers.get(e.key, [])
+                # for h in handlers:
+                #     h(e)
 
             if e.type == _pygame.KEYUP:
-                handlers = EventManager._keyup_handlers.get(e.key, [])
-                for h in handlers:
-                    h(e)
+                handlers += EventManager._keyup_handlers.get(e.key, [])
+                inst_handlers += EventManager._keyup_inst_handlers.get(e.key, [])
+                # for h in handlers:
+                #     h(e)
                     
             if e.type == _pygame.MOUSEMOTION:
-                for h in EventManager._mousemove_handlers:
-                    h(e)
+                handlers += EventManager._mousemove_handlers
+                inst_handlers += EventManager._mousemove_inst_handlers
+                # for h in EventManager._mousemove_handlers:
+                #     h(e)
 
             if e.type == _pygame.MOUSEBUTTONDOWN:
-                handlers = EventManager._mousebuttondown_handlers.get(e.button, [])
-                for h in handlers:
-                    h(e)
+                handlers += EventManager._mousebuttondown_handlers.get(e.button, [])
+                inst_handlers += EventManager._mousebuttondown_inst_handlers.get(e.button, [])
+                # for h in handlers:
+                #     h(e)
             
             if e.type == _pygame.MOUSEBUTTONUP:
-                handlers = EventManager._mousebuttonup_handlers.get(e.button, [])
-                for h in handlers:
-                    h(e)
+                handlers += EventManager._mousebuttonup_handlers.get(e.button, [])
+                inst_handlers += EventManager._mousebuttonup_inst_handlers.get(e.button, [])
+                # for h in handlers:
+                #     h(e)
+            for h in handlers:
+                h(e)
+            for h in inst_handlers:
+                h(Profile.user_instance, e)
 
+            # ===== instance dispatch =====
+            # if e.type == _pygame.WINDOWRESIZED:
+            #     handlers = EventManager._windowresized_inst_handlers
+            #     for h in handlers:
+            #         h(Profile.user_instance, e)
+
+            # if e.type == _pygame.KEYDOWN:
+            #     handlers = EventManager._keydown_inst_handlers.get(e.key, [])
+            #     for h in handlers:
+            #         h(Profile.user_instance, e)
+
+            # if e.type == _pygame.KEYUP:
+            #     handlers = EventManager._keyup_inst_handlers.get(e.key, [])
+            #     for h in handlers:
+            #         h(Profile.user_instance, e)
+                    
+            # if e.type == _pygame.MOUSEMOTION:
+            #     for h in EventManager._mousemove_inst_handlers:
+            #         h(Profile.user_instance, e)
+
+            # if e.type == _pygame.MOUSEBUTTONDOWN:
+            #     handlers = EventManager._mousebuttondown_inst_handlers.get(e.button, [])
+            #     for h in handlers:
+            #         h(Profile.user_instance, e)
+            
+            # if e.type == _pygame.MOUSEBUTTONUP:
+            #     handlers = EventManager._mousebuttonup_inst_handlers.get(e.button, [])
+            #     for h in handlers:
+            #         h(Profile.user_instance, e)
 
 # ===== User Function ======
 def getKey(key_data: Key.KeyType) -> KeyEventData:

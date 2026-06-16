@@ -11,7 +11,7 @@ from .Utils import Anchor
 from . import Key
 
 import pygame
-from typing import Optional
+from typing import Optional, Any
 from os import PathLike
 
 def init(title: str = "GameDeveloperKits", fps: int = 60, width: int = 600, height: int = 400, mapSprite_size: int = 32, window_width: Optional[int] = None, window_height: Optional[int] = None):
@@ -32,6 +32,9 @@ def init(title: str = "GameDeveloperKits", fps: int = 60, width: int = 600, heig
 def get_availableFonts():
     for font in pygame.font.get_fonts():
         print(font)
+
+def set_user_instance(instance: Any):
+    Profile.user_instance = instance
 
 def run():
     Core.run()

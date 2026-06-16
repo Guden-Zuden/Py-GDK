@@ -238,7 +238,7 @@ class Button(Base.LayerComponentBase):
             u: float,
             v: float,
             textAttr: TextAttribute,
-            text: str,
+            text: Any,
             width: float,
             height: float,
             background_color: gdk_color,
@@ -258,10 +258,10 @@ class Button(Base.LayerComponentBase):
         self.border_width = border_width
         self.border_color = border_color
 
-        self._box = Box(u, v, width, height, background_color, border_width, border_color)
-        self._text = Text(self.textAttr, self.text, u, v, True)
+        self.box_obj = Box(u, v, width, height, background_color, border_width, border_color)
+        self.text_obj = Text(self.textAttr, text, u, v, True)
         
-        self._box.set_child(self._text)
+        self.box_obj.set_child(self.text_obj)
 
         self.isHovered = False
         self.isPressed = False
@@ -277,17 +277,17 @@ class Button(Base.LayerComponentBase):
     def update(self):
         super().update()
 
-        self._box.x, self._box.y = self.x, self.y
-        self._text.x, self._text.y = self.x, self.y
-        self._box.update()
-        self._text.update()
+        self.box_obj.x, self.box_obj.y = self.x, self.y
+        self.text_obj.x, self.text_obj.y = self.x, self.y
+        self.box_obj.update()
+        self.text_obj.update()
 
         self.isHovered = False
         self.isPressed = False
 
         mp = Mouse.get_pos()
 
-        hovered = self._box.rect.collidepoint(mp.x - (Profile.window_width - Profile.width)/2, mp.y - (Profile.window_height - Profile.height)/2)
+        hovered = self.box_obj.rect.collidepoint(mp.x - (Profile.window_width - Profile.width)/2, mp.y - (Profile.window_height - Profile.height)/2)
 
         if not Button.g_isHovered and hovered:
             self.isHovered = True
@@ -328,7 +328,7 @@ class Button(Base.LayerComponentBase):
         else:
             color = (255, 255, 255, plus)
 
-        self._box.draw()
+        self.box_obj.draw()
 
         self.overlay.fill((0, 0, 0, 0))
 
@@ -341,7 +341,10 @@ class Button(Base.LayerComponentBase):
             ):
                     self.overlay.fill(color)
 
-        _pygame.Surface.blit(Profile.surface, self.overlay, self._box.rect)
+        _pygame.Surface.blit(Profile.surface, self.overlay, self.box_obj.rect)
+    
+    def set_text(self, text: Any):
+        self.text_obj.set_text(text)
 
 @Event.OnMousebuttonUp(Event.Mouse.left)
 def updateMousebuttonUp(e):
@@ -366,13 +369,13 @@ class Text(Base.LayerComponentBase):
     """Allow to attach: Scene, Layer"""
     def __init__(self,
                  textAttribute: TextAttribute,
-                 text: str,
+                 text: Any,
                  u: float,
                  v: float,
                  is_centered: bool = False) -> None:
         self.textAttr = textAttribute
         self.font = self.textAttr.createFont()
-        self.text = text
+        self.text: str = str(text)
 
         self._surf = self.font.render(self.text, self.textAttr.antialias, self.textAttr.text_color, self.textAttr.background_color)
         self.width, self.height = self._surf.get_size()
@@ -388,6 +391,12 @@ class Text(Base.LayerComponentBase):
             Profile.surface.blit(surf, (self.x - self.width/2, self.y - self.height/2))
         else:
             Profile.surface.blit(surf, (self.x, self.y))
+    
+    def set_text(self, text: Any):
+        self.text = str(text)
+        self._surf = self.font.render(self.text, self.textAttr.antialias, self.textAttr.text_color, self.textAttr.background_color)
+        self.width, self.height = self._surf.get_size()
+        super().__init__(self.u, self.v, self.width, self.height)
 
 # ===== Vertical alignment =====
 class VerticalAlignment:
