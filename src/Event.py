@@ -8,7 +8,7 @@ from pygame import constants as _cst
 from dataclasses import dataclass
 from enum import Flag, auto
 from typing import Optional, Any, Callable
-from inspect import ismethod
+import inspect
 
 __all__ = ["InputPermission", "getKey"]
 
@@ -171,49 +171,50 @@ class EventManager:
 
     @staticmethod
     def register_update(func: Callable):
-        if ismethod(func):
+        if 'self' in inspect.signature(func).parameters:
             EventManager._update_inst_handlers.append(func)
         else:
             EventManager._update_handlers.append(func)
 
     @staticmethod
     def register_windowresized(func: Callable):
-        if ismethod(func):
+        if 'self' in inspect.signature(func).parameters:
             EventManager._windowresized_inst_handlers.append(func)
         else:
             EventManager._windowresized_handlers.append(func)
 
     @staticmethod
     def register_keydown(key: Key.KeyType, func: Callable):
-        if ismethod(func):
+        if 'self' in inspect.signature(func).parameters:
             EventManager._keydown_inst_handlers.setdefault(key.keyCode, []).append(func)
         else:
             EventManager._keydown_handlers.setdefault(key.keyCode, []).append(func)
 
     @staticmethod
     def register_keyup(key: Key.KeyType, func: Callable):
-        if ismethod(func):
+        if 'self' in inspect.signature(func).parameters:
             EventManager._keyup_inst_handlers.setdefault(key.keyCode, []).append(func)
         else:
             EventManager._keyup_handlers.setdefault(key.keyCode, []).append(func)
 
     @staticmethod
     def register_mousemove(func: Callable):
-        if ismethod(func):
+        if 'self' in inspect.signature(func).parameters:
             EventManager._mousemove_inst_handlers.append(func)
         else:
             EventManager._mousemove_handlers.append(func)
 
     @staticmethod
     def register_mousebuttondown(button: Mouse.MouseButtonType, func: Callable):
-        if ismethod(func):
+        if 'self' in inspect.signature(func).parameters:
             EventManager._mousebuttondown_inst_handlers.setdefault(button.buttonType, []).append(func)
+            
         else:
             EventManager._mousebuttondown_handlers.setdefault(button.buttonType, []).append(func)
 
     @staticmethod
     def register_mousebuttonup(button: Mouse.MouseButtonType, func: Callable):
-        if ismethod(func):
+        if 'self' in inspect.signature(func).parameters:
             EventManager._mousebuttonup_inst_handlers.setdefault(button.buttonType, []).append(func)
         else:
             EventManager._mousebuttonup_handlers.setdefault(button.buttonType, []).append(func)
