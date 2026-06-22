@@ -3,7 +3,7 @@ from . import Event
 from . import Key
 from . import Scene, Entity
 from . import Sprite
-from .Timer import ScopedTimer
+from .Time import ScopedTimer
 from . import Layer
 from .Log import *
 

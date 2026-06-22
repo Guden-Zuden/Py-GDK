@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from . import Profile
 from .Log import *
+from . import Time
 
 from typing import Optional
 from enum import Enum
@@ -55,6 +56,7 @@ class LayerComponentBase:
     def attach(self, attachment: AttachComponentBase):
         self._attachments.append(attachment)
         attachment.component = self
+        attachment.on_attach()
         return self
 
     def update(self):
@@ -65,12 +67,32 @@ class LayerComponentBase:
         """drawing centered position"""
         pass
 
-    # def _draw(self, x: float, y: float):
-    #     """drawing non-centered position"""
-    #     pass
-
 class AttachComponentBase:
     def __init__(self) -> None:
         self.component: Optional[LayerComponentBase] = None
     
     def update(self) -> None: ...
+
+    def on_attach(self) -> None: ...
+
+class AnimBase:
+    def __init__(self) -> None:
+        self.start_x = 0.0
+        self.start_y = 0.0
+        self.dx = 0.0
+        self.dy = 0.0
+        self.isOutOfDate = False
+        self.timer = Time.Timer()
+
+    def reset(self) -> None:
+        self.isOutOfDate = False
+        self.timer.reset()
+
+    def update(self) -> None: ...
+
+class EasingBase:
+    def __init__(self, dx: float, dy: float, dt: float) -> None:
+        self.dx, self.dy = dx, dy
+        self.dt = dt
+
+    def update(self, timer: Time.Timer) -> tuple[float, float]: ...

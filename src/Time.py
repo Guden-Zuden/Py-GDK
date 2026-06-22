@@ -26,7 +26,7 @@ class Timer:
         self.time += self.deltaTime
 
     def reset(self):
-        self.time = 0
+        self.__init__()
 
     def info(self):
         printTime(self.deltaTime)

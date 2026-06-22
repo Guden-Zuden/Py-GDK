@@ -1,4 +1,4 @@
-from . import Core, Profile, Timer, Event
+from . import Core, Profile, Time, Event
 from . import Entity
 from . import Scene
 from . import Sprite
@@ -59,8 +59,8 @@ def createSprite(img_filepath: str | PathLike, sprite_size: int, sprite_padding:
 def createTilemap(sprite: Sprite.Sprite, start_pos: tuple[int, int] = (0, 0)):
     return Tilemap.Tilemap(sprite, start_pos)
 
-def createEntity(x: float, y: float, sprite: Sprite.Sprite, movement_model: Entity.MovementModelBase, animator: Animator | None = None, sprite_index: int = 0):
-    return Entity.Entity(x, y, sprite, movement_model, animator, sprite_index)
+def createEntity(x: float, y: float, sprite: Sprite.Sprite, movement_model: Entity.MovementModelBase, sprite_index: int = 0):
+    return Entity.Entity(x, y, sprite, movement_model, sprite_index)
 
 def createBox(u: float,
               v: float,

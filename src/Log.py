@@ -60,5 +60,5 @@ class Log:
     def debug(*args):
         print("[DEBUG]", colorama.Back.GREEN, end="")
         for arg in args:
-            print(arg, "", end="")
+            print(arg, " ", end="")
         print(colorama.Back.RESET)

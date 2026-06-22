@@ -27,7 +27,7 @@ from . import Profile
 from . import Animator
 from .Log import *
 from .Utils import *
-from . import Timer
+from . import Time
 from . import Sprite
 from . import Constants
 from . import Event
@@ -216,10 +216,11 @@ class SpriteBox(Base.LayerComponentBase):
     def draw(self):
         assert Profile.surface is not None
 
-        if self.animator:
-            self.sprite.draw(self.animator.get_frame(), self.x, self.y, Anchor.default)
-        else:
-            self.sprite.draw(self.sprite_index, self.x, self.y, Anchor.default)
+        # if self.animator:
+            # self.sprite.draw(self.animator.get_frame(), self.x, self.y, Anchor.default)
+        # else:
+            # self.sprite.draw(self.sprite_index, self.x, self.y, Anchor.default)
+        self.sprite.draw(self.sprite_index, self.x, self.y, Anchor.default)
 
 # ===== Button =====
 class Button(Base.LayerComponentBase):

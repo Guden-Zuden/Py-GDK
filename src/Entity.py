@@ -2,7 +2,7 @@ from . import Profile
 from . import Sprite
 from . import Utils
 from . import Event
-from . import Timer
+from . import Time
 from . import Animator
 from . import Base
 
@@ -17,7 +17,7 @@ class MovementModelBase:
         self.friction = friction
         self.vx = 0
         self.vy = 0
-        self.timer = Timer.Timer()
+        self.timer = Time.Timer()
 
     def update(self) -> None:
         self.timer.update()
@@ -83,14 +83,14 @@ class Entity(Base.SceneComponentBase):
                  y: float,
                  sprite: Sprite.Sprite,
                  movement_model: MovementModelBase,
-                 animator: Optional[Animator] = None,
+                #  animator: Optional[Animator] = None,
                  sprite_index: int = 0) -> None:
         super().__init__(x, y)
         self.vx: float = 0
         self.vy: float = 0
         self.sprite: Sprite.Sprite = sprite
         self.movement_model = movement_model
-        self.animator: Optional[Animator] = animator
+        # self.animator: Optional[Animator] = animator
         self.sprite_index = sprite_index
 
         self._update_func: list[Callable] = []
@@ -107,8 +107,8 @@ class Entity(Base.SceneComponentBase):
         self.vy = self.movement_model.vy
         # self.x += self.vx
         # self.y += self.vy
-        if self.animator:
-            self.animator.update()
+        # if self.animator:
+            # self.animator.update()
 
     def draw(self, offset_x: float, offset_y: float):
         assert Profile.surface is not None
@@ -116,7 +116,8 @@ class Entity(Base.SceneComponentBase):
         x, y = self.x - offset_x, self.y - offset_y
 
         # _pygame.draw.rect(Profile.screen, (255,255,255), _pygame.Rect(self.x, self.y, 20, 20))
-        if self.animator:
-            self.sprite.draw(self.animator.get_frame(), x, y, anchor=Utils.Anchor.bottom)
-        else:
-            self.sprite.draw(self.sprite_index, x, y, anchor=Utils.Anchor.bottom)
+        # if self.animator:
+            # self.sprite.draw(self.animator.get_frame(), x, y, anchor=Utils.Anchor.bottom)
+        # else:
+            # self.sprite.draw(self.sprite_index, x, y, anchor=Utils.Anchor.bottom)
+        self.sprite.draw(self.sprite_index, x, y, anchor=Utils.Anchor.bottom)
