@@ -9,6 +9,7 @@ from . import Layer
 from . import GUI
 from .Utils import Anchor
 from . import Key
+from . import Sound
 
 import pygame
 from typing import Optional, Any

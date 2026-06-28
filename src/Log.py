@@ -30,35 +30,34 @@ colorama.init(True)
 #     print("\033[0m") # Reset Color
 
 class Log:
-    log_level: int = 0
-    """log level\n
-    Info: 0 Warn: 1 Error: 2 Critical Error: 3"""
+    is_showDebugMessage = False
 
     @staticmethod
     def info(title: str, message: str):
-        if Log.log_level < 0: return
         print(f"[INFO] [{title}]: {message}")
         
     @staticmethod
     def warn(title: str, message: str):
-        if Log.log_level < 0: return
-        print(colorama.Fore.YELLOW + f"[WARN] [{title}]: {message}" + colorama.Fore.RESET)
+        print(colorama.Fore.YELLOW + f"[WARN] [{title}]: {message}")
 
     @staticmethod
     def error(title: str, message: str):
-        if Log.log_level < 0: return
-        print(colorama.Fore.RED + f"[ERROR] [{title}]: {message}" + colorama.Fore.RESET)
-        raise Exception(f"[ERROR] [{title}]: {message}")
+        print(colorama.Fore.RED + f"[ERROR] [{title}]: {message}")
 
     @staticmethod
     def critical(title: str, message: str):
-        if Log.log_level < 0: return
-        print(colorama.Style.BRIGHT + colorama.Back.RED + f"[**CRITICAL**] [{title}]: {message}" + colorama.Style.RESET_ALL + colorama.Fore.RESET)
+        print(colorama.Style.BRIGHT + colorama.Back.RED + f"[**CRITICAL**] [{title}]: {message}")
         raise Exception(f"[**CRITICAL**] [{title}]: {message}")
 
     @staticmethod
     def debug(*args):
-        print("[DEBUG]", colorama.Back.GREEN, end="")
-        for arg in args:
-            print(arg, " ", end="")
-        print(colorama.Back.RESET)
+        print(colorama.Back.GREEN + "[DEBUG]" + " ".join([str(arg) for arg in args]))
+
+        # print("[DEBUG]", colorama.Back.GREEN, end="")
+        # for arg in args:
+        #     print(arg, " ", end="")
+        # print(colorama.Back.RESET)
+    
+    @staticmethod
+    def enable_debug_message():
+        Log.is_showDebugMessage = True

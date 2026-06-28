@@ -4,6 +4,7 @@ import pygame as _pygame
 from . import Profile
 
 from . import GUI
+from .Animator import *
 from . import Base
 from . import Event
 from .Log import *
@@ -32,8 +33,11 @@ class Layer:
             self._layerComponent_stack.append(component)
         elif type(component) == GUI.Draggable:
             self._layerComponent_stack.append(component)
+        elif type(component) == Animator:
+            Log.debug("Attached")
+            self._layerComponent_stack.append(component)
         else:
-            Log.warn("Layer", f"{type(component)} is not allowed to attach to Layers.")
+            Log.error("Layer", f"{type(component)} is not allowed to attach to Layers.")
 
     def update(self):
         GUI.Button.reset()

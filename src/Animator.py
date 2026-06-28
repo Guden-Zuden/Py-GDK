@@ -79,7 +79,7 @@ class EasingInCubic(Base.EasingBase):
     
     def update(self, timer) -> tuple[float, float]:
         buf = pytweening.easeInCubic(timer.time / self.dt)
-        print("aaaa", buf, timer.time / self.dt)
+
         dx = self.dx * buf
         dy = self.dy * buf
         return (dx, dy)
@@ -102,8 +102,6 @@ class Anim_MoveTo(Base.AnimBase):
         self.timer.update()
 
         x, y = self.easing.update(self.timer)
-
-        print(self.start_x, self.start_y, x, y)
 
         self.component.x = self.start_x + x
         self.component.y = self.start_y + y
@@ -136,10 +134,11 @@ class Animation:
         if self.current_anim is None:
             if self.anim_datas == []:
                 Log.error("Animation", "Animation data is empty.")
+                return
             self.current_anim = self.anim_datas[self.anim_index]
 
         if self.current_anim.isOutOfDate:
-            if self.anim_index > len(self.anim_datas)-2:
+            if self.anim_index >= len(self.anim_datas)-1:
                 Log.debug("anim_end", self.anim_index)
                 self.anim_index = 0
                 self.anim_end = True
@@ -162,10 +161,14 @@ class Animation:
             self.current_anim = self.anim_datas[0]
         return self
 
-class Animator(Base.AttachComponentBase):
-    def __init__(self) -> None:
-        super().__init__()
+class Animator(Base.LayerComponentBase):
+    """
+    Attach to layer
+    """
 
+    def __init__(self) -> None:
+        # super().__init__()
+        self.component: Optional[Base.LayerComponentBase]
         self.animations: list[tuple[str, Animation]] = []
         self.animation_index = 0
         self.playing_animation: Optional[Animation] = None
@@ -186,5 +189,4 @@ class Animator(Base.AttachComponentBase):
         if self.playing_animation.anim_end:
             self.playing_animation = None
             return
-
         self.playing_animation.update()

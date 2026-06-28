@@ -12,6 +12,7 @@ import sys as _sys
 
 def init():
     _pygame.init()
+    _pygame.mixer.init()
     _pygame.display.set_caption(Profile.title)
     Profile.clock = _pygame.time.Clock()
     Profile.default_font = _pygame.font.Font(None, Profile.default_fontsize)

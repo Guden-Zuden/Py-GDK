@@ -408,7 +408,9 @@ class VerticalAlignment:
 
     @singledispatchmethod
     def pushItem(self, component: Any) -> None:
-        Log.error("VerticalAlignment.pushItem", "Unexpected type!")
+        Log.error("VerticalAlignment.pushItem",
+                  f"Unexpected type!: {type(component)}\nVerticalAlignment object allows to be attached only text/button.")
+        return
 
     @pushItem.register
     def _(self, text_obj: Text) -> None:

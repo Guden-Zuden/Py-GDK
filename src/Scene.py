@@ -23,13 +23,14 @@ class Scene:
         elif type(component) == Entity.Entity:
             self._entity_stack.append(component)
         else:
-            Log.warn("Scene", f"{type(component)} is not allowed to attach to Scenes.")
+            Log.error("Scene", f"{type(component)} is not allowed to attach to Scenes.")
 
     def adaptCameraOn(self, component: Base.SceneComponentBase):
         if (self._tilemap != component
             and component not in self._entity_stack
             and component not in self._component_stack):
-            Log.error("Scene", f"{component} is not attached in this Scene.")            
+            Log.error("Scene", f"{type(component)} is not attached in this Scene.")
+            return
         self.adaptedComponent = component
 
     def update(self):
