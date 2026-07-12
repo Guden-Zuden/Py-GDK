@@ -1,62 +1,55 @@
-from . import Profile
-from . import Event
-from . import Key
-from . import Scene, Entity
-from . import Sprite
-from .Time import ScopedTimer
-from . import Layer
-from .Log import *
+from . import profile
+from . import event
+from . import Scene
 
-import pygame as _pygame
+import pygame as _pg
 import sys as _sys
 
 def init():
-    _pygame.init()
-    _pygame.mixer.init()
-    _pygame.display.set_caption(Profile.title)
-    Profile.clock = _pygame.time.Clock()
-    Profile.default_font = _pygame.font.Font(None, Profile.default_fontsize)
-    Profile.surface = _pygame.Surface((Profile.width, Profile.height), flags=_pygame.SRCALPHA)
-    Profile.screen = _pygame.display.set_mode((Profile.window_width, Profile.window_height), flags=_pygame.RESIZABLE)
-
-    @Event.OnWindowResized()
-    def reflectWindowSize(e):
-        Log.debug(e)
-        Profile.window_width, Profile.window_height = e.x, e.y
+    _pg.init()
+    _pg.mixer.init()
+    _pg.display.set_caption(profile.title)
+    profile.clock = _pg.time.Clock()
+    profile.default_font = _pg.font.Font(None, profile.default_fontsize)
+    profile.surface = _pg.Surface((profile.width, profile.height), flags=_pg.SRCALPHA)
+    profile.screen = _pg.display.set_mode((profile.window_width, profile.window_height), flags=_pg.RESIZABLE)
 
 def recreate_surface():
-    Profile.surface = _pygame.Surface([Profile.window_width, Profile.window_height], flags=_pygame.SRCALPHA)
+    profile.surface = _pg.Surface([profile.window_width, profile.window_height], flags=_pg.SRCALPHA)
 
 def run():
-    assert Profile.surface is not None
-    assert Profile.screen is not None
-    assert Profile.clock is not None
+    assert profile.surface is not None
+    assert profile.screen is not None
+    assert profile.clock is not None
     while True:
         fps_clock = None
-        if Profile.isCalcPerformance:
-            fps_clock = ScopedTimer()
+        # if profile.isCalcPerformance:
+            # fps_clock = ScopedTimer()
 
-        Event._updateKeyEvents()
-        Event._updateMouseEvents()
-        Event._updateMousePos()
-        Event.Input.update()
+        event._updateKeyEvents()
+        event._updateMouseEvents()
+        event._updateMousePos()
+        event.Input.update()
 
-        Event.EventManager.update(_pygame.event.get())
-        Event.EventManager.dispatch()
-        Event.EventManager.dispatch_onUpdate()
+        event.EventManager.update(_pg.event.get())
+        event.EventManager.dispatch()
             
-        Profile.surface.fill((0, 0, 0))
+        profile.surface.fill((0, 0, 0))
 
-        Scene.SceneManager.update()
-        Scene.SceneManager.draw()
+        # Scene.SceneManager.update()
+        # Scene.SceneManager.draw()
 
-        Layer.LayerManager.update()
-        Layer.LayerManager.draw()
+        # Layer.LayerManager.update()
+        # Layer.LayerManager.draw()
 
-        Profile.screen.fill((0, 0, 0))
-        Profile.screen.blit(Profile.surface, (0, 0), _pygame.Rect(-Profile.window_width/2+Profile.width/2, -Profile.window_height/2+Profile.height/2, Profile.window_width, Profile.window_height))
-        _pygame.draw.rect(Profile.screen, (255, 255, 255), _pygame.Rect(Profile.window_width/2-Profile.width/2-1, Profile.window_height/2-Profile.height/2-1, Profile.width+2, Profile.height+2), 1)
+        profile.screen.fill((0, 0, 0))
+        profile.screen.blit(profile.surface, (0, 0), _pg.Rect(-profile.window_width/2+profile.width/2, -profile.window_height/2+profile.height/2, profile.window_width, profile.window_height))
+        _pg.draw.rect(profile.screen, (255, 255, 255), _pg.Rect(profile.window_width/2-profile.width/2-1, profile.window_height/2-profile.height/2-1, profile.width+2, profile.height+2), 1)
 
 
-        _pygame.display.update()
-        Profile.clock.tick(Profile.fps)
+        _pg.display.update()
+        profile.clock.tick(profile.fps)
+
+def quit():
+    _pg.quit()
+    _sys.exit()

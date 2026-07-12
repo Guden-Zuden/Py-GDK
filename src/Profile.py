@@ -1,13 +1,13 @@
 """
-There are values to be used globally.
+Contains Values to be used globally.
 """
 
-import pygame as _pygame
+import pygame as _pg
 from typing import Optional, Any
 
-screen: Optional[_pygame.Surface] = None
-surface: Optional[_pygame.Surface] = None
-clock: Optional[_pygame.time.Clock] = None
+screen: Optional[_pg.Surface] = None
+surface: Optional[_pg.Surface] = None
+clock: Optional[_pg.time.Clock] = None
 
 title: str = "GameDeveloperKits"
 fps: int = 60
@@ -16,10 +16,10 @@ height: int = 300
 window_width: int = 400
 window_height: int = 300
 
-user_instance: Optional[Any] = None
+# user_instance: Optional[Any] = None
 
 default_fontsize: int = 20
-default_font: Optional[_pygame.font.Font] = None
+default_font: Optional[_pg.font.Font] = None
 
 sprite_size: int = 32
 
