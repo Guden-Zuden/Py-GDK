@@ -1,9 +1,12 @@
 from . import core
 from . import profile
+from . import event, key, mouse
+from . import layer
+
 from . import GUI
 from . import Scene
 
-from . import event, key, mouse
+from .utils import *
 
 import pygame
 from typing import Optional, Any
@@ -30,4 +33,3 @@ def get_availableFonts():
 
 def run():
     core.run()
-

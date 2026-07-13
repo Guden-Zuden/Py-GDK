@@ -8,11 +8,9 @@ from pygame import constants as _cst
 from dataclasses import dataclass, field
 from enum import Flag, auto
 from typing import Optional, Any, Callable, Self
-from inspect import isfunction
+from inspect import isfunction, signature
 
-__all__ = ["InputPermission", "getKey"]
-
-# TODO Fix OnUpdate function (maybe misunderstanding) (Execute per frame)
+# TODO: Not complete yet, temporary.
 
 # ===== Permissions =====
 class InputPermission(Flag):
@@ -180,7 +178,7 @@ class MousebuttonHandler(HandlerBase):
 
 
 class EventObject:
-    def __new__(cls: type[Self]) -> Self:
+    def __new__(cls: type[Self], *args, **kwargs) -> Self:
         instance = super().__new__(cls)
         EventManager.link_instance(instance)
         return instance
@@ -194,7 +192,9 @@ class EventManager:
         Called by EventObject
         '''
         for _event_type, _handler in EventManager._handlers:
-            if instance.__class__.__qualname__ == _handler.func.__qualname__.rsplit('.', 1)[0]:
+            owner_name = _handler.func.__qualname__.rsplit(".", 1)[0]
+
+            if any(mro.__qualname__ == owner_name for mro in instance.__class__.__mro__):
                 _handler.instance = instance
 
     # ===== Register =====

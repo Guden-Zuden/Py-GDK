@@ -1,5 +1,7 @@
 from . import profile
 from . import event
+from . import layer
+
 from . import Scene
 
 import pygame as _pg
@@ -36,11 +38,11 @@ def run():
             
         profile.surface.fill((0, 0, 0))
 
-        # Scene.SceneManager.update()
+        # Scene.SceneManager.update() # TODO
         # Scene.SceneManager.draw()
 
-        # Layer.LayerManager.update()
-        # Layer.LayerManager.draw()
+        layer._LayerManager.update()
+        layer._LayerManager.draw()
 
         profile.screen.fill((0, 0, 0))
         profile.screen.blit(profile.surface, (0, 0), _pg.Rect(-profile.window_width/2+profile.width/2, -profile.window_height/2+profile.height/2, profile.window_width, profile.window_height))
