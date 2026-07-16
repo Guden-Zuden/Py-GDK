@@ -162,7 +162,7 @@ class EventType(Flag):
 @dataclass
 class HandlerBase:
     func: Callable[..., None]
-    instance: Optional[Any] = field(default=None, init=False)
+    instances: list[Any] = field(default_factory=list, init=False)
 
 @dataclass
 class Handler(HandlerBase):
@@ -195,11 +195,12 @@ class EventManager:
             owner_name = _handler.func.__qualname__.rsplit(".", 1)[0]
 
             if any(mro.__qualname__ == owner_name for mro in instance.__class__.__mro__):
-                _handler.instance = instance
+                _handler.instances.append(instance)
 
     # ===== Register =====
     @staticmethod
     def register_update(func: Callable[..., None]):
+        print("aaa")
         EventManager._handlers.append((EventType.OnUpdate, Handler(func)))
 
     @staticmethod
@@ -236,54 +237,61 @@ class EventManager:
     def dispatch():
         # OnUpdate
         for handler in [handler for event_type, handler in EventManager._handlers
-                        if event_type == EventType.OnUpdate and (not (isfunction(handler.func) or handler.instance) or isfunction(handler.func))]:
-            if handler.instance:
-                handler.func(handler.instance)
-            else:
+                        if event_type == EventType.OnUpdate]:
+            if handler.instances != []:
+                for instance in handler.instances:
+                    handler.func(instance)
+            elif not '.' in handler.func.__qualname__:
                 handler.func()
 
-        # Others
         for e in EventManager.eventQueue:
+            handlers: list[HandlerBase] = []
             if e.type == _pygame.QUIT:
                 _pygame.quit()
                 _sys.exit()
 
-            handlers: list[HandlerBase] = []
-
+            # Others
             if e.type == _pygame.WINDOWRESIZED:
                 handlers += [handler for event_type, handler in EventManager._handlers
-                             if event_type == EventType.OnWindowResized and (not (isfunction(handler.func) or handler.instance) or isfunction(handler.func))]
+                             if event_type == EventType.OnWindowResized]
 
             if e.type == _pygame.KEYDOWN:
                 handlers += [handler for event_type, handler in EventManager._handlers
-                             if event_type == EventType.OnKeydown and handler.key == e.key and (not (isfunction(handler.func) or handler.instance) or isfunction(handler.func))] # pyright: ignore
+                             if event_type == EventType.OnKeydown and handler.key == e.key] # pyright: ignore
 
             if e.type == _pygame.KEYUP:
                 handlers += [handler for event_type, handler in EventManager._handlers
-                             if event_type == EventType.OnKeyup and handler.key == e.key and (not (isfunction(handler.func) or handler.instance) or isfunction(handler.func))] # pyright: ignore
+                             if event_type == EventType.OnKeyup and handler.key == e.key] # pyright: ignore
                     
             if e.type == _pygame.MOUSEMOTION:
                 handlers += [handler for event_type, handler in EventManager._handlers
-                             if event_type == EventType.OnMousemove and (not (isfunction(handler.func) or handler.instance) or isfunction(handler.func))]
+                             if event_type == EventType.OnMousemove]
 
             if e.type == _pygame.MOUSEBUTTONDOWN:
                 handlers += [handler for event_type, handler in EventManager._handlers
-                             if event_type == EventType.OnMousebuttonDown and handler.mousebutton == e.button and (not (isfunction(handler.func) or handler.instance) or isfunction(handler.func))] # pyright: ignore
+                             if event_type == EventType.OnMousebuttonDown and handler.mousebutton == e.button] # pyright: ignore
             
             if e.type == _pygame.MOUSEBUTTONUP:
                 handlers += [handler for event_type, handler in EventManager._handlers
-                             if event_type == EventType.OnMousebuttonUp and handler.mousebutton == e.button and (not (isfunction(handler.func) or handler.instance) or isfunction(handler.func))] # pyright: ignore
+                             if event_type == EventType.OnMousebuttonUp and handler.mousebutton == e.button] # pyright: ignore
 
             for handler in handlers:
-                if handler.instance:
-                    handler.func(handler.instance, e)
-                else:
-                    handler.func(e) # if the exception was occurred here, you may forgot instancing.
+                if handler.instances != []:
+                    for instance in handler.instances:
+                        handler.func(instance, e)
+                elif not '.' in handler.func.__qualname__:
+                    handler.func(e)
 
 # ===== User Function ======
 def getKey(key_data: key.KeyType) -> KeyEventData:
     keyStatus = KeyEventData(key_data, pressedKeys[key_data.keyCode], pressedKeymods)
     return keyStatus
+
+def getMousePos() -> Pos:
+    return mouse._pos
+
+def getMousePressed() -> mouse.MouseButtonData:
+    return mouse.get_pressed()
 
 # ===== Input producing like Movements =====
 class Input:

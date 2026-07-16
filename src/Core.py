@@ -3,6 +3,7 @@ from . import event
 from . import layer
 
 from . import Scene
+from . import GUI
 
 import pygame as _pg
 import sys as _sys
@@ -40,6 +41,8 @@ def run():
 
         # Scene.SceneManager.update() # TODO
         # Scene.SceneManager.draw()
+
+        GUI.base.GUIBase._reset_g_flag()
 
         layer._LayerManager.update()
         layer._LayerManager.draw()

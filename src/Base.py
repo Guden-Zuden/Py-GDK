@@ -1,5 +1,7 @@
+import pygame as _pg
+# TODO: temporary
 
-# TODO: temporary.
+type gdk_color = _pg.Color | tuple[int, int, int, int] | tuple[int, int, int]
 
 # definition position type
 class Pos:
@@ -24,3 +26,7 @@ class Pos:
     
     def __str__(self) -> str:
         return f"x: {self.x} y: {self.y}"
+    
+    def __iter__(self):
+        yield self.x
+        yield self.y

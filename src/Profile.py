@@ -20,6 +20,7 @@ window_height: int = 300
 
 default_fontsize: int = 20
 default_font: Optional[_pg.font.Font] = None
+default_padding: float = 4
 
 sprite_size: int = 32
 

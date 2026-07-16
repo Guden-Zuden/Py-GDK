@@ -17,7 +17,9 @@ class AttachPermissionError(Exception):
 
 class Layer:
     PERMISSIONS: list[Any] = [
-        GUI.text.Text
+        GUI.Text,
+        GUI.VerticalAlignContainer,
+        GUI.HorizontalAlignContainer
     ]
 
     def __init__(self) -> None:
@@ -32,6 +34,7 @@ class Layer:
     
     def update(self):
         for component in reversed(self.__GUIComponent_stack):
+            component._reset_flag()
             component.update()
         
     def draw(self):

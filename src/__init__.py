@@ -13,7 +13,7 @@ from typing import Optional, Any
 from os import PathLike
 
 def init(title: str = "GameDeveloperKits", fps: int = 60, width: int = 600, height: int = 400, mapSprite_size: int = 32, window_width: Optional[int] = None, window_height: Optional[int] = None):
-    print("This Game Developer Kits is using pygame.")
+    print("This Game Developer Kits is using pygame-ce.")
     profile.title = title
     profile.fps = fps
     profile.width = width
