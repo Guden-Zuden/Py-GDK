@@ -1,8 +1,5 @@
-from typing import Any, Optional
-from dataclasses import dataclass
-
+from .base import *
 from . import profile
-
 from . import GUI
 
 class AttachPermissionError(Exception):
@@ -18,6 +15,7 @@ class AttachPermissionError(Exception):
 class Layer:
     PERMISSIONS: list[Any] = [
         GUI.Text,
+        GUI.Box,
         GUI.VerticalAlignContainer,
         GUI.HorizontalAlignContainer
     ]

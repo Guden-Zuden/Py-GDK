@@ -8,35 +8,35 @@ from ..base import *
 from .. import profile
 from .. import event, mouse
 
-print(profile.clock)
-
 class GUIBase(event.EventObject):
     g_hovered = False
     g_focused: Optional[GUIBase] = None
 
-    def __init__(self, u: float, v: float, width: float, height: float, padding: Optional[float] = None) -> None:
-        self.u, self.v = u, v
-        self.x = profile.width/2 + profile.width/2 * u - width/2
-        self.y = profile.height/2 + profile.height/2 * v - height/2
-        self.width, self.height = width, height
-        self.padding = profile.default_padding if padding is None else padding
+    def __init__(self, u: float, v: float, width: float, height: float, padding = profile.default_padding) -> None:
+        self.pos = Vec2(
+            profile.width/2 + profile.width/2 * u - width/2,
+            profile.height/2 + profile.height/2 * v - height/2)
+        self.width, self.height = Vec2(width, height)
+        self.padding = padding
 
         self.hovered = False
         self.clicked = False
         self.focused = False
 
-    def update(self): pass
-    def draw(self): pass
+    def update(self) -> None: pass
+    def draw(self, surface: Optional[_pg.Surface] = None) -> None: pass
 
     def get_rect(self):
-        return _pg.Rect(self.x - self.padding, self.y - self.padding, self.width + self.padding*2, self.height + self.padding*2)
+        return _pg.Rect(
+            self.pos.x - self.padding.left,
+            self.pos.y - self.padding.top,
+            self.width + self.padding.left + self.padding.right,
+            self.height + self.padding.top + self.padding.bottom)
 
     # commons
     def __init_subclass__(cls: type[Self]) -> None:
-        print(f"called __init_subclass__ cls: {cls}")
         event.EventManager.register_update(cls.on_hovered)
         event.EventManager.register_mousebuttondown(mouse.left, cls.on_click)
-        # event.EventManager.link_instance(cls)
 
     @staticmethod
     def _reset_g_flag():
@@ -45,6 +45,10 @@ class GUIBase(event.EventObject):
     def _reset_flag(self):
         self.hovered = False
         self.clicked = False
+    
+    def _centering(self):
+        self.pos.x -= self.width/2
+        self.pos.y -= self.height/2
 
     def on_hovered(self):
         mouse_pos = event.getMousePos()

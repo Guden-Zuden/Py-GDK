@@ -2,8 +2,7 @@
 Group of functions used by package users.
 '''
 
-from typing import Callable
-
+from .base import *
 from . import layer
 
 def createLayer():

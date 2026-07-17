@@ -2,7 +2,7 @@ from .base import *
 
 from pygame import constants as _cst
 from dataclasses import dataclass
-import sys
+import sys as _sys
 
 @dataclass
 class MouseButtonType:
@@ -18,7 +18,7 @@ class MouseButtonData:
     x2: bool
 
 _pressedButton: MouseButtonData = MouseButtonData(False, False, False, False, False)
-_pos = Pos(sys.maxsize, sys.maxsize)
+_pos = Vec2(_sys.maxsize, _sys.maxsize)
 
 right = MouseButtonType("right_button", _cst.BUTTON_RIGHT)
 left = MouseButtonType("left_button", _cst.BUTTON_LEFT)

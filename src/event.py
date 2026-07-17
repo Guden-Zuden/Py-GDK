@@ -1,14 +1,9 @@
+from .base import *
 from . import key, mouse
 from . import profile
-from .base import *
 
 import pygame as _pygame
 import sys as _sys
-from pygame import constants as _cst
-from dataclasses import dataclass, field
-from enum import Flag, auto
-from typing import Optional, Any, Callable, Self
-from inspect import isfunction, signature
 
 # TODO: Not complete yet, temporary.
 
@@ -34,7 +29,7 @@ def _updateMouseEvents():
 
 def _updateMousePos():
     x, y = _pygame.mouse.get_pos()
-    mouse._pos = Pos(x, y)
+    mouse._pos = Vec2(x, y)
 
 # ===== KeyData included some funcs =====
 @dataclass
@@ -200,7 +195,6 @@ class EventManager:
     # ===== Register =====
     @staticmethod
     def register_update(func: Callable[..., None]):
-        print("aaa")
         EventManager._handlers.append((EventType.OnUpdate, Handler(func)))
 
     @staticmethod
@@ -287,7 +281,7 @@ def getKey(key_data: key.KeyType) -> KeyEventData:
     keyStatus = KeyEventData(key_data, pressedKeys[key_data.keyCode], pressedKeymods)
     return keyStatus
 
-def getMousePos() -> Pos:
+def getMousePos() -> Vec2:
     return mouse._pos
 
 def getMousePressed() -> mouse.MouseButtonData:

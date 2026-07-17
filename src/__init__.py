@@ -1,14 +1,16 @@
 from . import core
 from . import profile
-from . import event, key, mouse
 from . import layer
 
 from . import GUI
 from . import Scene
 
+from . import event, key, mouse
+from . import colors
+
 from .utils import *
 
-import pygame
+import pygame as _pg
 from typing import Optional, Any
 from os import PathLike
 
@@ -28,7 +30,7 @@ def init(title: str = "GameDeveloperKits", fps: int = 60, width: int = 600, heig
     core.init()
 
 def get_availableFonts():
-    for font in pygame.font.get_fonts():
+    for font in _pg.font.get_fonts():
         print(font)
 
 def run():

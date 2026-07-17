@@ -1,9 +1,9 @@
+from .base import *
+from . import Scene
+from . import GUI
 from . import profile
 from . import event
 from . import layer
-
-from . import Scene
-from . import GUI
 
 import pygame as _pg
 import sys as _sys
@@ -21,7 +21,6 @@ def recreate_surface():
     profile.surface = _pg.Surface([profile.window_width, profile.window_height], flags=_pg.SRCALPHA)
 
 def run():
-    assert profile.surface is not None
     assert profile.screen is not None
     assert profile.clock is not None
     while True:
