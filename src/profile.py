@@ -17,8 +17,6 @@ height: int = 300
 window_width: int = 400
 window_height: int = 300
 
-# user_instance: Optional[Any] = None
-
 default_fontsize: int = 20
 default_font: Optional[_pg.font.Font] = None
 default_padding = Padding(4)
@@ -27,4 +25,9 @@ default_border = Border(0, colors.WHITE)
 
 sprite_size: int = 32
 
+surface_scale: int = 2
+"""surface_scale must be set before calling init()"""
+
+# === For debug ===
 isCalcPerformance: bool = False
+isShowPos: bool = False

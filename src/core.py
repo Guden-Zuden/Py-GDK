@@ -5,6 +5,8 @@ from . import profile
 from . import event
 from . import layer
 
+from .time import *
+
 import pygame as _pg
 import sys as _sys
 
@@ -14,19 +16,33 @@ def init():
     _pg.display.set_caption(profile.title)
     profile.clock = _pg.time.Clock()
     profile.default_font = _pg.font.Font(None, profile.default_fontsize)
-    profile.surface = _pg.Surface((profile.width, profile.height), flags=_pg.SRCALPHA)
+
+    # profile.surface = _pg.Surface((profile.width, profile.height), flags=_pg.SRCALPHA)
     profile.screen = _pg.display.set_mode((profile.window_width, profile.window_height), flags=_pg.RESIZABLE)
+    # profile.screen = _pg.display.set_mode((profile.window_width*profile.surface_scale, profile.window_height*profile.surface_scale), flags=_pg.RESIZABLE)
+
+    profile.surface = _pg.Surface((profile.width*profile.surface_scale, profile.height*profile.surface_scale), flags=_pg.SRCALPHA).convert_alpha()
+
 
 def recreate_surface():
-    profile.surface = _pg.Surface([profile.window_width, profile.window_height], flags=_pg.SRCALPHA)
+    profile.surface = _pg.Surface([profile.window_width*profile.surface_scale, profile.window_height*profile.surface_scale], flags=_pg.SRCALPHA)
 
 def run():
     assert profile.screen is not None
     assert profile.clock is not None
+
+    frameCounter = None
+    if profile.isCalcPerformance:
+        frameCounter = FrameCounter()
+
     while True:
-        fps_clock = None
-        # if profile.isCalcPerformance:
-            # fps_clock = ScopedTimer()
+        if frameCounter:
+            frameCounter.accumulateFrameCount()
+            if now() - frameCounter._start_time > 1:
+                printTime(1/frameCounter.frame_count)
+                frameCounter.reset()
+
+        profile.surface.fill(colors.BLACK)
 
         event._updateKeyEvents()
         event._updateMouseEvents()
@@ -36,18 +52,22 @@ def run():
         event.EventManager.update(_pg.event.get())
         event.EventManager.dispatch()
             
-        profile.surface.fill((0, 0, 0))
 
         # Scene.SceneManager.update() # TODO
         # Scene.SceneManager.draw()
 
+        GUI.base._updateMouseStatus()
         GUI.base.GUIBase._reset_g_flag()
 
         layer._LayerManager.update()
         layer._LayerManager.draw()
+        for pos in GUI.base.GUIBase._debug_position_stack:
+            _pg.draw.circle(profile.surface, (0, 255, 0), (pos*profile.surface_scale).pos, 10)
 
         profile.screen.fill((0, 0, 0))
-        profile.screen.blit(profile.surface, (0, 0), _pg.Rect(-profile.window_width/2+profile.width/2, -profile.window_height/2+profile.height/2, profile.window_width, profile.window_height))
+        _surf = _pg.transform.smoothscale(profile.surface, (profile.width, profile.height))
+        # _surf = profile.surface
+        profile.screen.blit(_surf, (0, 0))
         _pg.draw.rect(profile.screen, (255, 255, 255), _pg.Rect(profile.window_width/2-profile.width/2-1, profile.window_height/2-profile.height/2-1, profile.width+2, profile.height+2), 1)
 
 

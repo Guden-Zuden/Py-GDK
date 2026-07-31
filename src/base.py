@@ -1,7 +1,10 @@
+from __future__ import annotations
+
 from dataclasses import dataclass, field
 from enum import Flag, auto
 from typing import Optional, Any, Callable, Self, overload
 from inspect import isfunction, signature
+from functools import cache
 
 import pygame as _pg
 
@@ -21,18 +24,42 @@ class Vec2:
     @property
     def pos(self):
         return (self.x, self.y)
+
+    @property
+    def _pos(self):
+        return (self.x, self.y)
     
     def __add__(self, other: Vec2) -> Vec2:
-        return Vec2(self.x + other.x, self.y + other.y)
+        if type(other) == float or type(other) == int:
+            return Vec2(self.x + other, self.y + other)
+        elif type(other) == Vec2:
+            return Vec2(self.x + other.x, self.y + other.y)
+        else:
+            raise TypeError("Only Vec2, float, or integer arguments are supported.")
     
     def __sub__(self, other: Vec2) -> Vec2:
-        return Vec2(self.x - other.x, self.y - other.y)
+        if type(other) == float or type(other) == int:
+            return Vec2(self.x - other, self.y - other)
+        elif type(other) == Vec2:
+            return Vec2(self.x - other.x, self.y - other.y)
+        else:
+            raise TypeError("Only Vec2, float, or integer arguments are supported.")
     
-    def __mul__(self, other: Vec2) -> Vec2:
-        return Vec2(self.x * other.x, self.y * other.y)
+    def __mul__(self, other: Vec2 | float | int) -> Vec2:
+        if type(other) == float or type(other) == int:
+            return Vec2(self.x * other, self.y * other)
+        elif type(other) == Vec2:
+            return Vec2(self.x * other.x, self.y * other.y)
+        else:
+            raise TypeError("Only Vec2, float, or integer arguments are supported.")
     
-    def __truediv__(self, other: Vec2) -> Vec2:
-        return Vec2(self.x / other.x, self.y / other.y)
+    def __truediv__(self, other: Vec2 | float | int) -> Vec2:
+        if type(other) == float or type(other) == int:
+            return Vec2(self.x / other, self.y / other)
+        elif type(other) == Vec2:
+            return Vec2(self.x / other.x, self.y / other.y)
+        else:
+            raise TypeError("Only Vec2, float, or integer arguments are supported.")
     
     def __str__(self) -> str:
         return f"x: {self.x} y: {self.y}"
@@ -43,6 +70,11 @@ class Vec2:
     
     def normalized(self):
         distance = (self.x ** 2 + self.y ** 2) ** 1/2
+        self /= distance
+
+    def distance(self) -> float:
+        v = (self.x ** 2 + self.y ** 2) ** 1/2
+        return v
 
 class Padding:
     @overload
@@ -90,8 +122,10 @@ class TextAttributes:
     Italic: bool = False
 
     def getFontStyle(self):
+        from . import profile
         return (
-            self.Font, self.FontSize, self.Bold, self.Italic
+            # self.Font, self.FontSize, self.Bold, self.Italic
+            self.Font, self.FontSize*profile.surface_scale, self.Bold, self.Italic
         )
     def getTextColors(self):
         return (

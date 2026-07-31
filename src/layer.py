@@ -16,27 +16,29 @@ class Layer:
     PERMISSIONS: list[Any] = [
         GUI.Text,
         GUI.Box,
+        GUI.Button,
         GUI.VerticalAlignContainer,
         GUI.HorizontalAlignContainer
     ]
 
     def __init__(self) -> None:
-        self.__GUIComponent_stack: list[GUI.base.GUIBase] = []
+        self._GUIComponent_stack: list[GUI.base.GUIBase] = []
 
     def attach(self, *components: GUI.base.GUIBase):
         for component in components:
             if any(type(component) == cls for cls in Layer.PERMISSIONS):
-                self.__GUIComponent_stack.append(component)
+                self._GUIComponent_stack.append(component)
+                component.attachTo = self
             else:
                 raise AttachPermissionError(component, self)
     
     def update(self):
-        for component in reversed(self.__GUIComponent_stack):
+        for component in reversed(self._GUIComponent_stack):
             component._reset_flag()
             component.update()
         
     def draw(self):
-        for component in self.__GUIComponent_stack:
+        for component in self._GUIComponent_stack:
             component.draw()
 
 class _LayerManager:

@@ -1,3 +1,5 @@
+from .utils import *
+
 from . import core
 from . import profile
 from . import layer
@@ -8,7 +10,6 @@ from . import Scene
 from . import event, key, mouse
 from . import colors
 
-from .utils import *
 
 import pygame as _pg
 from typing import Optional, Any

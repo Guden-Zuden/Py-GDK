@@ -1,5 +1,7 @@
 from .base import *
+from . import GUI
 
+import pygame as _pg
 from pygame import constants as _cst
 from dataclasses import dataclass
 import sys as _sys

@@ -182,6 +182,22 @@ class EventManager:
     _handlers: list[tuple[EventType, Handler | KeyHandler | MousebuttonHandler]] = []
 
     @staticmethod
+    def _handler_key(event_type: EventType, handler: Handler | KeyHandler | MousebuttonHandler):
+        if isinstance(handler, KeyHandler):
+            return (event_type, handler.func, handler.key)
+        if isinstance(handler, MousebuttonHandler):
+            return (event_type, handler.func, handler.mousebutton)
+        return (event_type, handler.func, None)
+
+    @staticmethod
+    def _register_handler(event_type: EventType, handler: Handler | KeyHandler | MousebuttonHandler):
+        if any(EventManager._handler_key(event_type, existing_handler) == EventManager._handler_key(event_type, handler)
+               for existing_event_type, existing_handler in EventManager._handlers
+               if existing_event_type == event_type):
+            return
+        EventManager._handlers.append((event_type, handler))
+
+    @staticmethod
     def link_instance(instance: Any):
         '''
         Called by EventObject
@@ -190,36 +206,37 @@ class EventManager:
             owner_name = _handler.func.__qualname__.rsplit(".", 1)[0]
 
             if any(mro.__qualname__ == owner_name for mro in instance.__class__.__mro__):
-                _handler.instances.append(instance)
+                if not any(existing_instance is instance for existing_instance in _handler.instances):
+                    _handler.instances.append(instance)
 
     # ===== Register =====
     @staticmethod
     def register_update(func: Callable[..., None]):
-        EventManager._handlers.append((EventType.OnUpdate, Handler(func)))
+        EventManager._register_handler(EventType.OnUpdate, Handler(func))
 
     @staticmethod
     def register_windowresized(func: Callable[..., None]):
-        EventManager._handlers.append((EventType.OnWindowResized, Handler(func)))
+        EventManager._register_handler(EventType.OnWindowResized, Handler(func))
 
     @staticmethod
     def register_keydown(key: key.KeyType, func: Callable[..., None]):
-        EventManager._handlers.append((EventType.OnKeydown, KeyHandler(func, key.keyCode)))
+        EventManager._register_handler(EventType.OnKeydown, KeyHandler(func, key.keyCode))
 
     @staticmethod
     def register_keyup(key: key.KeyType, func: Callable[..., None]):
-        EventManager._handlers.append((EventType.OnKeydown, KeyHandler(func, key.keyCode)))
+        EventManager._register_handler(EventType.OnKeyup, KeyHandler(func, key.keyCode))
 
     @staticmethod
     def register_mousemove(func: Callable[..., None]):
-        EventManager._handlers.append((EventType.OnMousemove, Handler(func)))
+        EventManager._register_handler(EventType.OnMousemove, Handler(func))
 
     @staticmethod
     def register_mousebuttondown(button: mouse.MouseButtonType, func: Callable[..., None]):
-        EventManager._handlers.append((EventType.OnMousebuttonDown, MousebuttonHandler(func, button.buttonType)))
+        EventManager._register_handler(EventType.OnMousebuttonDown, MousebuttonHandler(func, button.buttonType))
 
     @staticmethod
     def register_mousebuttonup(button: mouse.MouseButtonType, func: Callable[..., None]):
-        EventManager._handlers.append((EventType.OnMousebuttonUp, MousebuttonHandler(func, button.buttonType)))
+        EventManager._register_handler(EventType.OnMousebuttonUp, MousebuttonHandler(func, button.buttonType))
 
     # ===== Register ===== end
 
