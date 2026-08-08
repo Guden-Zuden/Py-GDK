@@ -24,10 +24,6 @@ class Vec2:
     @property
     def pos(self):
         return (self.x, self.y)
-
-    @property
-    def _pos(self):
-        return (self.x, self.y)
     
     def __add__(self, other: Vec2) -> Vec2:
         if type(other) == float or type(other) == int:

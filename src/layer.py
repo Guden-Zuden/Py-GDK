@@ -17,6 +17,8 @@ class Layer:
         GUI.Text,
         GUI.Box,
         GUI.Button,
+        GUI.ImageButton,
+        GUI.Image,
         GUI.VerticalAlignContainer,
         GUI.HorizontalAlignContainer
     ]

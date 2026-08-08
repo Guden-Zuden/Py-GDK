@@ -24,8 +24,10 @@ def init():
     profile.surface = _pg.Surface((profile.width*profile.surface_scale, profile.height*profile.surface_scale), flags=_pg.SRCALPHA).convert_alpha()
 
 
-def recreate_surface():
-    profile.surface = _pg.Surface([profile.window_width*profile.surface_scale, profile.window_height*profile.surface_scale], flags=_pg.SRCALPHA)
+def recreate_surface(width: int, height: int):
+    profile.width = width
+    profile.height = height
+    profile.surface = _pg.Surface([profile.width*profile.surface_scale, profile.height*profile.surface_scale], flags=_pg.SRCALPHA)
 
 def run():
     assert profile.screen is not None
@@ -51,8 +53,7 @@ def run():
 
         event.EventManager.update(_pg.event.get())
         event.EventManager.dispatch()
-            
-
+        
         # Scene.SceneManager.update() # TODO
         # Scene.SceneManager.draw()
 
@@ -66,8 +67,8 @@ def run():
 
         profile.screen.fill((0, 0, 0))
         _surf = _pg.transform.smoothscale(profile.surface, (profile.width, profile.height))
-        # _surf = profile.surface
-        profile.screen.blit(_surf, (0, 0))
+
+        profile.screen.blit(_surf, (profile.window_width/2-profile.width/2, profile.window_height/2 - profile.height/2))
         _pg.draw.rect(profile.screen, (255, 255, 255), _pg.Rect(profile.window_width/2-profile.width/2-1, profile.window_height/2-profile.height/2-1, profile.width+2, profile.height+2), 1)
 
 

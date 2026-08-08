@@ -25,9 +25,17 @@ default_border = Border(0, colors.WHITE)
 
 sprite_size: int = 32
 
+surface_size_locked = False
+"""If true, surface size cannot be changed."""
+surface_fill_screen = False
+"""If false, surface size will be changed depending on the aspect ratio."""
 surface_scale: int = 2
 """surface_scale must be set before calling init()"""
 
 # === For debug ===
 isCalcPerformance: bool = False
 isShowPos: bool = False
+
+import pathlib
+_directory = pathlib.Path(__file__).parent
+print(_directory)

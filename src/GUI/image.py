@@ -4,14 +4,22 @@ from .. import colors
 from . import base
 
 import pygame as _pg
+import pathlib
 
-class Box(base.GUIBase):
-    def __init__(self, u: float, v: float, width: float, height: float,
-                 color: gdk_color, padding = profile.default_padding, border = Border(0, colors.WHITE),
+class Image(base.GUIBase):
+    def __init__(self, u: float, v: float, img_filepath: str | pathlib.Path, width: float,
+                 padding=profile.default_padding, border: base.Border = Border(0, colors.WHITE),
                  child: Optional[base.GUIBase] = None, no_register = False) -> None:
+        try:
+            self.img_surface = _pg.image.load(img_filepath).convert_alpha()
+        except FileNotFoundError as e:
+            print(f"[Image.__init__] {e}")
+            self.img_surface = _pg.image.load("src/assets/img/NoImage.png").convert_alpha()
+
+        height = self.img_surface.get_height() * width / self.img_surface.get_width()
+        self.img_surface = _pg.transform.smoothscale(self.img_surface, (width*2, height*2))
+
         super().__init__(u, v, width, height, padding, border, no_register)
-        self.color = color if type(color) is Color else Color(*color)
-        self.border = border
 
         self.child = child
         if self.child:
@@ -26,7 +34,7 @@ class Box(base.GUIBase):
     def draw(self, surface: Optional[_pg.Surface] = None) -> None:
         super().draw(surface)
 
-        _pg.draw.rect(self.surface, self.color, self.surface.get_rect())
+        self.surface.blit(self.img_surface)
 
         if self.child:
             self.child.pos = Vec2(

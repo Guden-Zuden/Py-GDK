@@ -5,14 +5,27 @@ from __future__ import annotations
 
 import pygame as _pg
 from typing import Self, Optional
+from enum import Flag, auto
 
 from ..base import *
 from .. import profile
 from .. import event, mouse
 
+class Direction(Flag):
+    # top bottom left right
+    TOP         = 0b1000
+    BOTTOM      = 0b0100
+    LEFT        = 0b0010
+    RIGHT       = 0b0001
+    LEFTTOP     = 0b1010
+    RIGHTTOP    = 0b1001
+    LEFTBOTTOM  = 0b0110
+    RIGHTBOTTOM = 0b0101
+
 def _updateMouseStatus():
-    from . import Button
-    if type(GUIBase.g_hoveredObj) == Button:
+    from . import Button, ImageButton
+    if (type(GUIBase.g_hoveredObj) == Button
+        or type(GUIBase.g_hoveredObj) == ImageButton):
         _pg.mouse.set_cursor(_pg.SYSTEM_CURSOR_HAND)
     else:
         _pg.mouse.set_cursor(_pg.SYSTEM_CURSOR_ARROW)
@@ -27,6 +40,8 @@ class GUIBase(event.EventObject):
     def __init__(self, u: float, v: float, width: float, height: float,
                  padding = profile.default_padding, border: Border = Border(0, colors.WHITE), no_register = False) -> None:
         self.surface = _pg.Surface((width*profile.surface_scale, height*profile.surface_scale), _pg.SRCALPHA)
+        
+        self.u, self.v = u, v
         self.width, self.height = Vec2(width, height)
         self.pos = Vec2(
             profile.width/2 + profile.width/2 * u - self.width/2,
@@ -68,6 +83,20 @@ class GUIBase(event.EventObject):
 
             _pg.draw.rect(surface, self.border.color, border_rect, int(width))
 
+    def stick(self, gui_obj: GUIBase, dir: Direction):
+        self.pos.x = gui_obj.pos.x + gui_obj.width/2 - self.width/2
+        self.pos.y = gui_obj.pos.y + gui_obj.height/2 - self.height/2
+
+        if dir & Direction.TOP:
+            self.pos.y = gui_obj.pos.y - self.height
+        elif dir & Direction.BOTTOM:
+            self.pos.y = gui_obj.pos.y + gui_obj.height
+
+        if dir & Direction.LEFT:
+            self.pos.x = gui_obj.pos.x - self.width
+        elif dir & Direction.RIGHT:
+            self.pos.x = gui_obj.pos.x + gui_obj.width
+        return self
 
     def _flush(self, surface: Optional[_pg.Surface] = None):
         """If surface is not specified, profile.surface will be used."""
@@ -83,10 +112,6 @@ class GUIBase(event.EventObject):
             self.pos.y*profile.surface_scale - self.padding.top*profile.surface_scale,
             self.width*profile.surface_scale + self.padding.left*profile.surface_scale + self.padding.right*profile.surface_scale,
             self.height*profile.surface_scale + self.padding.top*profile.surface_scale + self.padding.bottom*profile.surface_scale)
-
-    # commons
-    # def __init_subclass__(cls: type[Self]) -> None:
-
 
     @staticmethod
     def _reset_g_flag():
