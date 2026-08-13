@@ -22,6 +22,7 @@ default_font: Optional[_pg.font.Font] = None
 default_padding = Padding(4)
 default_textAttributes = TextAttributes("msgothic", 20, (255, 255, 255))
 default_border = Border(0, colors.WHITE)
+default_scrollbar_style = ScrollBarStyle()
 
 sprite_size: int = 32
 

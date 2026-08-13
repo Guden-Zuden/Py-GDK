@@ -114,6 +114,10 @@ class TextAttributes:
     TextColor: gdk_color
     BackGroundColor: Optional[gdk_color] = None
 
+    OutlineWidth: float = 0
+    """This is float, but """
+    OutlineColor: Optional[gdk_color] = None
+
     Bold: bool = False
     Italic: bool = False
 
@@ -127,3 +131,9 @@ class TextAttributes:
         return (
             self.TextColor, self.BackGroundColor
         )
+
+@dataclass
+class ScrollBarStyle:
+    width: int = 10
+    color: gdk_color = colors.WHITE
+    rounded: bool = False

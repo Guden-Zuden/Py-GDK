@@ -20,7 +20,9 @@ class Layer:
         GUI.ImageButton,
         GUI.Image,
         GUI.VerticalAlignContainer,
-        GUI.HorizontalAlignContainer
+        GUI.HorizontalAlignContainer,
+        GUI.HorizontalScrollBar, # test
+        GUI.VerticalScrollBar # test
     ]
 
     def __init__(self) -> None:

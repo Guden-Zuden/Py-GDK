@@ -70,6 +70,8 @@ class GUIBase(event.EventObject):
 
     def draw(self, surface: Optional[_pg.Surface] = None) -> None:
         if surface is None: surface = self.surface
+        self.surface.fill((0,0,0,0))
+
         rect = self.get_rect()
         rect.x *= profile.surface_scale
         rect.y *= profile.surface_scale

@@ -31,7 +31,7 @@ def _updateMousePos():
     x, y = _pygame.mouse.get_pos()
     mouse._pos = Vec2(x, y)
 
-# ===== KeyData included some funcs =====
+# ===== Dataclasses =====
 @dataclass
 class KeyEventData:
     keyData: key.KeyType
@@ -62,6 +62,18 @@ class KeyEventData:
             return self.mods & _pygame.KMOD_LALT > 0
         return self.mods & _pygame.KMOD_ALT > 0
     
+@dataclass
+class KeyModData:
+    flag: int
+
+    def isShift(self, optional: str | None = None):
+        return self.flag & _pygame.KMOD_SHIFT
+
+    def isCtrl(self, optional: str | None = None):
+        return self.flag & _pygame.KMOD_CTRL
+
+    def isAlt(self, optional: str | None = None):
+        return self.flag & _pygame.KMOD_ALT
 
 # ===== Event =====
 
@@ -152,6 +164,8 @@ class EventType(Flag):
     OnMousebuttonDown = auto()
     OnMousebuttonUp = auto()
     OnMousemove = auto()
+    OnMousewheelUp = auto()
+    OnMousewheelDown = auto()
 
 
 @dataclass
@@ -238,6 +252,14 @@ class EventManager:
     def register_mousebuttonup(button: mouse.MouseButtonType, func: Callable[..., None]):
         EventManager._register_handler(EventType.OnMousebuttonUp, MousebuttonHandler(func, button.buttonType))
 
+    @staticmethod
+    def register_mousewheelup(func: Callable[..., None]):
+        EventManager._register_handler(EventType.OnMousewheelUp, Handler(func))
+
+    @staticmethod
+    def register_mousewheeldown(func: Callable[..., None]):
+        EventManager._register_handler(EventType.OnMousewheelDown, Handler(func))
+
     # ===== Register ===== end
 
     @staticmethod
@@ -286,6 +308,14 @@ class EventManager:
                 handlers += [handler for event_type, handler in EventManager._handlers
                              if event_type == EventType.OnMousebuttonUp and handler.mousebutton == e.button] # pyright: ignore
 
+            if e.type == _pygame.MOUSEWHEEL:
+                if e.y > 0:
+                    handlers += [handler for event_type, handler in EventManager._handlers
+                                 if event_type == EventType.OnMousewheelUp]
+                elif e.y < 0:
+                    handlers += [handler for event_type, handler in EventManager._handlers
+                                 if event_type == EventType.OnMousewheelDown]
+
             for handler in handlers:
                 if handler.instances != []:
                     for instance in handler.instances:
@@ -303,6 +333,9 @@ def getMousePos() -> Vec2:
 
 def getMousePressed() -> mouse.MouseButtonData:
     return mouse.get_pressed()
+
+def getMod():
+    return KeyModData(_pygame.key.get_mods())
 
 # ===== Input producing like Movements =====
 class Input:

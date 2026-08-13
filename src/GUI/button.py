@@ -47,6 +47,7 @@ class Button(base.GUIBase):
         self.clicking_box_obj.padding = self.padding
 
     def draw(self, surface: Optional[_pg.Surface] = None):
+        super().draw(surface)
         self.box_obj.draw()
         if self.clicked:
             self.clicking_box_obj.draw(surface)
