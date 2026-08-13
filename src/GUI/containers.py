@@ -51,7 +51,7 @@ class ContainerBase(base.GUIBase):
 
     def on_mousewheeldown(self, e):
         if not self.hovered: return
-        delta = e.y * 32
+        delta: int = e.y * 32
         if event.getMod().isShift():
             self.scroll_h += delta
         else:
@@ -60,7 +60,7 @@ class ContainerBase(base.GUIBase):
 
     def on_mousewheelup(self, e):
         if not self.hovered: return
-        delta = e.y * 32
+        delta: int = e.y * 32
         if event.getMod().isShift():
             self.scroll_h += delta
         else:
@@ -125,7 +125,7 @@ class VerticalAlignContainer(ContainerBase):
 
     def update(self):
         super().update()
-        self.v_scrollBar_obj.scroll_v = self.scroll_v
+        self.v_scrollBar_obj.scroll_v = self.scroll_v # pyright: ignore
         self.v_scrollBar_obj.update()
 
     def draw(self, surface: Optional[_pg.Surface] = None):
@@ -159,7 +159,7 @@ class HorizontalAlignContainer(ContainerBase):
 
     def update(self):
         super().update()
-        self.h_scrollBar_obj.scroll_h = self.scroll_h
+        self.h_scrollBar_obj.scroll_h = self.scroll_h # pyright: ignore
         self.h_scrollBar_obj.update()
 
     def draw(self, surface: Optional[_pg.Surface] = None):
