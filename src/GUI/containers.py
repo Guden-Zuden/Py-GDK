@@ -4,8 +4,6 @@ import pygame as _pg
 from typing import Optional as _Optional
 import copy
 
-from src.colors import WHITE
-
 from ..base import *
 from .. import event as _event
 from . import base as _base
