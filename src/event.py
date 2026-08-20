@@ -4,6 +4,9 @@ from . import profile
 
 import pygame as _pygame
 import sys as _sys
+from enum import Flag, auto
+from dataclasses import dataclass, field
+from typing import Callable, Any, Self
 
 # TODO: Not complete yet, temporary.
 

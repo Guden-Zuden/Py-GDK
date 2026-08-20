@@ -1,5 +1,6 @@
 from .base import *
 from pygame import constants as _cst
+from dataclasses import dataclass
 
 @dataclass
 class KeyType:

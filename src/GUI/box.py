@@ -1,14 +1,15 @@
 from ..base import *
-from .. import profile
-from .. import colors
-from . import base
+from .. import profile as _profile
+from .. import colors as _colors
+from . import base as _base
 
 import pygame as _pg
+from typing import Optional as _Optional
 
-class Box(base.GUIBase):
+class Box(_base.GUIBase):
     def __init__(self, u: float, v: float, width: float, height: float,
-                 color: gdk_color, padding = profile.default_padding, border = Border(0, colors.WHITE),
-                 child: Optional[base.GUIBase] = None, no_register = False) -> None:
+                 color: gdk_color, padding = _profile.default_padding, border = Border(0, _colors.WHITE),
+                 child: _Optional[_base.GUIBase] = None, no_register = False) -> None:
         super().__init__(u, v, width, height, padding, border, no_register)
         self.color = color if type(color) is Color else Color(*color)
         self.border = border
@@ -23,7 +24,7 @@ class Box(base.GUIBase):
     def update(self):
         super().update()
 
-    def draw(self, surface: Optional[_pg.Surface] = None) -> None:
+    def draw(self, surface: _Optional[_pg.Surface] = None) -> None:
         super().draw(surface)
 
         _pg.draw.rect(self.surface, self.color, self.surface.get_rect())

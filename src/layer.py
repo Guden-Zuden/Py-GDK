@@ -2,8 +2,13 @@ from .base import *
 from . import profile
 from . import GUI
 
+from typing import (
+    Any as _Any,
+    Optional as _Optional
+)
+
 class AttachPermissionError(Exception):
-    def __init__(self, component: Any, attach_to: Any):
+    def __init__(self, component: _Any, attach_to: _Any):
         self.component = component
         self.attach_to = attach_to
 
@@ -13,7 +18,7 @@ class AttachPermissionError(Exception):
         )
 
 class Layer:
-    PERMISSIONS: list[Any] = [
+    PERMISSIONS: list[_Any] = [
         GUI.Text,
         GUI.Box,
         GUI.Button,
@@ -21,8 +26,9 @@ class Layer:
         GUI.Image,
         GUI.VerticalAlignContainer,
         GUI.HorizontalAlignContainer,
-        GUI.HorizontalScrollBar, # test
-        GUI.VerticalScrollBar # test
+        GUI.TabContainer,
+        GUI.HorizontalScrollBar,
+        GUI.VerticalScrollBar,
     ]
 
     def __init__(self) -> None:
@@ -30,15 +36,16 @@ class Layer:
 
     def attach(self, *components: GUI.base.GUIBase):
         for component in components:
-            if any(type(component) == cls for cls in Layer.PERMISSIONS):
+            if any(issubclass(type(component), cls) for cls in Layer.PERMISSIONS):
                 self._GUIComponent_stack.append(component)
                 component.attachTo = self
+                if profile._gdk_executed: # 実行中にGUI componentが追加されたときにイベント登録
+                    component._regist_events()
             else:
                 raise AttachPermissionError(component, self)
     
     def update(self):
         for component in reversed(self._GUIComponent_stack):
-            component._reset_flag()
             component.update()
         
     def draw(self):
@@ -46,7 +53,7 @@ class Layer:
             component.draw()
 
 class _LayerManager:
-    current_layer: Optional[Layer] = None
+    current_layer: _Optional[Layer] = None
     layer_stack: list[Layer] = []
 
     @staticmethod

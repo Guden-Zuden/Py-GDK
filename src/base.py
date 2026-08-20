@@ -1,12 +1,15 @@
+"""Normally, we import this file with wild card."""
 from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import Flag, auto
 from typing import Optional, Any, Callable, Self, overload
 from inspect import isfunction, signature
-from functools import cache
+from typing import overload, get_args
+import copy
 
 import pygame as _pg
+from enum import Flag as _Flag
 
 from . import colors
 
@@ -102,6 +105,17 @@ class Padding:
 
 class Color(_pg.Color): ...
 
+class Direction(_Flag):
+    # top bottom left right
+    TOP         = 0b1000
+    BOTTOM      = 0b0100
+    LEFT        = 0b0010
+    RIGHT       = 0b0001
+    LEFTTOP     = 0b1010
+    RIGHTTOP    = 0b1001
+    LEFTBOTTOM  = 0b0110
+    RIGHTBOTTOM = 0b0101
+
 class Border:
     def __init__(self, width: float, color: gdk_color) -> None:
         self.width = width
@@ -137,3 +151,47 @@ class ScrollBarStyle:
     width: int = 10
     color: gdk_color = colors.WHITE
     rounded: bool = False
+
+class Background:
+    from .GUI import Image
+    @overload
+    def __init__(self, color: gdk_color) -> None: ...
+
+    @overload
+    def __init__(self, image: Image) -> None: ...
+
+    def __init__(self, *args) -> None: # pyright: ignore
+        from .GUI import Image
+        if isinstance(args[0], (_pg.Color, tuple)):
+            self.color = args[0]
+            self.image = None
+        elif isinstance(args[0], Image):
+            self.color = None   
+            self.image = copy.copy(args[0]) # 位置調整は各GUIオブジェクトに任せる
+        else:
+            raise TypeError("Unexcepted Type!")
+
+    def isColor(self):
+        return self.image is None
+    def isImage(self):
+        return self.color is None
+
+@dataclass
+class TabProperty:
+    from . import GUI as _GUI
+    name: str
+    items: list[_GUI.base.GUIBase]
+
+__all__ = [
+    "gdk_color",
+    "NullSurface",
+    "Vec2",
+    "Padding",
+    "Color",
+    "Direction",
+    "Border",
+    "TextAttributes",
+    "ScrollBarStyle",
+    "Background",
+    "TabProperty",
+]

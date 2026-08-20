@@ -4,7 +4,15 @@ Contains Values to be used globally.
 
 import pygame as _pg
 
-from .base import *
+from .base import (
+    NullSurface,
+    Padding,
+    TextAttributes,
+    Border,
+    ScrollBarStyle,
+    colors,
+    Optional
+)
 
 screen: Optional[_pg.Surface] = None
 surface: _pg.Surface = NullSurface([0,0])
@@ -33,10 +41,40 @@ surface_fill_screen = False
 surface_scale: int = 2
 """surface_scale must be set before calling init()"""
 
+resizable = False
+"""resizable must be set before calling init()"""
+
+# === private flag ===
+_gdk_executed = False
+
 # === For debug ===
 isCalcPerformance: bool = False
 isShowPos: bool = False
 
 import pathlib
 _directory = pathlib.Path(__file__).parent
-print(_directory)
+
+__all__ = [
+    "screen",
+    "surface",
+    "clock",
+    "title",
+    "fps",
+    "width",
+    "height",
+    "window_width",
+    "window_height",
+    "default_fontsize",
+    "default_font",
+    "default_padding",
+    "default_textAttributes",
+    "default_border",
+    "default_scrollbar_style",
+    "sprite_size",
+    "surface_size_locked",
+    "surface_fill_screen",
+    "surface_scale",
+    "resizable",
+    "isCalcPerformance",
+    "isShowPos",
+]

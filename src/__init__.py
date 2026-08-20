@@ -1,23 +1,23 @@
+from .base import *
+from .GUI.base import *
 from .utils import *
 
-from . import core
 from . import profile
 from . import layer
-
 from . import GUI
 from . import Scene
-
 from . import event, key, mouse
 from . import colors
 from . import sound
 
-from .GUI.base import Direction
+# experimental
+from . import Debugger
 
-import pygame as _pg
-from typing import Optional, Any
-from os import PathLike
+import pygame
+from typing import Optional as _Optional
 
-def init(title: str = "GameDeveloperKits", fps: int = 60, width: int = 600, height: int = 400, mapSprite_size: int = 32, window_width: Optional[int] = None, window_height: Optional[int] = None):
+def init(title: str = "GameDeveloperKits", fps: int = 60, width: int = 600, height: int = 400, mapSprite_size: int = 32, window_width: _Optional[int] = None, window_height: _Optional[int] = None):
+    from . import core
     print("This Game Developer Kits is using pygame-ce.")
     profile.title = title
     profile.fps = fps
@@ -33,14 +33,17 @@ def init(title: str = "GameDeveloperKits", fps: int = 60, width: int = 600, heig
     core.init()
 
 def get_availableFonts():
-    for font in _pg.font.get_fonts():
+    import pygame as pg
+    for font in pg.font.get_fonts():
         print(font)
 
 def run():
+    from . import core
     core.run()
 
 @event.OnWindowResized()
 def on_windowResized(e):
+    from . import core
     profile.window_width = e.x
     profile.window_height = e.y
 
