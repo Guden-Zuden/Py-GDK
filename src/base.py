@@ -9,11 +9,12 @@ from typing import overload, get_args
 import copy
 
 import pygame as _pg
-from enum import Flag as _Flag
+from enum import (
+    Flag as _Flag,
+    Enum as _Enum,
+)
 
 from . import colors
-
-# TODO: temporary
 
 type gdk_color = _pg.Color | tuple[int, int, int, int] | tuple[int, int, int]
 
@@ -22,12 +23,55 @@ class NullSurface(_pg.Surface): ...
 # definition position type
 class Vec2:
     def __init__(self, x: int | float, y: int | float) -> None:
-        self.x, self.y = x, y
+        self._x, self._y = x, y
+        self._dirty = False
     
     @property
     def pos(self):
         return (self.x, self.y)
-    
+
+    @property
+    def x(self):
+        return self._x
+    @x.setter
+    def x(self, value):
+        self._x = value
+        self._dirty = True
+
+    @property
+    def y(self):
+        return self._y
+    @y.setter
+    def y(self, value):
+        self._y = value
+        self._dirty = True
+
+    @property
+    def width(self):
+        return self._x
+    @width.setter
+    def width(self, value):
+        self._x = value
+        self._dirty = True
+
+    @property
+    def height(self):
+        return self._y
+    @height.setter
+    def height(self, value):
+        self._y = value
+        self._dirty = True
+
+    def is_dirty(self):
+        return self._dirty
+    def reset(self):
+        """Reset dirty flag."""
+        self._dirty = False
+
+    @property
+    def tuple(self):
+        return (self.x, self.y)
+
     def __add__(self, other: Vec2) -> Vec2:
         if type(other) == float or type(other) == int:
             return Vec2(self.x + other, self.y + other)
@@ -116,6 +160,24 @@ class Direction(_Flag):
     LEFTBOTTOM  = 0b0110
     RIGHTBOTTOM = 0b0101
 
+class DockingDirection(_Enum):
+    TOP = 1
+    BOTTOM = 2
+    LEFT = 3
+    RIGHT = 4
+
+class Anchor(_Flag):
+    # top bottom left right
+    CENTER      = 0b0000
+    TOP         = 0b1000
+    BOTTOM      = 0b0100
+    LEFT        = 0b0010
+    RIGHT       = 0b0001
+    LEFTTOP     = 0b1010
+    RIGHTTOP    = 0b1001
+    LEFTBOTTOM  = 0b0110
+    RIGHTBOTTOM = 0b0101
+
 class Border:
     def __init__(self, width: float, color: gdk_color) -> None:
         self.width = width
@@ -138,7 +200,6 @@ class TextAttributes:
     def getFontStyle(self):
         from . import profile
         return (
-            # self.Font, self.FontSize, self.Bold, self.Italic
             self.Font, self.FontSize*profile.surface_scale, self.Bold, self.Italic
         )
     def getTextColors(self):
@@ -189,6 +250,8 @@ __all__ = [
     "Padding",
     "Color",
     "Direction",
+    "DockingDirection",
+    "Anchor",
     "Border",
     "TextAttributes",
     "ScrollBarStyle",

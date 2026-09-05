@@ -7,13 +7,14 @@ from typing import (
 from ..base import *
 from .. import profile as _profile
 from . import base as _base
-from .text import Text as _Text
+from .label import Label as _Text
 from .box import Box as _Box
 from .. import colors as _colors
 from .image import Image as _Image
 
 import pathlib as _pathlib
 import pygame as _pg
+from functools import wraps as _wraps
 
 class Button(_base.GUIBase):
     def __init__(self, u: float, v: float, width: float, height: float,
@@ -28,34 +29,41 @@ class Button(_base.GUIBase):
         self.padding = padding
         self.event_func = event_func
 
-        self.text_obj = _Text(u, v, text, textAttributes, padding, no_register=True)
-        self.box_obj = _Box(u, v, self.width, self.height, color, padding, border, child=self.text_obj, no_register=True)
-        self.hovering_box_obj = _Box(u, v, self.width, self.height, _colors.BLACK, padding, border, no_register=True)
+        self.text_obj = _Text(u, v, text, textAttributes, padding=padding, no_register=True)
+        self.box_obj = _Box(u, v, *self.size.tuple, color, padding, border, child=self.text_obj, no_register=True)
+        self.box_obj.sync_size_to(self)
+
+        self.hovering_box_obj = _Box(u, v, *self.size.tuple, _colors.BLACK, padding, border, no_register=True)
         self.hovering_box_obj.color.a = int(self.hovering_box_obj.color.a * 0.2)
+        self.hovering_box_obj.sync_size_to(self)
 
-        self.clicking_box_obj = _Box(u, v, self.width, self.height, _colors.BLACK, padding, border, no_register=True)
+        self.clicking_box_obj = _Box(u, v, *self.size.tuple, _colors.BLACK, padding, border, no_register=True)
         self.clicking_box_obj.color.a = int(self.clicking_box_obj.color.a * 0.4)
-
-        self.event_func = event_func
+        self.clicking_box_obj.sync_size_to(self)
 
     def update(self):
         super().update()
-        self.text_obj.pos = self.pos
+        self.text_obj.set_pos(*self.pos.pos)
         self.text_obj.text = self.text
         self.text_obj.textAttributes = self.textAttributes
         self.text_obj.padding = self.padding
+        self.text_obj.update()
 
-        self.box_obj.pos = self.pos
+        self.box_obj.set_pos(*self.pos.pos)
         self.box_obj.border = self.border
         self.box_obj.padding = self.padding
+        self.box_obj.color = self.color # pyright: ignore
+        self.box_obj.update()
 
-        self.hovering_box_obj.pos = self.pos
+        self.hovering_box_obj.set_pos(*self.pos.pos)
         self.hovering_box_obj.border = self.border
         self.hovering_box_obj.padding = self.padding
-        
-        self.clicking_box_obj.pos = self.pos
+        self.hovering_box_obj.update()
+
+        self.clicking_box_obj.set_pos(*self.pos.pos)
         self.clicking_box_obj.border = self.border
         self.clicking_box_obj.padding = self.padding
+        self.clicking_box_obj.update()
 
     def draw(self, surface: _Optional[_pg.Surface] = None):
         super().draw(surface)
@@ -68,6 +76,17 @@ class Button(_base.GUIBase):
         if surface: self._flush(surface)
         else: self._flush()
 
+    def OnClick(self):
+        def decorator(func):
+            self.event_func = func
+
+            @_wraps(func)
+            def wrapper(*args, **kwargs):
+                return func(*args, **kwargs)
+
+            return wrapper
+        return decorator
+
 class ImageButton(Button):
     from .. import profile
     def __init__(self, u: float, v: float, width: float,
@@ -75,13 +94,15 @@ class ImageButton(Button):
                  padding = profile.default_padding, event_func: _Optional[_Callable] = None, no_register = False) -> None:
         if image is None: raise Exception("image is None.")
         self.image_obj = image
-        super().__init__(u, v, width, self.image_obj.height, text, textAttributes, (0,0,0,0), border, padding, event_func, no_register)
+        super().__init__(u, v, width, self.image_obj.size.height, text, textAttributes, (0,0,0,0), border, padding, event_func, no_register)
+        self.image_obj.sync_size_to(self)
 
     def update(self):
         super().update()
         self.image_obj.pos = self.pos
         self.image_obj.border = self.border
         self.image_obj.padding = self.padding
+        self.image_obj.resize()
 
         self.image_obj.update()
 

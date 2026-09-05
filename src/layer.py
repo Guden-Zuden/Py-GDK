@@ -1,6 +1,8 @@
 from .base import *
 from . import profile
-from . import GUI
+from . import GUI as _GUI
+from . import event as _event
+from .time import BenchMark as _BenchMark
 
 from typing import (
     Any as _Any,
@@ -19,55 +21,64 @@ class AttachPermissionError(Exception):
 
 class Layer:
     PERMISSIONS: list[_Any] = [
-        GUI.Text,
-        GUI.Box,
-        GUI.Button,
-        GUI.ImageButton,
-        GUI.Image,
-        GUI.VerticalAlignContainer,
-        GUI.HorizontalAlignContainer,
-        GUI.TabContainer,
-        GUI.HorizontalScrollBar,
-        GUI.VerticalScrollBar,
+        _GUI.Label,
+        _GUI.Box,
+        _GUI.Button,
+        _GUI.ImageButton,
+        _GUI.Image,
+        _GUI.VerticalAlignContainer,
+        _GUI.HorizontalAlignContainer,
+        _GUI.TabContainer,
+        _GUI.HorizontalScrollBar,
+        _GUI.VerticalScrollBar,
     ]
 
     def __init__(self) -> None:
-        self._GUIComponent_stack: list[GUI.base.GUIBase] = []
+        self._GUIComponent_stack: list[_GUI.base.GUIBase] = []
+        self.docking_manager = _GUI.DockingManager(profile.width, profile.height)
 
-    def attach(self, *components: GUI.base.GUIBase):
+    def attach(self, *components: _GUI.base.GUIBase):
         for component in components:
             if any(issubclass(type(component), cls) for cls in Layer.PERMISSIONS):
                 self._GUIComponent_stack.append(component)
-                component.attachTo = self
+                component.parent = self
                 if profile._gdk_executed: # 実行中にGUI componentが追加されたときにイベント登録
                     component._regist_events()
             else:
                 raise AttachPermissionError(component, self)
     
     def update(self):
-        for component in reversed(self._GUIComponent_stack):
-            component.update()
+        with _BenchMark(f"{self}.update()"):
+            self.docking_manager.update()
+
+            for component in reversed(self._GUIComponent_stack):
+                with _BenchMark(f"{component}.update()"):
+                    component.update()
         
     def draw(self):
-        for component in self._GUIComponent_stack:
-            component.draw()
+        with _BenchMark(f"{self}.draw()"):
+            for component in self._GUIComponent_stack:
+                component.draw()
 
-class _LayerManager:
+class LayerObject(Layer, _event.EventObject):
+    pass
+
+class LayerManager:
     current_layer: _Optional[Layer] = None
     layer_stack: list[Layer] = []
 
     @staticmethod
     def pushLayer(layer: Layer):
-        if _LayerManager.current_layer is None:
-            _LayerManager.current_layer = layer
-        _LayerManager.layer_stack.append(layer)
+        if LayerManager.current_layer is None:
+            LayerManager.current_layer = layer
+        LayerManager.layer_stack.append(layer)
 
     @staticmethod
     def update():
-        if _LayerManager.current_layer is not None:
-            _LayerManager.current_layer.update()
+        if LayerManager.current_layer is not None:
+            LayerManager.current_layer.update()
     
     @staticmethod
     def draw():
-        if _LayerManager.current_layer is not None:
-            _LayerManager.current_layer.draw()
+        if LayerManager.current_layer is not None:
+            LayerManager.current_layer.draw()

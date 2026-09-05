@@ -20,38 +20,54 @@ class Image(base.GUIBase):
             self.img_surface = _pg.image.load("src/assets/img/NoImage.png").convert_alpha()
 
         height = self.img_surface.get_height() * width / self.img_surface.get_width()
-        self.img_surface = _pg.transform.smoothscale(self.img_surface, (width*profile.surface_scale, height*profile.surface_scale))
+        self.displayed_img_surface = _pg.transform.smoothscale(self.img_surface, (width*profile.surface_scale, height*profile.surface_scale))
+        
 
         super().__init__(u, v, width, height, padding, border, no_register)
 
         self.child = child
         if self.child:
             self.child.pos = Vec2(
-                self.width/2 - self.child.width/2,
-                self.height/2 - self.child.height/2
+                self.size.width/2 - self.child.size.width/2,
+                self.size.height/2 - self.child.size.height/2
             )
 
     def resize(self):
-        self.height = self.img_surface.get_height() * self.width / self.img_surface.get_width()
-        self.img_surface = _pg.transform.smoothscale(self.img_surface, (self.width*profile.surface_scale, self.height*profile.surface_scale))
-        self.surface = _pg.Surface((self.width*profile.surface_scale, self.height*profile.surface_scale), _pg.SRCALPHA)
+        """
+        _resize() is called in update(), but this method must be called after resizing.\n
+        This method resizes the image while preserving its aspect ratio.\n
+        Please call this method after changing width only. The height will be ignored.
+        """
+        if not self.size.is_dirty():
+            return
+        self.size.height = self.img_surface.get_height() * self.size.width / self.img_surface.get_width()
+        self.displayed_img_surface = _pg.transform.smoothscale(self.img_surface, (self.size*profile.surface_scale).tuple)
+        self.size.reset()
 
     def resize_strict(self):
-        self.img_surface = _pg.transform.smoothscale(self.img_surface, (self.width*profile.surface_scale, self.height*profile.surface_scale))
-        self.surface = _pg.Surface((self.width*profile.surface_scale, self.height*profile.surface_scale), _pg.SRCALPHA)
+        """
+        _resize() is called in update(), but this method must be called after resizing.\n
+        This method resizes the image without preserving its aspect ratio.
+        """
+        if not self.size.is_dirty():
+            return
+        self.displayed_img_surface = _pg.transform.smoothscale(self.img_surface, (self.size*profile.surface_scale).tuple)
+        self.size.reset()
 
     def update(self):
-        super().update()
+        from ..time import BenchMark
+        with BenchMark("image.update()"):
+            super().update()
 
     def draw(self, surface: _Optional[_pg.Surface] = None) -> None:
         super().draw(surface)
 
-        self.surface.blit(self.img_surface)
+        self.surface.blit(self.displayed_img_surface)
 
         if self.child:
             self.child.pos = Vec2(
-                self.width/2 - self.child.width/2,
-                self.height/2 - self.child.height/2
+                self.size.width/2 - self.child.size.width/2,
+                self.size.height/2 - self.child.size.height/2
             )
 
             self.child.draw(self.surface)

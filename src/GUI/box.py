@@ -17,8 +17,8 @@ class Box(_base.GUIBase):
         self.child = child
         if self.child:
             self.child.pos = Vec2(
-                self.width/2 - self.child.width/2,
-                self.height/2 - self.child.height/2
+                self.size.width/2 - self.child.size.width/2,
+                self.size.height/2 - self.child.size.height/2
             )
 
     def update(self):
@@ -31,8 +31,8 @@ class Box(_base.GUIBase):
 
         if self.child:
             self.child.pos = Vec2(
-                self.width/2 - self.child.width/2,
-                self.height/2 - self.child.height/2
+                self.size.width/2 - self.child.size.width/2,
+                self.size.height/2 - self.child.size.height/2
             )
 
             self.child.draw(self.surface)

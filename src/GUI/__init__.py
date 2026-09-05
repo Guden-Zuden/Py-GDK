@@ -1,6 +1,6 @@
 from .base import *
-from .text import (
-    Text,
+from .label import (
+    Label,
     TextAttributes
 )
 from .containers import (
@@ -23,4 +23,9 @@ from .image import (
 from .scrollbar import (
     VerticalScrollBar,
     HorizontalScrollBar,
+)
+
+from .docking import (
+    DockingDirection,
+    DockingManager
 )

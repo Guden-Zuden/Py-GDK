@@ -33,54 +33,51 @@ def run():
     assert profile.clock is not None
 
     profile._gdk_executed = True
-    for _layer in layer._LayerManager.layer_stack:
+    for _layer in layer.LayerManager.layer_stack:
         for _component in _layer._GUIComponent_stack:
             _component._regist_events()
 
-    frameCounter = None
-    if profile.isCalcPerformance:
-        frameCounter = FrameCounter()
-
     while True:
-        if frameCounter:
-            frameCounter.accumulateFrameCount()
-            if now() - frameCounter._start_time > 1:
-                printTime(1/frameCounter.frame_count)
-                frameCounter.reset()
+        with BenchMark("core"):
 
-        profile.surface.fill(colors.BLACK)
+            profile.surface.fill(colors.BLACK)
 
-        event._updateKeyEvents()
-        event._updateMouseEvents()
-        event._updateMousePos()
-        event.Input.update()
+            with BenchMark("event"):
+                event._updateKeyEvents()
+                event._updateMouseEvents()
+                event._updateMousePos()
+                event.Input.update()
 
-        event.EventManager.update(_pg.event.get())
+                event.EventManager.update(_pg.event.get())
 
-        event.EventManager.dispatch()
+                event.EventManager.dispatch()
 
-        # Scene.SceneManager.update() # TODO
-        # Scene.SceneManager.draw()
+            # Scene.SceneManager.update() # TODO
+            # Scene.SceneManager.draw()
 
-        GUI.base._updateMouseStatus()
-        GUI.base.GUIBase._reset_g_flag()
+            with BenchMark("layer"):
+                GUI.base._updateMouseStatus()
+                GUI.base.GUIBase._reset_g_flag()
 
-        layer._LayerManager.update()
-        layer._LayerManager.draw()
-        for pos in GUI.base.GUIBase._debug_position_stack:
-            _pg.draw.circle(profile.surface, (0, 255, 0), (pos*profile.surface_scale).pos, 10)
+                layer.LayerManager.update()
+                layer.LayerManager.draw()
 
-        profile.screen.fill((0, 0, 0))
-        if profile.surface_scale != 1:
-            _surf = _pg.transform.smoothscale(profile.surface, (profile.width, profile.height))
-        else:
-            _surf = profile.surface
+            with BenchMark("final draw"):
+                for pos in GUI.base.GUIBase._debug_position_stack:
+                    _pg.draw.circle(profile.surface, (0, 255, 0), (pos*profile.surface_scale).pos, 10)
 
-        profile.screen.blit(_surf, (profile.window_width/2-profile.width/2, profile.window_height/2 - profile.height/2))
-        _pg.draw.rect(profile.screen, (255, 255, 255), _pg.Rect(profile.window_width/2-profile.width/2-1, profile.window_height/2-profile.height/2-1, profile.width+2, profile.height+2), 1)
+                profile.screen.fill((0, 0, 0))
+                if profile.surface_scale != 1:
+                    _surf = _pg.transform.smoothscale(profile.surface, (profile.width, profile.height))
+                else:
+                    _surf = profile.surface
 
-        _pg.display.update()
-        profile.clock.tick(profile.fps)
+                profile.screen.blit(_surf, (profile.window_width/2-profile.width/2, profile.window_height/2 - profile.height/2))
+                _pg.draw.rect(profile.screen, (255, 255, 255), _pg.Rect(profile.window_width/2-profile.width/2-1, profile.window_height/2-profile.height/2-1, profile.width+2, profile.height+2), 1)
+
+                _pg.display.update()
+
+            profile.clock.tick(profile.fps)
 
 def quit():
     _pg.quit()

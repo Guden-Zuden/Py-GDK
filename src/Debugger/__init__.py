@@ -7,3 +7,8 @@ Other function keys keys may also be used by debugger.
 ## Features: 
 - Displays the position of GUI object under the cursor.
 """
+
+from .. import (
+    event as _event,
+    key as _key
+)

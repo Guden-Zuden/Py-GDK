@@ -48,8 +48,8 @@ resizable = False
 _gdk_executed = False
 
 # === For debug ===
-isCalcPerformance: bool = False
-isShowPos: bool = False
+is_show_benchmark_log: bool = False
+is_show_gui_positions: bool = False
 
 import pathlib
 _directory = pathlib.Path(__file__).parent
@@ -75,6 +75,6 @@ __all__ = [
     "surface_fill_screen",
     "surface_scale",
     "resizable",
-    "isCalcPerformance",
-    "isShowPos",
+    "is_show_benchmark_log",
+    "is_show_gui_positions",
 ]

@@ -9,6 +9,7 @@ from . import Scene
 from . import event, key, mouse
 from . import colors
 from . import sound
+from . import time
 
 # experimental
 from . import Debugger
@@ -68,7 +69,7 @@ def on_windowResized(e):
 
     core.recreate_surface(new_width, new_height)
 
-    for _layer in layer._LayerManager.layer_stack:
+    for _layer in layer.LayerManager.layer_stack:
         for gui_component in _layer._GUIComponent_stack:
             gui_component.pos = Vec2(
                 profile.width/2 + profile.width/2 * gui_component.u - gui_component.width/2,
