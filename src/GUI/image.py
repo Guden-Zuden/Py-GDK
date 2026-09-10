@@ -42,7 +42,6 @@ class Image(base.GUIBase):
             return
         self.size.height = self.img_surface.get_height() * self.size.width / self.img_surface.get_width()
         self.displayed_img_surface = _pg.transform.smoothscale(self.img_surface, (self.size*profile.surface_scale).tuple)
-        self.size.reset()
 
     def resize_strict(self):
         """
@@ -52,7 +51,6 @@ class Image(base.GUIBase):
         if not self.size.is_dirty():
             return
         self.displayed_img_surface = _pg.transform.smoothscale(self.img_surface, (self.size*profile.surface_scale).tuple)
-        self.size.reset()
 
     def update(self):
         from ..time import BenchMark

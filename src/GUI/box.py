@@ -23,6 +23,7 @@ class Box(_base.GUIBase):
 
     def update(self):
         super().update()
+        if self.child: self.child.create_surface()
 
     def draw(self, surface: _Optional[_pg.Surface] = None) -> None:
         super().draw(surface)

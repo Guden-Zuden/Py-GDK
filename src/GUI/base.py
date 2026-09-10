@@ -72,9 +72,6 @@ class GUIBase(event.EventObject):
     
     def __init__(self, u: float, v: float, width: float, height: float,
                  padding = profile.default_padding, border: Border = Border(0, colors.WHITE), no_register = False) -> None:
-        self.surface = _pg.Surface((width*profile.surface_scale, height*profile.surface_scale), _pg.SRCALPHA)
-        self.border_surface = _pg.Surface((width*profile.surface_scale, height*profile.surface_scale), _pg.SRCALPHA)
-
         self.u, self.v = u, v
         self.size = Vec2(width, height)
         self.pos = Vec2(
@@ -98,6 +95,8 @@ class GUIBase(event.EventObject):
         if profile.is_show_gui_positions:
             GUIBase._debug_position_stack.append(self.pos)
 
+        self.create_surface()
+
     def _regist_events(self):
         if not self.no_register:
             for component in self.children:
@@ -106,17 +105,9 @@ class GUIBase(event.EventObject):
             event.EventManager.register_mousebuttonup(mouse.left, type(self).on_executed)
             event.EventManager.link_instance(self)
 
-    def _resize(self):
+    def create_surface(self):
         self.surface = _pg.Surface((self.size*profile.surface_scale).tuple, _pg.SRCALPHA)
         self.border_surface = _pg.Surface((self.size*profile.surface_scale).tuple, _pg.SRCALPHA)
-        
-    def _flush(self, surface: _Optional[_pg.Surface] = None):
-        """If surface is not specified, profile.surface will be used."""
-        if surface is None:
-            surface = profile.surface
-
-        surface.blit(self.surface, (self.pos * profile.surface_scale).pos)
-        surface.blit(self.border_surface, (self.pos * profile.surface_scale).pos)
         
     def _centering(self):
         self.pos.x -= self.size.width/2
@@ -125,16 +116,18 @@ class GUIBase(event.EventObject):
     def update(self) -> None:
         GUIBase.update_count += 1
 
-        if (self.size.width != self.surface.width/profile.surface_scale
-            or self.size.height != self.surface.height/profile.surface_scale):
-            
-            self._resize()
+        self.on_update()
+
+        if self.size.is_dirty():
+            self.create_surface()
+            self.size.reset()
         
         if self.parent is None: return
 
     def draw(self, surface: _Optional[_pg.Surface] = None) -> None:
         GUIBase.draw_count += 1
         if surface is None: surface = self.surface
+        self.on_draw(surface)
         self.surface.fill((0,0,0,0))
 
         if self.border.width > 0:
@@ -143,6 +136,14 @@ class GUIBase(event.EventObject):
             width = int(self.border.width*profile.surface_scale)
 
             if width > 0: _pg.draw.rect(self.border_surface, self.border.color, border_rect, width)
+
+    def _flush(self, surface: _Optional[_pg.Surface] = None):
+        """If surface is not specified, profile.surface will be used."""
+        if surface is None:
+            surface = profile.surface
+
+        surface.blit(self.surface, (self.pos * profile.surface_scale).pos)
+        surface.blit(self.border_surface, (self.pos * profile.surface_scale).pos)
 
     def stick(self, gui_obj: GUIBase, dir: Direction):
         self.pos.x = gui_obj.pos.x + gui_obj.size.width/2 - self.size.width/2
@@ -194,7 +195,8 @@ class GUIBase(event.EventObject):
             parents.append(gui)
 
         return parents
-    
+
+    # events    
     def on_hovered(self):
         if self.parent is None: return
 
@@ -232,6 +234,11 @@ class GUIBase(event.EventObject):
         if self.event_func and self.hovered:
             self.event_func()
 
+    def on_update(self):
+        pass
+    def on_draw(self, surface: _pg.Surface):
+        pass
+
     # setters
     def set_pos(self, x: int | float, y: int | float):
         self.pos = Vec2(x, y)
@@ -240,12 +247,13 @@ class GUIBase(event.EventObject):
         self.u, self.v = u, v
         self.pos = _uvTopos((u, v), self.size.width, self.size.height)
 
-    def set_size(self, size: Vec2):
-        self.size = size
-        self._resize()
+    def set_size(self, width: float, height: float):
+        self.size.width, self.size.height = width, height
 
     def sync_size_to(self, component: GUIBase):
         self.size = component.size
+
+    #
 
 __all__ = [
     "Direction"

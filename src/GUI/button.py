@@ -32,14 +32,17 @@ class Button(_base.GUIBase):
         self.text_obj = _Text(u, v, text, textAttributes, padding=padding, no_register=True)
         self.box_obj = _Box(u, v, *self.size.tuple, color, padding, border, child=self.text_obj, no_register=True)
         self.box_obj.sync_size_to(self)
+        self.attach(self.box_obj)
 
         self.hovering_box_obj = _Box(u, v, *self.size.tuple, _colors.BLACK, padding, border, no_register=True)
         self.hovering_box_obj.color.a = int(self.hovering_box_obj.color.a * 0.2)
         self.hovering_box_obj.sync_size_to(self)
+        self.attach(self.hovering_box_obj)
 
         self.clicking_box_obj = _Box(u, v, *self.size.tuple, _colors.BLACK, padding, border, no_register=True)
         self.clicking_box_obj.color.a = int(self.clicking_box_obj.color.a * 0.4)
         self.clicking_box_obj.sync_size_to(self)
+        self.attach(self.clicking_box_obj)
 
     def update(self):
         super().update()

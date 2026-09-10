@@ -28,6 +28,7 @@ class Layer:
         _GUI.Image,
         _GUI.VerticalAlignContainer,
         _GUI.HorizontalAlignContainer,
+        _GUI.GridContainer,
         _GUI.TabContainer,
         _GUI.HorizontalScrollBar,
         _GUI.VerticalScrollBar,

@@ -23,8 +23,10 @@ class NullSurface(_pg.Surface): ...
 # definition position type
 class Vec2:
     def __init__(self, x: int | float, y: int | float) -> None:
+        from . import GUI as _GUI
         self._x, self._y = x, y
         self._dirty = False
+        self._sync_components: list[_GUI.base.GUIBase] = []
     
     @property
     def pos(self):

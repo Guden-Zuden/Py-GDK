@@ -53,17 +53,15 @@ class ContainerBase(_base.GUIBase):
     def adjust_size(self):
         width = abs(self.item_size.width - self.size.width)
         height = abs(self.item_size.height - self.size.height)
-        if not self.lock_horizontal_scroll:
-            if self.scroll_h > 0:
-                self.scroll_h = 0
-            elif self.scroll_h < -width:
-                self.scroll_h = -width
+        if self.scroll_h > 0 or self.lock_horizontal_scroll:
+            self.scroll_h = 0
+        elif self.scroll_h < -width:
+            self.scroll_h = -width
 
-        if not self.lock_vertical_scroll:
-            if self.scroll_v > 0:
-                self.scroll_v = 0
-            elif self.scroll_v < -height:
-                self.scroll_v = -height
+        if self.scroll_v > 0 or self.lock_vertical_scroll:
+            self.scroll_v = 0
+        elif self.scroll_v < -height:
+            self.scroll_v = -height
         
     def on_mousewheeldown(self, e):
         if not self.hovered: return
@@ -73,6 +71,7 @@ class ContainerBase(_base.GUIBase):
         else:
             self.scroll_v += delta
         self.adjust_size()
+        self._calc_positions()
 
     def on_mousewheelup(self, e):
         if not self.hovered: return
@@ -82,6 +81,7 @@ class ContainerBase(_base.GUIBase):
         else:
             self.scroll_v += delta
         self.adjust_size()
+        self._calc_positions()
 
     def update(self):
         with _BenchMark(f"{self}.update:item.update()"):
@@ -101,19 +101,21 @@ class ContainerBase(_base.GUIBase):
             if self.lock_horizontal_scroll:
                 self.scroll_h = 0
 
+            if self.size.is_dirty():
+                # self._calc_size()
+                self.size.reset()
+
             # make scroll bar
             u, v = _base._posTouv(self.pos, self.size.width, self.size.height)
             if (not self.lock_vertical_scroll
-                    and self.v_scrollBar_obj is None
-                    and not self.lock_vertical_scroll):
+                    and self.v_scrollBar_obj is None):
                 self.v_scrollBar_obj = _VerticalScrollBar(
                     u, v, self.item_size, self.size, self.bar_style, self.padding, self.no_register)
             elif self.lock_vertical_scroll:
                 self.v_scrollBar_obj = None
                 
             if (not self.lock_horizontal_scroll
-                    and self.h_scrollBar_obj is None
-                    and not self.lock_horizontal_scroll):
+                    and self.h_scrollBar_obj is None):
                 self.h_scrollBar_obj = _HorizontalScrollBar(
                     u, v, self.item_size, self.size, self.bar_style, self.padding, self.no_register)            
             elif self.lock_horizontal_scroll:
@@ -121,13 +123,15 @@ class ContainerBase(_base.GUIBase):
 
             # background image position
             if self.background and self.background.isImage():
-                self.background.image.pos = Vec2(0,0)        # pyright: ignore
-                if self.background.image.size.width != self.size.width: self.background.image.size.width = self.size.width       # pyright: ignore
-                if self.background.image.size.height != self.size.height: self.background.image.size.height = self.size.height
+                self.background.image.pos = Vec2(0,0)       # pyright: ignore
+                if self.background.image.size.width != self.size.width:     # pyright: ignore
+                    self.background.image.size.width = self.size.width      # pyright: ignore
+                if self.background.image.size.height != self.size.height:   # pyright: ignore
+                    self.background.image.size.height = self.size.height    # pyright: ignore
                 with _BenchMark(f"{self}.update:background.image.resize_strict()"):
-                    self.background.image.resize_strict()    # pyright: ignore
+                    self.background.image.resize_strict()   # pyright: ignore
                 with _BenchMark(f"{self}.update:background.image.update()"):
-                    self.background.image.update()
+                    self.background.image.update()          # pyright: ignore
 
             # update scrollbar member values and udpate them
             if self.v_scrollBar_obj:
@@ -146,7 +150,10 @@ class ContainerBase(_base.GUIBase):
         elif self.background and self.background.isImage():
             self.background.image.draw(self.surface) # pyright: ignore
 
-    def pushItem(self, item: _base.GUIBase): ...
+    def push_item(self, item: _base.GUIBase): ...
+
+    def _calc_size(self): pass
+    def _calc_positions(self): pass
 
 # containers
 class VerticalAlignContainer(ContainerBase):
@@ -155,29 +162,18 @@ class VerticalAlignContainer(ContainerBase):
                  lock_vertical_scroll = False, lock_horizontal_scroll = False,
                  space: float = 0, border: Border = Border(0, _colors.WHITE), no_register = False) -> None:
         super().__init__(u, v, width, height, background, padding, items, bar_style, lock_vertical_scroll, lock_horizontal_scroll, space, border, no_register)
-
-        if len(self.items) == 0:
-            self.item_size.width = 0
-        else:
-            self.item_size.width = max([item.size.width for item in self.items])
-
-        for item in self.items[:-1]:
-            self.item_size.height += item.size.height + item.padding.top + item.padding.bottom + self.space
-        self.item_size.height += self.size.height
+        self._calc_size()
+        self._calc_positions()
 
     def update(self):
         super().update()
 
     def draw(self, surface: _Optional[_pg.Surface] = None):
         super().draw(surface)
-        x = self.padding.left + self.border.width
-        y = self.padding.top + self.border.width
 
         for item in self.items:
-            item.pos = Vec2(x + self.scroll_h, y + self.scroll_v)
             if item.pos.y + item.size.height > 0 and item.pos.y < self.size.height:
                 item.draw(self.surface)
-            y += item.size.height + item.padding.top + item.padding.bottom + self.space
 
         if self.v_scrollBar_obj: self.v_scrollBar_obj.draw(self.surface)
         if self.h_scrollBar_obj: self.h_scrollBar_obj.draw(self.surface)
@@ -185,12 +181,39 @@ class VerticalAlignContainer(ContainerBase):
         if surface: self._flush(surface)
         else: self._flush()
 
-    def pushItem(self, item: _base.GUIBase):
+    def push_item(self, item: _base.GUIBase):
         self.items.append(item)
 
         item = self.items[-2]
-        self.item_size.width = max(*[item.size.width for item in self.items])
-        self.item_size.height += item.size.height + item.padding.top + item.padding.bottom + self.space*2
+        self.item_size.width = max([item.size.width for item in self.items])
+        self.item_size.height += item.size.height + item.padding.top + item.padding.bottom + self.space
+        self._calc_size()
+        self._calc_positions()
+
+    def set_items(self, items: list[_base.GUIBase]):
+        self.items = items
+        self._calc_size()
+        self._calc_positions()
+
+    def _calc_size(self):
+        self.item_size.width = 0
+        if len(self.items) != 0:
+            self.item_size.width = max([item.size.width for item in self.items])
+
+        self.item_size.height = 0
+        for item in self.items:
+            self.item_size.height += item.size.height + item.padding.top + item.padding.bottom
+        self.item_size.height += (len(self.items) - 1) * self.space
+        self.item_size.height += self.padding.bottom
+
+    def _calc_positions(self):
+        x = self.padding.left + self.border.width
+        y = self.padding.top + self.border.width
+
+        for item in self.items:
+            item.pos = Vec2(x + self.scroll_h, y + self.scroll_v)
+            y += item.size.height + item.padding.top + item.padding.bottom + self.space
+
 
 class HorizontalAlignContainer(ContainerBase):
     def __init__(self, u: float, v: float, width: float, height: float, background: _Optional[Background] = None,
@@ -198,29 +221,18 @@ class HorizontalAlignContainer(ContainerBase):
                  lock_vertical_scroll = False, lock_horizontal_scroll = False,
                  space: float = 0, border: Border = Border(0, _colors.WHITE), no_register = False) -> None:
         super().__init__(u, v, width, height, background, padding, items, bar_style, lock_vertical_scroll, lock_horizontal_scroll, space, border, no_register)
-
-        for item in self.items[:-1]:
-            self.item_size.width += item.size.width + item.padding.left + item.padding.right + self.space
-        self.item_size.width += self.size.width
-
-        if len(self.items) == 0:
-            self.item_size.height = 0
-        else:
-            self.item_size.height = max([item.size.height for item in self.items])
+        self._calc_size()
+        self._calc_positions()
 
     def update(self):
         super().update()
 
     def draw(self, surface: _Optional[_pg.Surface] = None):
         super().draw(surface)
-        x = self.padding.left + self.border.width
-        y = self.padding.top + self.border.width
 
         for item in self.items:
-            item.pos = Vec2(x + self.scroll_h, y + self.scroll_v)
             if item.pos.x + item.size.width > 0 and item.pos.x < self.size.width:
                 item.draw(self.surface)
-            x += item.size.width + item.padding.left + item.padding.right + self.space
 
         if self.v_scrollBar_obj: self.v_scrollBar_obj.draw(self.surface)
         if self.h_scrollBar_obj: self.h_scrollBar_obj.draw(self.surface)
@@ -228,25 +240,121 @@ class HorizontalAlignContainer(ContainerBase):
         if surface: self._flush(surface)
         else: self._flush()
 
-    def pushItem(self, item: _base.GUIBase):
+    def push_item(self, item: _base.GUIBase):
         self.items.append(item)
 
         item = self.items[-2]
         self.item_size.width += item.size.width + item.padding.left + item.padding.right + self.space*2
-        self.item_size.height = max(*[item.size.height for item in self.items])
+        self.item_size.height = max([item.size.height for item in self.items])
+
+        self._calc_size()
+        self._calc_positions()
+
+    def set_items(self, items: list[_base.GUIBase]):
+        self.items = items
+        self._calc_size()
+        self._calc_positions()
+
+    def _calc_size(self):
+        self.item_size.width = 0
+        for item in self.items:
+            self.item_size.width += item.size.width + item.padding.left + item.padding.right
+        self.item_size.width += (len(self.items) - 1) * self.space
+        self.item_size.width += self.padding.right
+
+        self.item_size.height = 0
+        if len(self.items) != 0:
+            self.item_size.height = max([item.size.height for item in self.items])
+
+    def _calc_positions(self):
+        x = self.padding.left + self.border.width
+        y = self.padding.top + self.border.width
+
+        for item in self.items:
+            item.pos = Vec2(x + self.scroll_h, y + self.scroll_v)
+            x += item.size.width + item.padding.left + item.padding.right + self.space
+
 
 class GridContainer(ContainerBase):
-    def __init__(self, u: float, v: float, width: float, height: float, 
-                 background: _event.Background | None = None, padding=_profile.default_padding, 
-                 items: list[_base.GUIBase] = [], bar_style: _event.ScrollBarStyle = _profile.default_scrollbar_style, 
-                 lock_vertical_scroll=False, lock_horizontal_scroll=False, 
-                 space: float = 0, border: _event.Border = Border(0, _colors.WHITE), no_register=False) -> None:
+    def __init__(self, u: float, v: float, width: float, height: float, background: _Optional[Background] = None,
+                 grid_col: int = -1, grid_row: int = -1,
+                 padding = _profile.default_padding, items: list[_base.GUIBase] = [], bar_style: _event.ScrollBarStyle = _profile.default_scrollbar_style, 
+                 lock_vertical_scroll = False, lock_horizontal_scroll = False, 
+                 space: float = 0, border: Border = Border(0, _colors.WHITE), no_register=False) -> None:
+        if grid_col < 1 or grid_row < 1:
+            raise Exception("Invalid number. It must be more than 1.")
         super().__init__(u, v, width, height, background, padding, items, bar_style, lock_vertical_scroll, lock_horizontal_scroll, space, border, no_register)
+        self.grid_col, self.grid_row = grid_col, grid_row
 
-        if len(self.items) == 0:
-            self.item_size.width = 0
-        else:
-            self.item_size.width = max([item.size.width for item in self.items])
+        self._calc_size()
+        self._calc_positions()
+
+    def update(self):
+        super().update()
+
+    def draw(self, surface: _Optional[_pg.Surface] = None):
+        super().draw(surface)
+
+        _index = 0
+        for item in self.items:
+            if item.pos.x + item.size.width > 0 and item.pos.x < self.size.width:
+                item.draw(self.surface)
+            _index += 1
+
+        if self.v_scrollBar_obj: self.v_scrollBar_obj.draw(self.surface)
+        if self.h_scrollBar_obj: self.h_scrollBar_obj.draw(self.surface)
+
+        if surface: self._flush(surface)
+        else: self._flush()
+
+    def _calc_size(self):
+        def separate_items(_list: list, _n: int):
+            return [_list[i : i + _n] for i in range(0, len(_list), _n)]
+
+        if len(self.items) == 0: return
+        x_size = max(
+            [
+                sum([obj.size.width + obj.padding.left + obj.padding.right for obj in h_objs]) + (len(h_objs) - 1) * self.space + self.padding.right
+                for h_objs in separate_items(self.items, self.grid_row)
+            ]
+        )
+        y_size = sum(
+            [
+                max([obj.size.height + obj.padding.top + obj.padding.bottom for obj in h_objs])
+                for h_objs in separate_items(self.items, self.grid_col)
+            ]
+        ) + (self.grid_col - 1) * self.space + self.padding.bottom
+
+        self.item_size.width = x_size
+        self.item_size.height = y_size
+
+    def _calc_positions(self):
+        with _BenchMark(f"{self}._calc_positions()"):
+            x = self.padding.left + self.border.width
+            y = self.padding.top + self.border.width
+
+            _index = 0
+            for item in self.items:
+                item.pos = Vec2(x + self.scroll_h, y + self.scroll_v)
+                if item.pos.x + item.size.width > 0 and item.pos.x < self.size.width:
+                    item.draw(self.surface)
+                if (_index + 1) % self.grid_row == 0:
+                    x = self.padding.left + self.border.width # reset
+                    y += item.size.height + item.padding.top + item.padding.bottom + self.space
+                else:
+                    x += item.size.width + item.padding.left + item.padding.right + self.space
+
+                _index += 1
+
+    def push_item(self, item: _base.GUIBase):
+        self.items.append(item)
+        self._calc_positions()
+        self._calc_size()
+
+    def set_item(self, items: list[_base.GUIBase]):
+        self.items = items
+        self._calc_positions()
+        self._calc_size()
 
 class TabContainer(_base.GUIBase):
     def __init__(self, u: float, v: float, width: float, height: float,

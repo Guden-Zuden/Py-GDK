@@ -6,7 +6,7 @@ from .label import (
 from .containers import (
     VerticalAlignContainer,
     HorizontalAlignContainer,
-    # GridContainer,
+    GridContainer,
     TabContainer,
 )
 from .box import (
