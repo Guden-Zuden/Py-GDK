@@ -13,9 +13,9 @@ from .base import (
     colors,
     Optional
 )
+from .window import Window
 
-screen: Optional[_pg.Surface] = None
-surface: _pg.Surface = NullSurface([0,0])
+window: Optional[Window] = None
 clock: Optional[_pg.time.Clock] = None
 
 title: str = "GameDeveloperKits"
@@ -38,8 +38,8 @@ surface_size_locked = False
 """If true, surface size cannot be changed."""
 surface_fill_screen = False
 """If false, surface size will be changed depending on the aspect ratio."""
-surface_scale: int = 2
-"""surface_scale must be set before calling init()"""
+# surface_scale: int = 2
+# """surface_scale must be set before calling init()"""
 
 resizable = False
 """resizable must be set before calling init()"""
@@ -54,9 +54,19 @@ is_show_gui_positions: bool = False
 import pathlib
 _directory = pathlib.Path(__file__).parent
 
+import ctypes as _ctypes
+SPI_GETSCROLLLINES = 0x0068
+lines = _ctypes.c_uint()
+success = _ctypes.windll.user32.SystemParametersInfoW(
+    SPI_GETSCROLLLINES, 0, _ctypes.byref(lines), 0
+)
+lines_per_scroll = lines.value*32 if success else 3*32
+
+
 __all__ = [
-    "screen",
-    "surface",
+    # "screen",
+    # "surface",
+    "window",
     "clock",
     "title",
     "fps",
@@ -73,8 +83,8 @@ __all__ = [
     "sprite_size",
     "surface_size_locked",
     "surface_fill_screen",
-    "surface_scale",
     "resizable",
     "is_show_benchmark_log",
     "is_show_gui_positions",
+    "lines_per_scroll",
 ]

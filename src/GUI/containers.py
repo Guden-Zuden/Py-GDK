@@ -65,7 +65,7 @@ class ContainerBase(_base.GUIBase):
         
     def on_mousewheeldown(self, e):
         if not self.hovered: return
-        delta: int = e.y * 32
+        delta: int = e.y * _profile.lines_per_scroll
         if _event.getMod().isShift():
             self.scroll_h += delta
         else:
@@ -75,7 +75,7 @@ class ContainerBase(_base.GUIBase):
 
     def on_mousewheelup(self, e):
         if not self.hovered: return
-        delta: int = e.y * 32
+        delta: int = e.y * _profile.lines_per_scroll
         if _event.getMod().isShift():
             self.scroll_h += delta
         else:
@@ -146,7 +146,7 @@ class ContainerBase(_base.GUIBase):
         if self.background and self.background.isColor():
             _pg.draw.rect(
                 self.surface, self.background.color,# pyright: ignore
-                _pg.Rect(0,0, *(self.size*_profile.surface_scale)))
+                _pg.Rect(0,0, *self.size))
         elif self.background and self.background.isImage():
             self.background.image.draw(self.surface) # pyright: ignore
 

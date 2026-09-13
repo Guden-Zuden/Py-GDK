@@ -14,13 +14,14 @@ class Image(base.GUIBase):
                  padding=profile.default_padding, border: base.Border = Border(0, colors.WHITE),
                  child: _Optional[base.GUIBase] = None, no_register = False) -> None:
         try:
+            _pg.Window.get_surface(profile.window.window)
             self.img_surface = _pg.image.load(img_filepath).convert_alpha()
         except FileNotFoundError as e:
             print(f"[Image.__init__] {e}")
             self.img_surface = _pg.image.load("src/assets/img/NoImage.png").convert_alpha()
 
         height = self.img_surface.get_height() * width / self.img_surface.get_width()
-        self.displayed_img_surface = _pg.transform.smoothscale(self.img_surface, (width*profile.surface_scale, height*profile.surface_scale))
+        self.displayed_img_surface = _pg.transform.smoothscale(self.img_surface, (width, height))
         
 
         super().__init__(u, v, width, height, padding, border, no_register)
@@ -41,7 +42,7 @@ class Image(base.GUIBase):
         if not self.size.is_dirty():
             return
         self.size.height = self.img_surface.get_height() * self.size.width / self.img_surface.get_width()
-        self.displayed_img_surface = _pg.transform.smoothscale(self.img_surface, (self.size*profile.surface_scale).tuple)
+        self.displayed_img_surface = _pg.transform.smoothscale(self.img_surface, (self.size).tuple)
 
     def resize_strict(self):
         """
@@ -50,7 +51,7 @@ class Image(base.GUIBase):
         """
         if not self.size.is_dirty():
             return
-        self.displayed_img_surface = _pg.transform.smoothscale(self.img_surface, (self.size*profile.surface_scale).tuple)
+        self.displayed_img_surface = _pg.transform.smoothscale(self.img_surface, (self.size).tuple)
 
     def update(self):
         from ..time import BenchMark

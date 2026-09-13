@@ -106,8 +106,8 @@ class GUIBase(event.EventObject):
             event.EventManager.link_instance(self)
 
     def create_surface(self):
-        self.surface = _pg.Surface((self.size*profile.surface_scale).tuple, _pg.SRCALPHA)
-        self.border_surface = _pg.Surface((self.size*profile.surface_scale).tuple, _pg.SRCALPHA)
+        self.surface = _pg.Surface((self.size).tuple, _pg.SRCALPHA)
+        self.border_surface = _pg.Surface((self.size).tuple, _pg.SRCALPHA)
         
     def _centering(self):
         self.pos.x -= self.size.width/2
@@ -133,17 +133,18 @@ class GUIBase(event.EventObject):
         if self.border.width > 0:
             border_rect = surface.get_rect()
 
-            width = int(self.border.width*profile.surface_scale)
+            width = int(self.border.width)
 
             if width > 0: _pg.draw.rect(self.border_surface, self.border.color, border_rect, width)
 
     def _flush(self, surface: _Optional[_pg.Surface] = None):
         """If surface is not specified, profile.surface will be used."""
+        assert profile.window
         if surface is None:
-            surface = profile.surface
+            surface = profile.window.surface
 
-        surface.blit(self.surface, (self.pos * profile.surface_scale).pos)
-        surface.blit(self.border_surface, (self.pos * profile.surface_scale).pos)
+        surface.blit(self.surface, (self.pos).pos)
+        surface.blit(self.border_surface, (self.pos).pos)
 
     def stick(self, gui_obj: GUIBase, dir: Direction):
         self.pos.x = gui_obj.pos.x + gui_obj.size.width/2 - self.size.width/2
@@ -162,10 +163,10 @@ class GUIBase(event.EventObject):
 
     def get_rect(self):
         return _pg.Rect(
-            self.pos.x*profile.surface_scale - self.padding.left*profile.surface_scale,
-            self.pos.y*profile.surface_scale - self.padding.top*profile.surface_scale,
-            self.size.width*profile.surface_scale + self.padding.left*profile.surface_scale + self.padding.right*profile.surface_scale,
-            self.size.height*profile.surface_scale + self.padding.top*profile.surface_scale + self.padding.bottom*profile.surface_scale)
+            self.pos.x - self.padding.left,
+            self.pos.y - self.padding.top,
+            self.size.width + self.padding.left + self.padding.right,
+            self.size.height + self.padding.top + self.padding.bottom)
 
     def get_size(self):
         return (self.size.width, self.size.height)
@@ -202,10 +203,6 @@ class GUIBase(event.EventObject):
 
         mouse_pos = event.getMousePos()
         rect = self.get_rect()
-        rect.x /= profile.surface_scale
-        rect.y /= profile.surface_scale
-        rect.width /= profile.surface_scale
-        rect.height /= profile.surface_scale
 
         for parent in self.get_parents():
             rect.x += parent.pos.x

@@ -6,6 +6,7 @@ from . import event
 from . import layer
 from .time import *
 from . import colors
+from . import Window
 
 import pygame as _pg
 import sys as _sys
@@ -18,18 +19,19 @@ def init():
     profile.default_font = _pg.font.Font(None, profile.default_fontsize)
 
     flags = _pg.RESIZABLE if profile.resizable else 0
-    profile.screen = _pg.display.set_mode((profile.window_width, profile.window_height), flags=flags)
-
-    profile.surface = _pg.Surface((profile.width*profile.surface_scale, profile.height*profile.surface_scale), flags=_pg.SRCALPHA).convert_alpha()
+    profile.window = Window(profile.title, profile.window_width, profile.window_height, profile.width, profile.height)
+    profile.window.window.resizable = profile.resizable
 
 
 def recreate_surface(width: int, height: int):
+    assert profile.window
     profile.width = width
     profile.height = height
-    profile.surface = _pg.Surface([profile.width*profile.surface_scale, profile.height*profile.surface_scale], flags=_pg.SRCALPHA)
+    profile.window.recreate_surface(width, height)
+    print("recreated")
 
 def run():
-    assert profile.screen is not None
+    assert profile.window is not None
     assert profile.clock is not None
 
     profile._gdk_executed = True
@@ -40,7 +42,7 @@ def run():
     while True:
         with BenchMark("core"):
 
-            profile.surface.fill(colors.BLACK)
+            profile.window.surface.fill(colors.BLACK)
 
             with BenchMark("event"):
                 event._updateKeyEvents()
@@ -64,18 +66,33 @@ def run():
 
             with BenchMark("final draw"):
                 for pos in GUI.base.GUIBase._debug_position_stack:
-                    _pg.draw.circle(profile.surface, (0, 255, 0), (pos*profile.surface_scale).pos, 10)
+                    _pg.draw.circle(profile.window.surface, (0, 255, 0), pos.pos, 10)
 
-                profile.screen.fill((0, 0, 0))
-                if profile.surface_scale != 1:
-                    _surf = _pg.transform.smoothscale(profile.surface, (profile.width, profile.height))
-                else:
-                    _surf = profile.surface
+                profile.window.draw()
+                # profile.window.screen.fill((0, 0, 0))
+                # if profile.surface_scale != 1:
+                #     _surf = _pg.transform.smoothscale(profile.surface, (profile.width, profile.height))
+                # else:
+                #     _surf = profile.surface
+                # if profile.width != profile.window_width and profile.height != profile.window_height:
+                #     old_width = profile.width
+                #     old_height = profile.height
+                #     max_width = profile.window_width
+                #     max_height = profile.window_height
 
-                profile.screen.blit(_surf, (profile.window_width/2-profile.width/2, profile.window_height/2 - profile.height/2))
-                _pg.draw.rect(profile.screen, (255, 255, 255), _pg.Rect(profile.window_width/2-profile.width/2-1, profile.window_height/2-profile.height/2-1, profile.width+2, profile.height+2), 1)
+                #     scaleX = max_width / old_width
+                #     scaleY = max_height / old_height
+                #     scale = min(scaleX, scaleY)
 
-                _pg.display.update()
+                #     new_width = old_width * scale
+                #     new_height = old_height * scale
+
+                #     _surf = _pg.transform.smoothscale(_surf, (new_width, new_height))
+
+                # profile.screen.blit(_surf, (profile.window_width/2-_surf.get_width()/2, profile.window_height/2 - _surf.get_height()/2))
+                # _pg.draw.rect(profile.screen, (255, 255, 255), _pg.Rect(profile.window_width/2-_surf.get_width()/2-1, profile.window_height/2-_surf.get_height()/2-1, _surf.get_width()+2, _surf.get_height()+2), 1)
+
+                # _pg.display.update()
 
             profile.clock.tick(profile.fps)
 

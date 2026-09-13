@@ -19,20 +19,21 @@ class Label(_base.GUIBase):
         self.__private_text = text
         self.__private_wrap_width = wrap_width
 
-        self.text_surface = _pg.sysfont.SysFont(*self.textAttributes.getFontStyle()).render(
+        self.font = _pg.sysfont.SysFont(*self.textAttributes.getFontStyle())
+        self.text_surface = self.font.render(
             text, True, *self.textAttributes.getTextColors(), wraplength=wrap_width)
         if self.textAttributes.OutlineColor:
-            self.outline_surface = _pg.sysfont.SysFont(*self.textAttributes.getFontStyle()).render(
+            self.outline_surface = self.font.render(
                 text, True, self.textAttributes.OutlineColor, wraplength=wrap_width)
         else:
             self.outline_surface = None
             
-        super().__init__(u, v, self.text_surface.width/_profile.surface_scale, self.text_surface.height/_profile.surface_scale, padding, border, no_register)
+        super().__init__(u, v, self.text_surface.width, self.text_surface.height, padding, border, no_register)
         self._render_text()
         
         self.surface = _pg.Surface(
-            (self.textAttributes.OutlineWidth*_profile.surface_scale + self.size.width*_profile.surface_scale, 
-             self.textAttributes.OutlineWidth*_profile.surface_scale + self.size.height*_profile.surface_scale), flags=_pg.SRCALPHA)
+            (self.textAttributes.OutlineWidth + self.size.width, 
+             self.textAttributes.OutlineWidth + self.size.height), flags=_pg.SRCALPHA)
 
     def _isChanged(self):
         if (self.text != self.__private_text
@@ -41,16 +42,15 @@ class Label(_base.GUIBase):
         return False
 
     def _render_text(self):
-        self.pos = _base._uvTopos((self.u, self.v), self.size.width, self.size.height, self.anchor)
-
         self.text_surface = _pg.sysfont.SysFont(*self.textAttributes.getFontStyle()).render(
-                self.text, True, *self.textAttributes.getTextColors(), wraplength=self.wrap_width*_profile.surface_scale)
+                self.text, True, *self.textAttributes.getTextColors(), wraplength=self.wrap_width)
         if self.textAttributes.OutlineColor:
             self.outline_surface = _pg.sysfont.SysFont(*self.textAttributes.getFontStyle()).render(
                 self.text, True, self.textAttributes.OutlineColor, wraplength=self.wrap_width)
         else:
             self.outline_surface = None
-        # print(f"Text is rendered! {self.surface.width}")
+
+        self.pos = _base._uvTopos((self.u, self.v), self.size.width, self.size.height, self.anchor)
 
     def update(self):
         super().update()
@@ -59,8 +59,8 @@ class Label(_base.GUIBase):
             self.__private_wrap_width = self.wrap_width
 
             self._render_text()
-            self.size.width = self.text_surface.get_width()/_profile.surface_scale
-            self.size.height = self.text_surface.get_height()/_profile.surface_scale
+            self.size.width = self.text_surface.get_width()
+            self.size.height = self.text_surface.get_height()
             self.surface = _pg.Surface(self.text_surface.get_size(), _pg.SRCALPHA)
             self.pos = _base._uvTopos((self.u, self.v), self.size.width, self.size.height, self.anchor)
 

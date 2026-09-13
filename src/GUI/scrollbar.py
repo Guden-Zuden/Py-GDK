@@ -55,17 +55,17 @@ class VerticalScrollBar(ScrollBarBase):
 
         if not self.bar_style.rounded:
             _pg.draw.line(surface, self.bar_style.color, 
-                            (self.start_pos*_profile.surface_scale).pos, (self.end_pos*_profile.surface_scale).pos, self.bar_style.width)
+                            (self.start_pos).pos, (self.end_pos).pos, self.bar_style.width)
         else:
             # 補正
             self.start_pos.y += self.bar_style.width/2
             self.end_pos.y -= self.bar_style.width/2
             _pg.draw.line(surface, self.bar_style.color,
-                          (self.start_pos*_profile.surface_scale).pos, (self.end_pos*_profile.surface_scale).pos, self.bar_style.width)
+                          (self.start_pos).pos, (self.end_pos).pos, self.bar_style.width)
             _pg.draw.circle(surface, self.bar_style.color, # start edge
-                            (self.start_pos*_profile.surface_scale).pos, self.bar_style.width/2)
+                            (self.start_pos).pos, self.bar_style.width/2)
             _pg.draw.circle(surface, self.bar_style.color, # end edge
-                            (self.end_pos*_profile.surface_scale).pos, self.bar_style.width/2)
+                            (self.end_pos).pos, self.bar_style.width/2)
         
         self._flush(surface)
 
@@ -98,15 +98,15 @@ class HorizontalScrollBar(ScrollBarBase):
 
         if not self.bar_style.rounded:
             _pg.draw.line(surface, self.bar_style.color, 
-                            (self.start_pos*_profile.surface_scale).pos, (self.end_pos*_profile.surface_scale).pos, self.bar_style.width)
+                            (self.start_pos).pos, (self.end_pos).pos, self.bar_style.width)
         else:
             # 補正
             self.start_pos.y += self.bar_style.width/2
             self.end_pos.y -= self.bar_style.width/2
             _pg.draw.line(surface, self.bar_style.color,
-                          (self.start_pos*_profile.surface_scale).pos, (self.end_pos*_profile.surface_scale).pos, self.bar_style.width)
+                          (self.start_pos).pos, (self.end_pos).pos, self.bar_style.width)
             _pg.draw.circle(surface, self.bar_style.color, # start edge
-                            (self.start_pos*_profile.surface_scale).pos, self.bar_style.width/2)
+                            (self.start_pos).pos, self.bar_style.width/2)
             _pg.draw.circle(surface, self.bar_style.color, # end edge
-                            (self.end_pos*_profile.surface_scale).pos, self.bar_style.width/2)
+                            (self.end_pos).pos, self.bar_style.width/2)
         self._flush(surface)

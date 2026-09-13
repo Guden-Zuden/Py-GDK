@@ -202,7 +202,7 @@ class TextAttributes:
     def getFontStyle(self):
         from . import profile
         return (
-            self.Font, self.FontSize*profile.surface_scale, self.Bold, self.Italic
+            self.Font, self.FontSize, self.Bold, self.Italic
         )
     def getTextColors(self):
         return (

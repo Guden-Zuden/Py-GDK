@@ -31,8 +31,8 @@ def _updateMouseEvents():
     mouse._pressedButton = mouse.MouseButtonData(b[0], b[1], b[2], b[3], b[4])
 
 def _updateMousePos():
-    x, y = _pygame.mouse.get_pos()
-    mouse._pos = Vec2(x, y)
+    assert profile.window
+    mouse._pos = profile.window.get_mousePos()
 
 # ===== Dataclasses =====
 @dataclass

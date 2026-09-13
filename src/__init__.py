@@ -10,11 +10,15 @@ from . import event, key, mouse
 from . import colors
 from . import sound
 from . import time
+from .window import (
+    Window,    
+)
 
 # experimental
 from . import Debugger
 
 import pygame
+import sys
 from typing import Optional as _Optional
 
 def init(title: str = "GameDeveloperKits", fps: int = 60, width: int = 600, height: int = 400, mapSprite_size: int = 32, window_width: _Optional[int] = None, window_height: _Optional[int] = None):
@@ -67,10 +71,11 @@ def on_windowResized(e):
         new_width = old_width * scale
         new_height = old_height * scale
 
-    core.recreate_surface(new_width, new_height)
+    if profile.surface_fill_screen:
+        core.recreate_surface(new_width, new_height)
 
     for _layer in layer.LayerManager.layer_stack:
         for gui_component in _layer._GUIComponent_stack:
             gui_component.pos = Vec2(
-                profile.width/2 + profile.width/2 * gui_component.u - gui_component.width/2,
-                profile.height/2 + profile.height/2 * gui_component.v - gui_component.height/2)
+                profile.width/2 + profile.width/2 * gui_component.u - gui_component.size.width/2,
+                profile.height/2 + profile.height/2 * gui_component.v - gui_component.size.height/2)
