@@ -1,5 +1,5 @@
 from .base import *
-from . import Scene
+from . import scene
 from . import GUI
 from . import profile
 from . import event
@@ -21,8 +21,7 @@ def init():
     flags = _pg.RESIZABLE if profile.resizable else 0
     profile.window = Window(profile.title, profile.window_width, profile.window_height, profile.width, profile.height)
     profile.window.window.resizable = profile.resizable
-
-
+    
 def recreate_surface(width: int, height: int):
     assert profile.window
     profile.width = width
@@ -54,8 +53,8 @@ def run():
 
                 event.EventManager.dispatch()
 
-            # Scene.SceneManager.update() # TODO
-            # Scene.SceneManager.draw()
+            scene.SceneManager.update() # TODO
+            scene.SceneManager.draw()
 
             with BenchMark("layer"):
                 GUI.base._updateMouseStatus()

@@ -5,6 +5,7 @@ from . import base
 
 import pygame as _pg
 import pathlib
+from importlib.resources import files as _files
 from typing import (
     Optional as _Optional
 )
@@ -18,7 +19,7 @@ class Image(base.GUIBase):
             self.img_surface = _pg.image.load(img_filepath).convert_alpha()
         except FileNotFoundError as e:
             print(f"[Image.__init__] {e}")
-            self.img_surface = _pg.image.load("src/assets/img/NoImage.png").convert_alpha()
+            self.img_surface = _pg.image.load(_files("pygdk").joinpath("assets", "img", "NoImage.png")).convert_alpha()
 
         height = self.img_surface.get_height() * width / self.img_surface.get_width()
         self.displayed_img_surface = _pg.transform.smoothscale(self.img_surface, (width, height))

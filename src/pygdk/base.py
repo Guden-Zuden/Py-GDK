@@ -74,6 +74,12 @@ class Vec2:
     def tuple(self):
         return (self.x, self.y)
 
+    @property
+    def normalized(self):
+        distance = (self.x ** 2 + self.y ** 2) ** (1/2)
+        if distance == 0: return self
+        return self / abs(distance)
+
     def __add__(self, other: Vec2) -> Vec2:
         if type(other) == float or type(other) == int:
             return Vec2(self.x + other, self.y + other)
@@ -105,6 +111,9 @@ class Vec2:
             return Vec2(self.x / other.x, self.y / other.y)
         else:
             raise TypeError("Only Vec2, float, or integer arguments are supported.")
+
+    def __abs__(self) -> Vec2:
+        return Vec2(abs(self.x), abs(self.y))
     
     def __str__(self) -> str:
         return f"x: {self.x} y: {self.y}"
@@ -113,9 +122,8 @@ class Vec2:
         yield self.x
         yield self.y
     
-    def normalized(self):
-        distance = (self.x ** 2 + self.y ** 2) ** 1/2
-        self /= distance
+    def normalize(self):
+        self = self.normalized
 
     def distance(self) -> float:
         v = (self.x ** 2 + self.y ** 2) ** 1/2

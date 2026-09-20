@@ -22,6 +22,7 @@ class Window(_event.EventObject):
             (window_width, window_height),
             allow_high_dpi=allow_high_dpi,
             utility=utility)
+        self.window.get_surface()
         self.surface = _pg.Surface(
             (surface_width, surface_height), _pg.SRCALPHA
         )
@@ -29,6 +30,8 @@ class Window(_event.EventObject):
         self.window_height = window_height
         self.surface_width = surface_width
         self.surface_height = surface_height
+
+        self.is_fullscreen = False
 
     def _get_actual_size(self):
         old_width = self.surface.width
@@ -42,7 +45,6 @@ class Window(_event.EventObject):
 
         actual_width = old_width * scale
         actual_height = old_height * scale
-        print(actual_width, actual_height)
         return Vec2(actual_width, actual_height)
 
     def get_mousePos(self):
@@ -75,3 +77,11 @@ class Window(_event.EventObject):
     def on_resized(self, e):
         self.window_width = e.x
         self.window_height = e.y
+
+    def change_fullscreen(self):
+        if self.is_fullscreen:
+            self.window.set_windowed()
+            self.is_fullscreen = False
+        else:
+            self.window.set_fullscreen(True)
+            self.is_fullscreen = True

@@ -10,6 +10,10 @@ from . import event, key, mouse
 from . import colors
 from . import sound
 from . import time
+from .sprite import (
+    Sprite
+)
+from .import animator
 from .window import (
     Window,    
 )

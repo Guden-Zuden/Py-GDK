@@ -2,8 +2,6 @@ from typing import (
     Optional as _Optional
 )
 
-from src.colors import WHITE
-
 from .. import (
     GUI as _GUI,
     layer as _layer,

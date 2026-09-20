@@ -3,21 +3,12 @@ from . import profile
 from . import GUI as _GUI
 from . import event as _event
 from .time import BenchMark as _BenchMark
+from .exceptions import *
 
 from typing import (
     Any as _Any,
     Optional as _Optional
 )
-
-class AttachPermissionError(Exception):
-    def __init__(self, component: _Any, attach_to: _Any):
-        self.component = component
-        self.attach_to = attach_to
-
-    def __str__(self):
-        return (
-            f"{self.component} is not allowed to attach to {self.attach_to}."
-        )
 
 class Layer:
     PERMISSIONS: list[_Any] = [
