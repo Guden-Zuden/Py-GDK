@@ -15,8 +15,9 @@ from .sprite import (
 )
 from .import animator
 from .window import (
-    Window,    
+    Window,
 )
+from . import scene
 
 # experimental
 from . import Debugger

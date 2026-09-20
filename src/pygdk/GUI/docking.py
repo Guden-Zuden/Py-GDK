@@ -29,11 +29,11 @@ class DockingData:
         if (self.docking_direction == DockingDirection.LEFT
             or self.docking_direction == DockingDirection.RIGHT):
             # self.gui_component.height = current_height
-            self.gui_component.set_size(Vec2(self.gui_component.size.width, self.current_height))
+            self.gui_component.set_size(self.gui_component.size.width, self.current_height)
         if (self.docking_direction == DockingDirection.TOP
             or self.docking_direction == DockingDirection.BOTTOM):
             # self.gui_component.width = current_width
-            self.gui_component.set_size(Vec2(self.current_width, self.gui_component.size.height))
+            self.gui_component.set_size(self.current_width, self.gui_component.size.height)
         
 class DockingData_End:
     def __init__(
@@ -45,7 +45,7 @@ class DockingData_End:
         self.gui_component.pos = pos
         # self.gui_component.width = current_width
         # self.gui_component.height = current_height
-        self.gui_component.set_size(Vec2(current_width, current_height))
+        self.gui_component.set_size(current_width, current_height)
 
 class DockingManager:
     """Experimental"""
