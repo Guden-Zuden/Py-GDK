@@ -156,7 +156,20 @@ class ContainerBase(_base.GUIBase):
         elif self.background and self.background.isImage():
             self.background.image.draw(self.surface) # pyright: ignore
 
-    def push_item(self, item: _base.GUIBase): ...
+    def push_item(self, item: _base.GUIBase):
+        self.items.append(item)
+        self.attach(item)
+        self._calc_positions()
+        self._calc_size()
+
+    def set_items(self, items: list[_base.GUIBase]):
+        self.items = items
+        self.children.clear()
+        for item in items:
+            if item not in self.children:
+                self.attach(item)
+        self._calc_positions()
+        self._calc_size()
 
     def _calc_size(self): pass
     def _calc_positions(self): pass
@@ -186,16 +199,6 @@ class VerticalAlignContainer(ContainerBase):
 
         if surface: self._flush(surface)
         else: self._flush()
-
-    def push_item(self, item: _base.GUIBase):
-        self.items.append(item)
-        self._calc_size()
-        self._calc_positions()
-
-    def set_items(self, items: list[_base.GUIBase]):
-        self.items = items
-        self._calc_size()
-        self._calc_positions()
 
     def _calc_size(self):
         self.item_size.width = 0
@@ -240,16 +243,6 @@ class HorizontalAlignContainer(ContainerBase):
 
         if surface: self._flush(surface)
         else: self._flush()
-
-    def push_item(self, item: _base.GUIBase):
-        self.items.append(item)
-        self._calc_size()
-        self._calc_positions()
-
-    def set_items(self, items: list[_base.GUIBase]):
-        self.items = items
-        self._calc_size()
-        self._calc_positions()
 
     def _calc_size(self):
         self.item_size.width = 0
@@ -342,15 +335,7 @@ class GridContainer(ContainerBase):
 
                 _index += 1
 
-    def push_item(self, item: _base.GUIBase):
-        self.items.append(item)
-        self._calc_positions()
-        self._calc_size()
 
-    def set_item(self, items: list[_base.GUIBase]):
-        self.items = items
-        self._calc_positions()
-        self._calc_size()
 
 class TabContainer(_base.GUIBase):
     def __init__(self, u: float, v: float, width: float, height: float,
@@ -386,9 +371,6 @@ class TabContainer(_base.GUIBase):
         self.attach(self.HC_Tab)
 
         self.tab_properties = tab_properties
-        for tab_property in tab_properties:
-            for item in tab_property.items:
-                item.pos.y += self.HC_Tab.size.height
 
         self.current_tabIndex = 0
         self.VC_TabItems = VerticalAlignContainer(
@@ -415,7 +397,7 @@ class TabContainer(_base.GUIBase):
 
     def on_click_tab(self, index):
         self.current_tabIndex = index
-        self.VC_TabItems.items = self.tab_properties[self.current_tabIndex].items
+        self.VC_TabItems.set_items(self.tab_properties[self.current_tabIndex].items)
         self._set_colors()
 
     def _set_colors(self):

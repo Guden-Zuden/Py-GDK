@@ -28,12 +28,15 @@ class DockingData:
 
         if (self.docking_direction == DockingDirection.LEFT
             or self.docking_direction == DockingDirection.RIGHT):
-            # self.gui_component.height = current_height
             self.gui_component.set_size(self.gui_component.size.width, self.current_height)
+            if self.docking_direction == DockingDirection.RIGHT:
+                self.gui_component.set_pos(pos.x + self.current_width - gui_component.size.width, pos.y)
+
         if (self.docking_direction == DockingDirection.TOP
             or self.docking_direction == DockingDirection.BOTTOM):
-            # self.gui_component.width = current_width
             self.gui_component.set_size(self.current_width, self.gui_component.size.height)
+            if self.docking_direction == DockingDirection.BOTTOM:
+                self.gui_component.set_pos(pos.x, pos.y + self.current_height - gui_component.size.height)
         
 class DockingData_End:
     def __init__(

@@ -201,6 +201,9 @@ class GUIBase(event.EventObject):
     def on_hovered(self):
         if self.parent is None: return
 
+        for child in self.children:
+            child.on_hovered()
+
         mouse_pos = event.getMousePos()
         rect = self.get_rect()
 

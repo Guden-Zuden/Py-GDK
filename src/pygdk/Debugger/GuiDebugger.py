@@ -5,7 +5,8 @@ from typing import (
 from .. import (
     GUI as _GUI,
     layer as _layer,
-    colors as _colors
+    colors as _colors,
+    event as _event
 )
 from ..layer import LayerManager
 from ..base import *
@@ -22,15 +23,23 @@ class _Label(_GUI.Label):
 class GUIDebugger:
     def __init__(self, layer: _layer.Layer) -> None:
         self.current_layer = layer
+
+        self.TP_GUI_components = TabProperty(
+                            "GUI components", 
+                            [_Label(0, 0, component, TextAttributes("msgothic", 15, _colors.WHITE), wrap_width=500)
+                            for component in self.current_layer._GUIComponent_stack]
+                        )
+        self.TP_GUI_handlers = TabProperty(
+                            "GUI callbacks",
+                            [_GUI.Label(0, 0, f"type: {event_type}\n    event handler: {event_handler}", TextAttributes("msgothic", 15, _colors.WHITE), wrap_width=500)
+                             for event_type, event_handler in _event.EventManager._handlers]
+                        )
+
         self.GUI_Components_Container = _GUI.TabContainer(
             0, 0, 500, 300, Background(_colors.BLACK), Background((0, 70, 70)), Background(_colors.BLACK),
             tab_textAttributes=TextAttributes("msgothic", 12, _colors.WHITE),
             tab_properties=[
-                TabProperty(
-                    "GUI components", 
-                    [_Label(0, 0, component, TextAttributes("msgothic", 15, _colors.WHITE))
-                    for component in self.current_layer._GUIComponent_stack]
-                )
+                self.TP_GUI_components, self.TP_GUI_handlers
             ]
         )
 
@@ -46,6 +55,8 @@ class GUIDebugger:
         #         TextAttributes("msgothic", 15, Color(0,255,255) if component is _GUI.base.GUIBase.g_hoveredObj else _colors.WHITE))
         #     for component in self.current_layer._GUIComponent_stack
         # ])
+        # self.TP_GUI_handlers.items = [_GUI.Label(0, 0, f"type: {event_type}, event handler: {event_handler}", TextAttributes("msgothic", 15, _colors.WHITE))
+                                    #  for event_type, event_handler in _event.EventManager._handlers]
     
     def append_text(self, component: _GUI.base.GUIBase):
         label = _Label(
