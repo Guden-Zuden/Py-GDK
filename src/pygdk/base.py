@@ -253,6 +253,11 @@ class TabProperty:
     name: str
     items: list[_GUI.base.GUIBase]
 
+@dataclass
+class ToolBarItemProperty:
+    name: str
+    pulldown_menu_items: list[tuple[str, Callable]]
+
 __all__ = [
     "gdk_color",
     "NullSurface",
@@ -267,4 +272,5 @@ __all__ = [
     "ScrollBarStyle",
     "Background",
     "TabProperty",
+    "ToolBarItemProperty",
 ]

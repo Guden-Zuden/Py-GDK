@@ -23,6 +23,7 @@ class Layer:
         _GUI.TabContainer,
         _GUI.HorizontalScrollBar,
         _GUI.VerticalScrollBar,
+        _GUI.ToolBar,
     ]
 
     def __init__(self) -> None:

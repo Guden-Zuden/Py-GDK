@@ -77,6 +77,7 @@ class GUIBase(event.EventObject):
         self.pos = Vec2(
             profile.width/2 + profile.width/2 * u - self.size.width/2,
             profile.height/2 + profile.height/2 * v - self.size.height/2)
+        self.is_hide = False
 
         self.padding = padding
         self.border = border
@@ -86,7 +87,8 @@ class GUIBase(event.EventObject):
         self.focused = False
 
         self.parent: _Optional[object] = None
-        self.children: list[GUIBase] = []
+        self.children: list[GUIBase] = [] # event
+        self.inners: list[GUIBase] = []   # size
 
         self.event_func: _Optional[_Callable] = None
 
@@ -108,12 +110,15 @@ class GUIBase(event.EventObject):
     def create_surface(self):
         self.surface = _pg.Surface((self.size).tuple, _pg.SRCALPHA)
         self.border_surface = _pg.Surface((self.size).tuple, _pg.SRCALPHA)
+        for inner in self.inners:
+            inner.create_surface()
         
     def _centering(self):
         self.pos.x -= self.size.width/2
         self.pos.y -= self.size.height/2
 
     def update(self) -> None:
+        if self.is_hide: return
         GUIBase.update_count += 1
 
         self.on_update()
@@ -125,6 +130,7 @@ class GUIBase(event.EventObject):
         if self.parent is None: return
 
     def draw(self, surface: _Optional[_pg.Surface] = None) -> None:
+        if self.is_hide: return
         GUIBase.draw_count += 1
         if surface is None: surface = self.surface
         self.on_draw(surface)
@@ -175,9 +181,12 @@ class GUIBase(event.EventObject):
     def _reset_g_flag():
         GUIBase.g_hoveredObj = None
 
-    def attach(self, gui: GUIBase):
+    def add_child(self, gui: GUIBase):
         gui.parent = self
         self.children.append(gui)
+
+    def add_inner(self, gui: GUIBase):
+        self.inners.append(gui)
 
     def get_top(self):
         gui = self
@@ -252,8 +261,10 @@ class GUIBase(event.EventObject):
 
     def sync_size_to(self, component: GUIBase):
         self.size = component.size
-
     #
+
+    def info(self):
+        return {self.__str__(): [child.info() for child in self.children]}
 
 __all__ = [
     "Direction"

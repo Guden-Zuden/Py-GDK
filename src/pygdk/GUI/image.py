@@ -55,11 +55,13 @@ class Image(base.GUIBase):
         self.displayed_img_surface = _pg.transform.smoothscale(self.img_surface, (self.size).tuple)
 
     def update(self):
+        if self.is_hide: return
         from ..time import BenchMark
         with BenchMark("image.update()"):
             super().update()
 
     def draw(self, surface: _Optional[_pg.Surface] = None) -> None:
+        if self.is_hide: return
         super().draw(surface)
 
         self.surface.blit(self.displayed_img_surface)

@@ -28,7 +28,7 @@ class ContainerBase(_base.GUIBase):
         self.background = background
         self.items = items
         for item in self.items:
-            self.attach(item)
+            self.add_child(item)
 
         self.space = space
         self.bar_style = bar_style
@@ -84,6 +84,7 @@ class ContainerBase(_base.GUIBase):
         self._calc_positions()
 
     def update(self):
+        if self.is_hide: return
         with _BenchMark(f"{self}.update:item.update()"):
             for item in self.items:
                 item.update()
@@ -148,6 +149,7 @@ class ContainerBase(_base.GUIBase):
                 self.h_scrollBar_obj.update()
         
     def draw(self, surface: _Optional[_pg.Surface] = None):
+        if self.is_hide: return
         super().draw(surface)
         if self.background and self.background.isColor():
             _pg.draw.rect(
@@ -158,7 +160,7 @@ class ContainerBase(_base.GUIBase):
 
     def push_item(self, item: _base.GUIBase):
         self.items.append(item)
-        self.attach(item)
+        self.add_child(item)
         self._calc_positions()
         self._calc_size()
 
@@ -167,7 +169,7 @@ class ContainerBase(_base.GUIBase):
         self.children.clear()
         for item in items:
             if item not in self.children:
-                self.attach(item)
+                self.add_child(item)
         self._calc_positions()
         self._calc_size()
 
@@ -185,9 +187,11 @@ class VerticalAlignContainer(ContainerBase):
         self._calc_positions()
 
     def update(self):
+        if self.is_hide: return
         super().update()
 
     def draw(self, surface: _Optional[_pg.Surface] = None):
+        if self.is_hide: return
         super().draw(surface)
 
         for item in self.items:
@@ -229,9 +233,11 @@ class HorizontalAlignContainer(ContainerBase):
         self._calc_positions()
 
     def update(self):
+        if self.is_hide: return
         super().update()
 
     def draw(self, surface: _Optional[_pg.Surface] = None):
+        if self.is_hide: return
         super().draw(surface)
 
         for item in self.items:
@@ -279,9 +285,11 @@ class GridContainer(ContainerBase):
         self._calc_positions()
 
     def update(self):
+        if self.is_hide: return
         super().update()
 
     def draw(self, surface: _Optional[_pg.Surface] = None):
+        if self.is_hide: return
         super().draw(surface)
 
         _index = 0
@@ -310,7 +318,7 @@ class GridContainer(ContainerBase):
         y_size = sum(
             [
                 max([obj.size.height for obj in h_objs])
-                for h_objs in separate_items(self.items, self.grid_col)
+                for h_objs in separate_items(self.items, self.grid_row)
             ]
         ) + (self.grid_col - 1) * self.space + self.padding.top + self.padding.bottom
 
@@ -334,8 +342,6 @@ class GridContainer(ContainerBase):
                     x += item.size.width + self.space
 
                 _index += 1
-
-
 
 class TabContainer(_base.GUIBase):
     def __init__(self, u: float, v: float, width: float, height: float,
@@ -368,7 +374,8 @@ class TabContainer(_base.GUIBase):
             bar_style=ScrollBarStyle(0),
             lock_vertical_scroll=True)
         self.HC_Tab.pos = Vec2(0,0)
-        self.attach(self.HC_Tab)
+        self.add_child(self.HC_Tab)
+        self.add_inner(self.HC_Tab)
 
         self.tab_properties = tab_properties
 
@@ -379,15 +386,18 @@ class TabContainer(_base.GUIBase):
             bar_style=bar_style
         )
         self.VC_TabItems.pos = Vec2(0, self.HC_Tab.size.height)
-        self.attach(self.VC_TabItems)
+        self.add_child(self.VC_TabItems)
+        self.add_inner(self.VC_TabItems)
         self._set_colors()
 
     def update(self) -> None:
+        if self.is_hide: return
+        super().update()
         self.HC_Tab.update()
         self.VC_TabItems.update()
-        super().update()
         
     def draw(self, surface: _Optional[_pg.Surface] = None):
+        if self.is_hide: return
         super().draw(surface)
         self.HC_Tab.draw(self.surface)
         self.VC_TabItems.draw(self.surface)

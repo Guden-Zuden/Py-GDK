@@ -22,10 +22,12 @@ class Box(_base.GUIBase):
             )
 
     def update(self):
+        if self.is_hide: return
         super().update()
         if self.child: self.child.create_surface()
 
     def draw(self, surface: _Optional[_pg.Surface] = None) -> None:
+        if self.is_hide: return
         super().draw(surface)
 
         _pg.draw.rect(self.surface, self.color, self.surface.get_rect())

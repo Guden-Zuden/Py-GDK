@@ -29,3 +29,7 @@ from .docking import (
     DockingDirection,
     DockingManager
 )
+
+from .toolbar import (
+    ToolBar
+)

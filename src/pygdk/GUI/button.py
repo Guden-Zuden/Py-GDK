@@ -32,46 +32,54 @@ class Button(_base.GUIBase):
         self.text_obj = _Text(u, v, text, textAttributes, padding=padding, no_register=True)
         self.box_obj = _Box(u, v, *self.size.tuple, color, padding, border, child=self.text_obj, no_register=True)
         self.box_obj.sync_size_to(self)
+        self.box_obj.set_pos(0, 0)
+        self.add_inner(self.box_obj)
 
         self.hovering_box_obj = _Box(u, v, *self.size.tuple, _colors.BLACK, padding, border, no_register=True)
         self.hovering_box_obj.color.a = int(self.hovering_box_obj.color.a * 0.2)
         self.hovering_box_obj.sync_size_to(self)
+        self.hovering_box_obj.set_pos(0, 0)
+        self.add_inner(self.hovering_box_obj)
 
         self.clicking_box_obj = _Box(u, v, *self.size.tuple, _colors.BLACK, padding, border, no_register=True)
         self.clicking_box_obj.color.a = int(self.clicking_box_obj.color.a * 0.4)
         self.clicking_box_obj.sync_size_to(self)
+        self.clicking_box_obj.set_pos(0, 0)
+        self.add_inner(self.clicking_box_obj)
 
     def update(self):
+        if self.is_hide: return
         super().update()
-        self.text_obj.set_pos(*self.pos.pos)
+        # self.text_obj.set_pos(*self.pos.pos)
         self.text_obj.text = self.text
         self.text_obj.textAttributes = self.textAttributes
         self.text_obj.padding = self.padding
         self.text_obj.update()
 
-        self.box_obj.set_pos(*self.pos.pos)
+        # self.box_obj.set_pos(*self.pos.pos)
         self.box_obj.border = self.border
         self.box_obj.padding = self.padding
         self.box_obj.color = self.color # pyright: ignore
         self.box_obj.update()
 
-        self.hovering_box_obj.set_pos(*self.pos.pos)
+        # self.hovering_box_obj.set_pos(*self.pos.pos)
         self.hovering_box_obj.border = self.border
         self.hovering_box_obj.padding = self.padding
         self.hovering_box_obj.update()
 
-        self.clicking_box_obj.set_pos(*self.pos.pos)
+        # self.clicking_box_obj.set_pos(*self.pos.pos)
         self.clicking_box_obj.border = self.border
         self.clicking_box_obj.padding = self.padding
         self.clicking_box_obj.update()
 
     def draw(self, surface: _Optional[_pg.Surface] = None):
+        if self.is_hide: return
         super().draw(surface)
-        self.box_obj.draw(surface)
+        self.box_obj.draw(self.surface)
         if self.clicked:
-            self.clicking_box_obj.draw(surface)
+            self.clicking_box_obj.draw(self.surface)
         elif self.hovered:
-            self.hovering_box_obj.draw(surface)
+            self.hovering_box_obj.draw(self.surface)
 
         if surface: self._flush(surface)
         else: self._flush()

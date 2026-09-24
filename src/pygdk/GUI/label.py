@@ -53,6 +53,7 @@ class Label(_base.GUIBase):
         self.pos = _base._uvTopos((self.u, self.v), self.size.width, self.size.height, self.anchor)
 
     def update(self):
+        if self.is_hide: return
         super().update()
         if self._isChanged():
             self.__private_text = self.text
@@ -65,6 +66,7 @@ class Label(_base.GUIBase):
             self.pos = _base._uvTopos((self.u, self.v), self.size.width, self.size.height, self.anchor)
 
     def draw(self, surface: _Optional[_pg.Surface] = None):
+        if self.is_hide: return
         super().draw(surface)
         pos = Vec2(self.surface.get_width()/2 - self.text_surface.get_width()/2,
                    self.surface.get_height()/2 - self.text_surface.get_height()/2)

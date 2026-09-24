@@ -83,6 +83,7 @@ class HorizontalScrollBar(ScrollBarBase):
         self.end_pos.x += self.field_size.width / self.item_size.width * self.field_size.width
 
     def update(self) -> None:
+        if self.is_hide: return
         super().update()
         self.start_pos = Vec2(0, self.size.height)
         self.start_pos.y -= self.bar_style.width/2 # 太さの補正
@@ -92,6 +93,7 @@ class HorizontalScrollBar(ScrollBarBase):
         self.end_pos.x += self.field_size.width / self.item_size.width * self.field_size.width
 
     def draw(self, surface: _Optional[_pg.Surface] = None):
+        if self.is_hide: return
         super().draw(surface)
         if surface is None:
             raise Exception("Scrollbar.draw() needs surface argument.")
