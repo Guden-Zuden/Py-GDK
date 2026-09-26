@@ -70,7 +70,12 @@ class ToolBar(_base.GUIBase):
 
     def on_clicked_toolbar_item(self, property: ToolBarItemProperty):
         from . import Button
-        self.VC_DropDownMenu.items = []
+        from .. import event
+
+        for item in self.VC_DropDownMenu.items:
+            item.is_hide = True # TODO: ISSUE: ボタンオブジェクトがイベントハンドラに残りメモリリーク的なことが起きている。
+
+        self.VC_DropDownMenu.items.clear()
         for property_item in property.pulldown_menu_items:
             button = Button(
                 0, 0,
@@ -84,12 +89,19 @@ class ToolBar(_base.GUIBase):
             self.VC_DropDownMenu.push_item(
                 button
             )
+
+        for item in self.VC_DropDownMenu.items:
+            item.is_hide = False
+
         index = self.toolbar_properties.index(property)
         self.VC_DropDownMenu.set_pos(
             *self.HC_ToolBar.items[index].pos
         )
-        self.VC_DropDownMenu.pos.y += self.HC_ToolBar.size.height/2
-        self.VC_DropDownMenu.set_size(*self.VC_DropDownMenu.item_size)
+        self.VC_DropDownMenu.pos.y += self.HC_ToolBar.items[index].size.height
+        self.VC_DropDownMenu.set_size(
+            self.VC_DropDownMenu.item_size.width,
+            self.VC_DropDownMenu.item_size.height
+        )
         self.VC_DropDownMenu.is_hide = False
 
     def update(self) -> None:
@@ -104,6 +116,9 @@ class ToolBar(_base.GUIBase):
         super().draw(surface)
         self.HC_ToolBar.draw(self.surface)
         self.VC_DropDownMenu.draw(surface)
+
     
         if surface: self._flush(surface)
         else: self._flush()
+        _pg.draw.circle(_profile.window.surface, (0,255,255), self.VC_DropDownMenu.pos.tuple, 5)
+        _pg.draw.circle(_profile.window.surface, (0,255,255), self.HC_ToolBar.pos.tuple, 5)

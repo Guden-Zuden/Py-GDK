@@ -53,7 +53,7 @@ def run():
 
                 event.EventManager.dispatch()
 
-            scene.SceneManager.update() # TODO
+            scene.SceneManager.update()
             scene.SceneManager.draw()
 
             with BenchMark("layer"):

@@ -8,7 +8,7 @@ from enum import Flag, auto
 from dataclasses import dataclass, field
 from typing import Callable, Any, Self
 
-# TODO: Not complete yet, temporary.
+# TODO: Not complete yet. temporary.
 
 # ===== Permissions =====
 class InputPermission(Flag):

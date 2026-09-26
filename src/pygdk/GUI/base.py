@@ -169,10 +169,11 @@ class GUIBase(event.EventObject):
 
     def get_rect(self):
         return _pg.Rect(
-            self.pos.x - self.padding.left,
-            self.pos.y - self.padding.top,
-            self.size.width + self.padding.left + self.padding.right,
-            self.size.height + self.padding.top + self.padding.bottom)
+            self.pos.x,
+            self.pos.y,
+            self.size.width,
+            self.size.height
+        )
 
     def get_size(self):
         return (self.size.width, self.size.height)
@@ -209,6 +210,7 @@ class GUIBase(event.EventObject):
     # events    
     def on_hovered(self):
         if self.parent is None: return
+        if self.is_hide: return
 
         for child in self.children:
             child.on_hovered()
