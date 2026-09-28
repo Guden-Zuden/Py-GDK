@@ -18,6 +18,7 @@ from ..base import *
 from .. import profile
 from .. import event, mouse
 from .. import colors
+from ..time import BenchMark as _BenchMark
 
 def _posTouv(pos: Vec2, width: float, height: float) -> tuple[float, float]:
     u = 2 / profile.width * (pos.x + width - profile.width/2)
@@ -209,41 +210,48 @@ class GUIBase(event.EventObject):
 
     # events    
     def on_hovered(self):
-        if self.parent is None: return
-        if self.is_hide: return
-        from .. import layer
-        if (layer.LayerManager.current_layer and 
-            not self in layer.LayerManager.current_layer._GUIComponent_stack):
-            self.hovered = False
-            return
+        with _BenchMark(f"{self}.on_hovered()"):
+            if self.parent is None: return
+            if self.is_hide: return
+            from .. import layer
+            if (layer.LayerManager.current_layer and 
+                not self in layer.LayerManager.current_layer._GUIComponent_stack):
+                flag = True
 
-        for child in self.children:
-            child.on_hovered()
+                for parent in self.get_parents():
+                    if parent in layer.LayerManager.current_layer._GUIComponent_stack:
+                        flag = False
+                if flag:
+                    self.hovered = False
+                    return
 
-        mouse_pos = event.getMousePos()
-        rect = self.get_rect()
+            for child in self.children:
+                child.on_hovered()
 
-        for parent in self.get_parents():
-            rect.x += parent.pos.x
-            rect.y += parent.pos.y
+            mouse_pos = event.getMousePos()
+            rect = self.get_rect()
 
-        isCollide = _pg.Rect.collidepoint(rect, *mouse_pos)
+            for parent in self.get_parents():
+                rect.x += parent.pos.x
+                rect.y += parent.pos.y
 
-        if GUIBase.g_hoveredObj is None:
-            if isCollide:
-                GUIBase.g_hoveredObj = self
-                self.hovered = True
-            else:
-                self.hovered = False
-        if self.hovered:
-            if mouse.get_pressed().left:
-                self.clicked = True
+            isCollide = _pg.Rect.collidepoint(rect, *mouse_pos)
+
+            if GUIBase.g_hoveredObj is None:
+                if isCollide:
+                    GUIBase.g_hoveredObj = self
+                    self.hovered = True
+                else:
+                    self.hovered = False
+            if self.hovered:
+                if mouse.get_pressed().left:
+                    self.clicked = True
+                else:
+                    self.clicked = False
             else:
                 self.clicked = False
-        else:
-            self.clicked = False
-        if not isCollide:
-            self.hovered = False
+            if not isCollide:
+                self.hovered = False
 
     def on_executed(self, e):
         if self.parent is None: return

@@ -9,3 +9,4 @@ Other function keys keys may also be used by debugger.
 """
 
 from .GuiDebugger import GUIDebugger
+from .fps_counter import FpsCounter
