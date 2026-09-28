@@ -51,6 +51,10 @@ def run():
     from . import core
     core.run()
 
+def exit():
+    from . import core
+    core.exit()
+
 @event.OnWindowResized()
 def on_windowResized(e):
     from . import core

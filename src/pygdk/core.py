@@ -95,6 +95,6 @@ def run():
 
             profile.clock.tick(profile.fps)
 
-def quit():
+def exit():
     _pg.quit()
     _sys.exit()
