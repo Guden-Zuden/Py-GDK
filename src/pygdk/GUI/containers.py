@@ -181,8 +181,9 @@ class VerticalAlignContainer(ContainerBase):
     def __init__(self, u: float, v: float, width: float, height: float, background: _Optional[Background] = None,
                  padding = _profile.default_padding, items: list[_base.GUIBase] = [], bar_style: _base.ScrollBarStyle = _profile.default_scrollbar_style,
                  lock_vertical_scroll = False, lock_horizontal_scroll = False,
-                 space: float = 0, border: Border = Border(0, _colors.WHITE), no_register = False) -> None:
+                 space: float = 0, alignment: Alignment = Alignment.LEFT, border: Border = Border(0, _colors.WHITE), no_register = False) -> None:
         super().__init__(u, v, width, height, background, padding, items, bar_style, lock_vertical_scroll, lock_horizontal_scroll, space, border, no_register)
+        self.alignment = alignment
         self._calc_size()
         self._calc_positions()
 
@@ -221,6 +222,10 @@ class VerticalAlignContainer(ContainerBase):
 
         for item in self.items:
             item.pos = Vec2(x + self.scroll_h, y + self.scroll_v)
+            if self.alignment == Alignment.CENTER:
+                item.pos.x = self.size.width/2 - item.size.width/2
+            elif self.alignment == Alignment.RIGHT:
+                item.pos.x = self.size.width - item.size.width - self.padding.right
             y += item.size.height + self.space
 
 class HorizontalAlignContainer(ContainerBase):

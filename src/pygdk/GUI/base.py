@@ -267,7 +267,4 @@ class GUIBase(event.EventObject):
 
     def info(self):
         return {self.__str__(): [child.info() for child in self.children]}
-
-__all__ = [
-    "Direction"
-]
+    

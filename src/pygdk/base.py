@@ -157,6 +157,11 @@ class Padding:
         else:
             raise TypeError("Padding() takes 0, 1, 2, or 4 arguments.")
 
+class Alignment(_Enum):
+    LEFT = 1
+    CENTER = 2
+    RIGHT = 3
+
 class Color(_pg.Color): ...
 
 class Direction(_Flag):
@@ -263,6 +268,7 @@ __all__ = [
     "NullSurface",
     "Vec2",
     "Padding",
+    "Alignment",
     "Color",
     "Direction",
     "DockingDirection",
