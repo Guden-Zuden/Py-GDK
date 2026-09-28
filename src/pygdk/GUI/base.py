@@ -50,8 +50,8 @@ def _uvTopos(uv: tuple[float, float], width: float, height: float, anchor: _Opti
     return pos
 
 def _updateMouseStatus():
-    from . import Button, ImageButton
-    if isinstance(GUIBase.g_hoveredObj, (Button, ImageButton)):
+    from . import Button, ImageButton, LinkLabel
+    if isinstance(GUIBase.g_hoveredObj, (Button, ImageButton, LinkLabel)):
         _pg.mouse.set_cursor(_pg.SYSTEM_CURSOR_HAND)
     else:
         _pg.mouse.set_cursor(_pg.SYSTEM_CURSOR_ARROW)

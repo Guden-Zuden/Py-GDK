@@ -2,6 +2,9 @@ import pygame as _pg
 from typing import Optional as _Optional
 from dataclasses import dataclass as _dataclass
 import copy as _copy
+from functools import (
+    wraps as _wraps
+)
 
 from ..base import *
 from . import base as _base
@@ -16,8 +19,8 @@ class Label(_base.GUIBase):
         self.textAttributes = textAttributes
         self.anchor = anchor
         
-        self.__private_text = text
-        self.__private_wrap_width = wrap_width
+        self._private_text = text
+        self._private_wrap_width = wrap_width
 
         self.font = _pg.sysfont.SysFont(*self.textAttributes.getFontStyle())
         self.text_surface = self.font.render(
@@ -36,8 +39,8 @@ class Label(_base.GUIBase):
              self.textAttributes.OutlineWidth + self.size.height), flags=_pg.SRCALPHA)
 
     def _isChanged(self):
-        if (self.text != self.__private_text
-                or self.wrap_width != self.__private_wrap_width):
+        if (self.text != self._private_text
+                or self.wrap_width != self._private_wrap_width):
             return True
         return False
 
@@ -56,8 +59,8 @@ class Label(_base.GUIBase):
         if self.is_hide: return
         super().update()
         if self._isChanged():
-            self.__private_text = self.text
-            self.__private_wrap_width = self.wrap_width
+            self._private_text = self.text
+            self._private_wrap_width = self.wrap_width
 
             self._render_text()
             self.size.width = self.text_surface.get_width()
@@ -81,3 +84,48 @@ class Label(_base.GUIBase):
         self.surface.blit(self.text_surface, pos.pos)
         if surface: self._flush(surface)
         else: self._flush()
+
+class LinkLabel(Label):
+    def __init__(self, u: float, v: float, text: str, textAttributes = _profile.default_textAttributes, hovered_textAttributes: _Optional[TextAttributes] = None, anchor: Anchor = Anchor.CENTER,
+                 padding = _profile.default_padding, wrap_width: int = 0, border: Border = Border(0, _colors.WHITE), no_register = False) -> None:
+        super().__init__(u, v, text, textAttributes, anchor, padding, wrap_width, border, no_register)
+        self.hovered_textAttributes = hovered_textAttributes
+        self._last_hovered = self.hovered
+
+    def _render_text(self):
+        if self.hovered and self.hovered_textAttributes:
+            textAttributes = self.hovered_textAttributes
+        else:
+            textAttributes = self.textAttributes
+
+        self.text_surface = _pg.sysfont.SysFont(*textAttributes.getFontStyle()).render(
+                self.text, True, *textAttributes.getTextColors(), wraplength=self.wrap_width)
+        if textAttributes.OutlineColor:
+            self.outline_surface = _pg.sysfont.SysFont(*textAttributes.getFontStyle()).render(
+                self.text, True, textAttributes.OutlineColor, wraplength=self.wrap_width)
+        else:
+            self.outline_surface = None
+
+        self.pos = _base._uvTopos((self.u, self.v), self.size.width, self.size.height, self.anchor)
+
+    def _isChanged(self):
+        flag = False
+        
+        if (self.text != self._private_text
+                or self.wrap_width != self._private_wrap_width
+                or self.hovered != self._last_hovered):
+            flag = True
+        self._last_hovered = self.hovered
+        
+        return flag
+
+    def OnClick(self):
+        def decorator(func):
+            self.event_func = func
+
+            @_wraps(func)
+            def wrapper(*args, **kwargs):
+                return func(*args, **kwargs)
+
+            return wrapper
+        return decorator

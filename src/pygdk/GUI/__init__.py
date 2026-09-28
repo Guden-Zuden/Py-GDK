@@ -1,7 +1,7 @@
 from .base import *
 from .label import (
     Label,
-    TextAttributes
+    LinkLabel
 )
 from .containers import (
     VerticalAlignContainer,
