@@ -20,15 +20,18 @@ from ..time import BenchMark as _BenchMark
 
 class ContainerBase(_base.GUIBase):
     def __init__(self, u: float, v: float, width: float, height: float, background: _Optional[_base.Background] = None,
-                 padding = _profile.default_padding, items: list[_base.GUIBase] = [], bar_style: _base.ScrollBarStyle = _profile.default_scrollbar_style,
+                 padding = _profile.default_padding, items: _Optional[list[_base.GUIBase]] = None, bar_style: _base.ScrollBarStyle = _profile.default_scrollbar_style,
                  lock_vertical_scroll = False, lock_horizontal_scroll = False,
                  space: float = 0, border: Border = Border(0, _colors.WHITE), no_register = False) -> None:
         super().__init__(u, v, width, height, padding, border, no_register)
 
         self.background = background
-        self.items = items
-        for item in self.items:
-            self.add_child(item)
+        if items:
+            self.items = items
+            for item in self.items:
+                self.add_child(item)
+        else:
+            self.items = []
 
         self.space = space
         self.bar_style = bar_style
@@ -179,7 +182,7 @@ class ContainerBase(_base.GUIBase):
 # containers
 class VerticalAlignContainer(ContainerBase):
     def __init__(self, u: float, v: float, width: float, height: float, background: _Optional[Background] = None,
-                 padding = _profile.default_padding, items: list[_base.GUIBase] = [], bar_style: _base.ScrollBarStyle = _profile.default_scrollbar_style,
+                 padding = _profile.default_padding, items: _Optional[list[_base.GUIBase]] = None, bar_style: _base.ScrollBarStyle = _profile.default_scrollbar_style,
                  lock_vertical_scroll = False, lock_horizontal_scroll = False,
                  space: float = 0, alignment: Alignment = Alignment.LEFT, border: Border = Border(0, _colors.WHITE), no_register = False) -> None:
         super().__init__(u, v, width, height, background, padding, items, bar_style, lock_vertical_scroll, lock_horizontal_scroll, space, border, no_register)
@@ -230,7 +233,7 @@ class VerticalAlignContainer(ContainerBase):
 
 class HorizontalAlignContainer(ContainerBase):
     def __init__(self, u: float, v: float, width: float, height: float, background: _Optional[Background] = None,
-                 padding = _profile.default_padding, items: list[_base.GUIBase] = [], bar_style: _base.ScrollBarStyle = _profile.default_scrollbar_style,
+                 padding = _profile.default_padding, items: _Optional[list[_base.GUIBase]] = None, bar_style: _base.ScrollBarStyle = _profile.default_scrollbar_style,
                  lock_vertical_scroll = False, lock_horizontal_scroll = False,
                  space: float = 0, border: Border = Border(0, _colors.WHITE), no_register = False) -> None:
         super().__init__(u, v, width, height, background, padding, items, bar_style, lock_vertical_scroll, lock_horizontal_scroll, space, border, no_register)
@@ -278,7 +281,7 @@ class HorizontalAlignContainer(ContainerBase):
 class GridContainer(ContainerBase):
     def __init__(self, u: float, v: float, width: float, height: float, background: _Optional[Background] = None,
                  grid_col: int = -1, grid_row: int = -1,
-                 padding = _profile.default_padding, items: list[_base.GUIBase] = [], bar_style: _event.ScrollBarStyle = _profile.default_scrollbar_style, 
+                 padding = _profile.default_padding, items: _Optional[list[_base.GUIBase]] = None, bar_style: _event.ScrollBarStyle = _profile.default_scrollbar_style, 
                  lock_vertical_scroll = False, lock_horizontal_scroll = False, 
                  space: float = 0, border: Border = Border(0, _colors.WHITE), no_register=False) -> None:
         if grid_col < 1 or grid_row < 1:
