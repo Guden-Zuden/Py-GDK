@@ -211,6 +211,11 @@ class GUIBase(event.EventObject):
     def on_hovered(self):
         if self.parent is None: return
         if self.is_hide: return
+        from .. import layer
+        if (layer.LayerManager.current_layer and 
+            not self in layer.LayerManager.current_layer._GUIComponent_stack):
+            self.hovered = False
+            return
 
         for child in self.children:
             child.on_hovered()
