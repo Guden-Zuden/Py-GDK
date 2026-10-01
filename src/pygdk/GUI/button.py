@@ -11,6 +11,7 @@ from .label import Label as _Text
 from .box import Box as _Box
 from .. import colors as _colors
 from .image import Image as _Image
+from .. import animator as _animator
 
 import pathlib as _pathlib
 import pygame as _pg
@@ -19,8 +20,8 @@ from functools import wraps as _wraps
 class Button(_base.GUIBase):
     def __init__(self, u: float, v: float, width: float, height: float,
                  text: str, textAttributes: TextAttributes = _profile.default_textAttributes, color: gdk_color = (0,0,0), border = _profile.default_border,
-                 padding = _profile.default_padding, event_func: _Optional[_Callable] = None, no_register = False) -> None:
-        super().__init__(u, v, width, height, padding, border, no_register)
+                 padding = _profile.default_padding, event_func: _Optional[_Callable] = None, animator: _Optional[_animator.GAnimator] = None, no_register = False) -> None:
+        super().__init__(u, v, width, height, padding, border, animator, no_register)
 
         self.text = text
         self.textAttributes = textAttributes
@@ -99,10 +100,10 @@ class ImageButton(Button):
     from .. import profile
     def __init__(self, u: float, v: float, width: float,
                  text: str, textAttributes: TextAttributes = profile.default_textAttributes, image: _Optional[_Image] = None, border = profile.default_border,
-                 padding = profile.default_padding, event_func: _Optional[_Callable] = None, no_register = False) -> None:
+                 padding = profile.default_padding, event_func: _Optional[_Callable] = None, animator: _Optional[_animator.GAnimator] = None, no_register = False) -> None:
         if image is None: raise Exception("image is None.")
         self.image_obj = image
-        super().__init__(u, v, width, self.image_obj.size.height, text, textAttributes, (0,0,0,0), border, padding, event_func, no_register)
+        super().__init__(u, v, width, self.image_obj.size.height, text, textAttributes, (0,0,0,0), border, padding, event_func, animator, no_register)
         self.image_obj.sync_size_to(self)
 
     def update(self):

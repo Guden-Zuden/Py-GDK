@@ -27,7 +27,7 @@ class MapDataManager:
         file_object = filedialog.askopenfile(filetypes=[("JSONファイル", "*.json")])
         if file_object:
             sprite = _sprite.Sprite()
-            sprite.load_tile(file_object.name, sprite_size, sprite_padding, )
+            # sprite.load_tile(file_object.name, sprite_size, sprite_padding, )
 
 @_dataclass
 class MapLayer:
@@ -61,9 +61,9 @@ def _get_viewport(
     halfsize = _profile.sprite_size/2
 
     # begin of map_x
-    if halfsize < offset_x:
+    if offset_x > 0:
         start_mx = 0
-    elif offset_x <= halfsize and offset_x + map_w * _profile.sprite_size > 0:
+    elif offset_x < -_profile.sprite_size * map_h:
         start_mx = int(abs(offset_x)) // _profile.sprite_size
     else:
         start_mx = map_w - 1
@@ -89,20 +89,30 @@ def _get_viewport(
     _offset_y = offset_y + (map_h - 1) * _profile.sprite_size
 
     # end of map_y
-    _offset_y = offset_y + (map_h - 1) * _profile.sprite_size
+    # _offset_y = offset_y + (map_h - 1) * _profile.sprite_size
     if _profile.height - halfsize > _offset_y:
         end_my = map_h - 1
-    elif offset_y <= halfsize and offset_y < _profile.height - halfsize:
+    # elif offset_y <= halfsize and offset_y < _profile.height - halfsize:
+    elif _offset_y >= _profile.height - halfsize and offset_y < _profile.height - halfsize:
         end_my = (map_h - 1) - int(abs(_profile.height - _offset_y)) // _profile.sprite_size
     else:
         end_my = 0
 
+    print("\033[H\033[J", end="")
+    print(f"start_mx: {start_mx}, end_mx: {end_mx}, start_my: {start_my}, end_my: {end_my}, offset_x: {offset_x}, offset_y: {offset_y}")
+
     return (start_mx, end_mx, start_my, end_my)
 
 class Tilemap:
-    def __init__(self, sprite: _sprite.Sprite = _sprite.Sprite()) -> None:
+    # TODO: viewport is wrong
+    def __init__(self, sprite: _Optional[_sprite.Sprite] = None) -> None:
         self.x, self.y = 0, 0
-        self.map_sprite = sprite
+
+        if sprite:
+            self.map_sprite = sprite
+        else:
+            self.map_sprite = _sprite.Sprite()
+            
         self.map_data: _Optional[MapData] = None
         self.collision_data: list[list[int]] = []
         self.viewport = _Viewport(0, 0, 0, 0)
@@ -163,13 +173,14 @@ class Tilemap:
 
     def draw(self, offset_x: float, offset_y: float):
         assert _profile.sprite_size
-        assert self.map_data
 
         if self.__loaded == False:
             if self.__warned == False:
                 print("warning: There are not map data.")
                 self.__warned = True
             return
+        
+        assert self.map_data
 
         self.update_viewport(-offset_x, -offset_y)
         for x in range(self.viewport.get_width()):

@@ -123,10 +123,10 @@ class Vec2:
         yield self.y
     
     def normalize(self):
-        self = self.normalized
+        self.x, self.y = self.normalized.x, self.normalized.y
 
     def distance(self) -> float:
-        v = (self.x ** 2 + self.y ** 2) ** 1/2
+        v = (self.x ** 2 + self.y ** 2) ** (1/2)
         return v
 
 class Padding:
@@ -235,6 +235,9 @@ class Background:
 
     @overload
     def __init__(self, image: Image) -> None: ...
+
+    # @overload
+    # def __init__(self, color: tuple[int, int, int]) -> None: ...
 
     def __init__(self, *args) -> None: # pyright: ignore
         from .GUI import Image

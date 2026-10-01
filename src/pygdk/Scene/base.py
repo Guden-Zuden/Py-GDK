@@ -22,7 +22,7 @@ class EntityBase:
         if self.movement_model:
             self.movement_model.velocity = self.velocity
             self.movement_model.update()
-            self.pos += self.movement_model.velocity * abs(self.movement_model.velocity.normalized)
+            self.pos += self.movement_model.velocity * abs(self.movement_model.velocity.normalized) * self._timer.delta_time
         # self.pos += self.velocity * abs(self.velocity.normalized) * self._timer.delta_time
 
         

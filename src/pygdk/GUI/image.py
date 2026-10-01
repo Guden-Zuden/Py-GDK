@@ -2,6 +2,7 @@ from ..base import *
 from .. import profile
 from .. import colors
 from . import base
+from .. import animator as _animator
 
 import pygame as _pg
 import pathlib
@@ -13,7 +14,7 @@ from typing import (
 class Image(base.GUIBase):
     def __init__(self, u: float, v: float, img_filepath: str | pathlib.Path, width: float,
                  padding=profile.default_padding, border: base.Border = Border(0, colors.WHITE),
-                 child: _Optional[base.GUIBase] = None, no_register = False) -> None:
+                 child: _Optional[base.GUIBase] = None, animator: _Optional[_animator.GAnimator] = None, no_register = False) -> None:
         try:
             _pg.Window.get_surface(profile.window.window)
             self.img_surface = _pg.image.load(img_filepath).convert_alpha()
@@ -25,7 +26,7 @@ class Image(base.GUIBase):
         self.displayed_img_surface = _pg.transform.smoothscale(self.img_surface, (width, height))
         
 
-        super().__init__(u, v, width, height, padding, border, no_register)
+        super().__init__(u, v, width, height, padding, border, animator, no_register)
 
         self.child = child
         if self.child:

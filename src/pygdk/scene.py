@@ -71,7 +71,7 @@ class SceneManager:
     scene_stack: list[Scene] = []
 
     @staticmethod
-    def pushScene(scene: Scene):
+    def push_scene(scene: Scene):
         if SceneManager.current_scene is None:
             SceneManager.current_scene = scene
         SceneManager.scene_stack.append(scene)

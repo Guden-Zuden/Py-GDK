@@ -1,6 +1,7 @@
 from ..base import *
 from .. import profile as _profile
 from .. import colors as _colors
+from .. import animator as _animator
 from . import base as _base
 
 import pygame as _pg
@@ -9,8 +10,8 @@ from typing import Optional as _Optional
 class Box(_base.GUIBase):
     def __init__(self, u: float, v: float, width: float, height: float,
                  color: gdk_color, padding = _profile.default_padding, border = Border(0, _colors.WHITE),
-                 child: _Optional[_base.GUIBase] = None, no_register = False) -> None:
-        super().__init__(u, v, width, height, padding, border, no_register)
+                 child: _Optional[_base.GUIBase] = None, animator: _Optional[_animator.GAnimator] = None, no_register = False) -> None:
+        super().__init__(u, v, width, height, padding, border, animator, no_register)
         self.color = color if type(color) is Color else Color(*color)
         self.border = border
 

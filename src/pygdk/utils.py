@@ -13,7 +13,7 @@ def createLayer():
 
 def createScene():
     new_scene = _scene.Scene()
-    _scene.SceneManager.pushScene(new_scene)
+    _scene.SceneManager.push_scene(new_scene)
     return new_scene
 
 __all__ = [

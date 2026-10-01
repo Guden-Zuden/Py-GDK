@@ -7,16 +7,16 @@ from ..base import *
 from .. import profile as _profile
 from .. import colors as _colors
 from . import base as _base
-
+from .. import animator as _animator
 
 class ToolBar(_base.GUIBase):
     def __init__(
             self, u: float, v: float, textAttributes: TextAttributes = _profile.default_textAttributes,
             toolbar_background: _Optional[Background] = None, dropdownMenu_background: _Optional[Background] = None, bar_style: ScrollBarStyle = _profile.default_scrollbar_style,
-            space = 0,padding=_profile.default_padding, border: _base.Border = Border(0, _colors.WHITE), no_register=False
+            space = 0,padding=_profile.default_padding, border: _base.Border = Border(0, _colors.WHITE), animator: _Optional[_animator.GAnimator] = None, no_register=False
             ) -> None:
         from . import HorizontalAlignContainer, VerticalAlignContainer
-        super().__init__(u, v, _profile.width, textAttributes.FontSize + padding.top + padding.bottom, padding, border, no_register)
+        super().__init__(u, v, _profile.width, textAttributes.FontSize + padding.top + padding.bottom, padding, border, animator, no_register)
         self.textAttributes = textAttributes
         self.HC_ToolBar = HorizontalAlignContainer(
             0,0,

@@ -7,13 +7,14 @@ from .. import event as _event
 from . import base as _base
 from .. import profile as _profile
 from .. import colors as _colors
+from .. import animator as _animator
 
 class ScrollBarBase(_base.GUIBase):
     def __init__(self,
                  u: float, v: float, item_size: Vec2, field_size: Vec2,
                  bar_style: _base.ScrollBarStyle = _profile.default_scrollbar_style,
-                 padding = _profile.default_padding, no_register=False) -> None:
-        super().__init__(u, v, *field_size.tuple, padding, no_register=no_register)
+                 padding = _profile.default_padding, animator: _Optional[_animator.GAnimator] = None, no_register=False) -> None:
+        super().__init__(u, v, *field_size.tuple, padding, animator=animator, no_register=no_register)
         self.size = field_size
         self.item_size = item_size
         self.field_size = field_size
@@ -29,8 +30,8 @@ class VerticalScrollBar(ScrollBarBase):
     def __init__(self,
                  u: float, v: float, item_size: Vec2, field_size: Vec2,
                  bar_style: _base.ScrollBarStyle = _profile.default_scrollbar_style,
-                 padding = _profile.default_padding, no_register=False) -> None:
-        super().__init__(u, v, item_size, field_size, bar_style, padding, no_register)
+                 padding = _profile.default_padding, animator: _Optional[_animator.GAnimator] = None, no_register=False) -> None:
+        super().__init__(u, v, item_size, field_size, bar_style, padding, animator, no_register)
         self.start_pos = Vec2(self.size.width, 0)
         self.start_pos.x -= self.bar_style.width/2 # 太さの補正
         self.start_pos.y -= self.field_size.height / self.item_size.height * self.scroll_v
@@ -73,8 +74,8 @@ class HorizontalScrollBar(ScrollBarBase):
     def __init__(self,
                  u: float, v: float, item_size: Vec2, field_size: Vec2,
                  bar_style: _base.ScrollBarStyle = _profile.default_scrollbar_style,
-                 padding = _profile.default_padding, no_register=False) -> None:
-        super().__init__(u, v, item_size, field_size, bar_style, padding, no_register)
+                 padding = _profile.default_padding, animator: _Optional[_animator.GAnimator] = None, no_register=False) -> None:
+        super().__init__(u, v, item_size, field_size, bar_style, padding, animator, no_register)
         self.start_pos = Vec2(0, self.size.height)
         self.start_pos.y -= self.bar_style.width/2 # 太さの補正
         self.start_pos.x -= self.field_size.width / self.item_size.width * self.scroll_h

@@ -1,20 +1,20 @@
-from .. import GUI
+from .. import GUI as _GUI
 from .. import profile as _profile
 from ..base import *
-from .. import colors
-from .. import event
-from .. import time
-from .. import layer
+from .. import colors as _colors
+from .. import event as _event
+from .. import time as _time
+from .. import layer as _layer
 
-class FpsCounter(GUI.Label):
-    def __init__(self, layer: layer.Layer) -> None:
-        super().__init__(1, -1, "FPS: NaN", TextAttributes("msgothic", 20, colors.WHITE), Anchor.RIGHTTOP)
+class FpsCounter(_GUI.Label):
+    def __init__(self, layer: _layer.Layer) -> None:
+        super().__init__(1, -1, "FPS: NaN", TextAttributes("msgothic", 20, _colors.WHITE), Anchor.RIGHTTOP)
         layer.attach(self)
 
-        self.timer = time.Timer()
+        self.timer = _time.Timer()
         self.frame_count = 0
 
-    @event.OnUpdate()
+    @_event.OnUpdate()
     def on_update(self):
         self.timer.update()
         self.frame_count += 1

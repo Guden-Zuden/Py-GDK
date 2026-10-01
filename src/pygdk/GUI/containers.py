@@ -17,13 +17,14 @@ from .label import (
     Label as _Label
 )
 from ..time import BenchMark as _BenchMark
+from .. import animator as _animator
 
 class ContainerBase(_base.GUIBase):
     def __init__(self, u: float, v: float, width: float, height: float, background: _Optional[_base.Background] = None,
                  padding = _profile.default_padding, items: _Optional[list[_base.GUIBase]] = None, bar_style: _base.ScrollBarStyle = _profile.default_scrollbar_style,
                  lock_vertical_scroll = False, lock_horizontal_scroll = False,
-                 space: float = 0, border: Border = Border(0, _colors.WHITE), no_register = False) -> None:
-        super().__init__(u, v, width, height, padding, border, no_register)
+                 space: float = 0, border: Border = Border(0, _colors.WHITE), animator: _Optional[_animator.GAnimator] = None, no_register = False) -> None:
+        super().__init__(u, v, width, height, padding, border, animator, no_register)
 
         self.background = background
         if items:
@@ -184,8 +185,9 @@ class VerticalAlignContainer(ContainerBase):
     def __init__(self, u: float, v: float, width: float, height: float, background: _Optional[Background] = None,
                  padding = _profile.default_padding, items: _Optional[list[_base.GUIBase]] = None, bar_style: _base.ScrollBarStyle = _profile.default_scrollbar_style,
                  lock_vertical_scroll = False, lock_horizontal_scroll = False,
-                 space: float = 0, alignment: Alignment = Alignment.LEFT, border: Border = Border(0, _colors.WHITE), no_register = False) -> None:
-        super().__init__(u, v, width, height, background, padding, items, bar_style, lock_vertical_scroll, lock_horizontal_scroll, space, border, no_register)
+                 space: float = 0, alignment: Alignment = Alignment.LEFT, border: Border = Border(0, _colors.WHITE), 
+                 animator: _Optional[_animator.GAnimator] = None, no_register = False) -> None:
+        super().__init__(u, v, width, height, background, padding, items, bar_style, lock_vertical_scroll, lock_horizontal_scroll, space, border, animator, no_register)
         self.alignment = alignment
         self._calc_size()
         self._calc_positions()
@@ -224,7 +226,7 @@ class VerticalAlignContainer(ContainerBase):
         y = self.padding.top + self.border.width
 
         for item in self.items:
-            item.pos = Vec2(x + self.scroll_h, y + self.scroll_v)
+            item.set_pos(x + self.scroll_h, y + self.scroll_v)
             if self.alignment == Alignment.CENTER:
                 item.pos.x = self.size.width/2 - item.size.width/2
             elif self.alignment == Alignment.RIGHT:
@@ -235,8 +237,8 @@ class HorizontalAlignContainer(ContainerBase):
     def __init__(self, u: float, v: float, width: float, height: float, background: _Optional[Background] = None,
                  padding = _profile.default_padding, items: _Optional[list[_base.GUIBase]] = None, bar_style: _base.ScrollBarStyle = _profile.default_scrollbar_style,
                  lock_vertical_scroll = False, lock_horizontal_scroll = False,
-                 space: float = 0, border: Border = Border(0, _colors.WHITE), no_register = False) -> None:
-        super().__init__(u, v, width, height, background, padding, items, bar_style, lock_vertical_scroll, lock_horizontal_scroll, space, border, no_register)
+                 space: float = 0, border: Border = Border(0, _colors.WHITE), animator: _Optional[_animator.GAnimator] = None, no_register = False) -> None:
+        super().__init__(u, v, width, height, background, padding, items, bar_style, lock_vertical_scroll, lock_horizontal_scroll, space, border, animator, no_register)
         self._calc_size()
         self._calc_positions()
 
@@ -283,10 +285,10 @@ class GridContainer(ContainerBase):
                  grid_col: int = -1, grid_row: int = -1,
                  padding = _profile.default_padding, items: _Optional[list[_base.GUIBase]] = None, bar_style: _event.ScrollBarStyle = _profile.default_scrollbar_style, 
                  lock_vertical_scroll = False, lock_horizontal_scroll = False, 
-                 space: float = 0, border: Border = Border(0, _colors.WHITE), no_register=False) -> None:
+                 space: float = 0, border: Border = Border(0, _colors.WHITE), animator: _Optional[_animator.GAnimator] = None, no_register=False) -> None:
         if grid_col < 1 or grid_row < 1:
             raise Exception("Invalid number. It must be more than 1.")
-        super().__init__(u, v, width, height, background, padding, items, bar_style, lock_vertical_scroll, lock_horizontal_scroll, space, border, no_register)
+        super().__init__(u, v, width, height, background, padding, items, bar_style, lock_vertical_scroll, lock_horizontal_scroll, space, border, animator, no_register)
         self.grid_col, self.grid_row = grid_col, grid_row
 
         self._calc_size()
@@ -359,9 +361,10 @@ class TabContainer(_base.GUIBase):
                  bar_style: ScrollBarStyle = _profile.default_scrollbar_style,
                  tab_textAttributes: TextAttributes = _profile.default_textAttributes,
                  tab_properties: list[TabProperty] = [],
-                 padding=_profile.default_padding, border: _event.Border = Border(0, _colors.WHITE), no_register=False) -> None:
+                 padding=_profile.default_padding, border: _event.Border = Border(0, _colors.WHITE), 
+                 animator: _Optional[_animator.GAnimator] = None, no_register=False) -> None:
         from . import ImageButton, Button, Label
-        super().__init__(u, v, width, height, padding, border, no_register)
+        super().__init__(u, v, width, height, padding, border, animator, no_register)
 
         self.tab_background = tab_background
         self.selected_tab_background = selected_tab_background

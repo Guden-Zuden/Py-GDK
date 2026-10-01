@@ -10,10 +10,12 @@ from ..base import *
 from . import base as _base
 from .. import profile as _profile
 from .. import colors as _colors
+from .. import animator as _animator
 
 class Label(_base.GUIBase):
     def __init__(self, u: float, v: float, text: str, textAttributes = _profile.default_textAttributes, anchor: Anchor = Anchor.CENTER,
-                 padding = _profile.default_padding, wrap_width: int = 0, border: Border = Border(0, _colors.WHITE), no_register = False) -> None:
+                 padding = _profile.default_padding, wrap_width: int = 0, border: Border = Border(0, _colors.WHITE), 
+                 animator: _Optional[_animator.GAnimator] = None, no_register = False) -> None:
         self.text = text
         self.wrap_width = wrap_width
         self.textAttributes = textAttributes
@@ -31,7 +33,7 @@ class Label(_base.GUIBase):
         else:
             self.outline_surface = None
             
-        super().__init__(u, v, self.text_surface.width, self.text_surface.height, padding, border, no_register)
+        super().__init__(u, v, self.text_surface.width, self.text_surface.height, padding, border, animator, no_register)
         self._render_text()
         
         self.surface = _pg.Surface(
@@ -53,7 +55,8 @@ class Label(_base.GUIBase):
         else:
             self.outline_surface = None
 
-        self.pos = _base._uvTopos((self.u, self.v), self.size.width, self.size.height, self.anchor)
+        if self.parent is None:
+            self.pos = _base._uvTopos((self.u, self.v), self.size.width, self.size.height, self.anchor)
 
     def update(self):
         if self.is_hide: return
@@ -66,7 +69,8 @@ class Label(_base.GUIBase):
             self.size.width = self.text_surface.get_width()
             self.size.height = self.text_surface.get_height()
             self.surface = _pg.Surface(self.text_surface.get_size(), _pg.SRCALPHA)
-            self.pos = _base._uvTopos((self.u, self.v), self.size.width, self.size.height, self.anchor)
+            if self.parent is None:
+                self.pos = _base._uvTopos((self.u, self.v), self.size.width, self.size.height, self.anchor)
 
     def draw(self, surface: _Optional[_pg.Surface] = None):
         if self.is_hide: return
@@ -87,8 +91,9 @@ class Label(_base.GUIBase):
 
 class LinkLabel(Label):
     def __init__(self, u: float, v: float, text: str, textAttributes = _profile.default_textAttributes, hovered_textAttributes: _Optional[TextAttributes] = None, anchor: Anchor = Anchor.CENTER,
-                 padding = _profile.default_padding, wrap_width: int = 0, border: Border = Border(0, _colors.WHITE), no_register = False) -> None:
-        super().__init__(u, v, text, textAttributes, anchor, padding, wrap_width, border, no_register)
+                 padding = _profile.default_padding, wrap_width: int = 0, border: Border = Border(0, _colors.WHITE), 
+                 animator: _Optional[_animator.GAnimator] = None, no_register = False) -> None:
+        super().__init__(u, v, text, textAttributes, anchor, padding, wrap_width, border, animator, no_register)
         self.hovered_textAttributes = hovered_textAttributes
         self._last_hovered = self.hovered
 
@@ -106,7 +111,8 @@ class LinkLabel(Label):
         else:
             self.outline_surface = None
 
-        self.pos = _base._uvTopos((self.u, self.v), self.size.width, self.size.height, self.anchor)
+        if self.parent is None:
+            self.pos = _base._uvTopos((self.u, self.v), self.size.width, self.size.height, self.anchor)
 
     def _isChanged(self):
         flag = False

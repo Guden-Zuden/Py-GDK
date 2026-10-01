@@ -1,5 +1,6 @@
 """Normally, we import this file with wild card."""
 from __future__ import annotations
+from typing import TYPE_CHECKING as _TYPE_CHECKING
 
 import pygame as _pg
 from typing import (
@@ -19,6 +20,8 @@ from .. import profile
 from .. import event, mouse
 from .. import colors
 from ..time import BenchMark as _BenchMark
+if _TYPE_CHECKING:
+    from ..animator import GAnimator
 
 def _posTouv(pos: Vec2, width: float, height: float) -> tuple[float, float]:
     u = 2 / profile.width * (pos.x + width - profile.width/2)
@@ -72,7 +75,8 @@ class GUIBase(event.EventObject):
     _debug_position_stack: list[Vec2] = []
     
     def __init__(self, u: float, v: float, width: float, height: float,
-                 padding = profile.default_padding, border: Border = Border(0, colors.WHITE), no_register = False) -> None:
+                 padding = profile.default_padding, border: Border = Border(0, colors.WHITE),
+                 animator: _Optional["GAnimator"] = None, no_register = False) -> None:
         self.u, self.v = u, v
         self.size = Vec2(width, height)
         self.pos = Vec2(
@@ -82,6 +86,8 @@ class GUIBase(event.EventObject):
 
         self.padding = padding
         self.border = border
+
+        self.animator = animator
 
         self.hovered = False
         self.clicked = False
@@ -123,6 +129,9 @@ class GUIBase(event.EventObject):
         GUIBase.update_count += 1
 
         self.on_update()
+
+        if self.animator:
+            self.animator.update()
 
         if self.size.is_dirty():
             self.create_surface()

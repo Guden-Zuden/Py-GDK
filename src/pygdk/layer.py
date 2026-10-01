@@ -53,7 +53,8 @@ class Layer:
             for component in self._GUIComponent_stack:
                 component.draw()
 
-class LayerObject(Layer, _event.EventObject):
+class LayerObject(_event.EventObject):
+    """NOT YET. DO NOT USE."""
     pass
 
 class LayerManager:
