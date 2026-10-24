@@ -108,6 +108,7 @@ class GUIBase(event.EventObject):
 
     def _regist_events(self):
         if not self.no_register:
+            print(f"{self} events registed.")
             for component in self.children:
                 component._regist_events()
             event.EventManager.register_update(type(self).on_hovered)

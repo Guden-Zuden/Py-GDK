@@ -74,9 +74,7 @@ class DockingManager:
             or docking_direction == DockingDirection.BOTTOM):
             self.current_height -= gui_component.size.height
             self.current_pos.y += gui_component.size.height
-
-        # print(gui_component.pos.pos, gui_component.width, gui_component.height)
-
+            
     def fill(self, gui_component: base.GUIBase):
         """finish docking."""
         self.docking_datas.append(

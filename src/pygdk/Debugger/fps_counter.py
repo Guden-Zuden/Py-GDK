@@ -14,7 +14,6 @@ class FpsCounter(_GUI.Label):
         self.timer = _time.Timer()
         self.frame_count = 0
 
-    @_event.OnUpdate()
     def on_update(self):
         self.timer.update()
         self.frame_count += 1

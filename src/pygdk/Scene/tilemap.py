@@ -28,6 +28,7 @@ class MapDataManager:
         if file_object:
             sprite = _sprite.Sprite()
             # sprite.load_tile(file_object.name, sprite_size, sprite_padding, )
+            # TODO
 
 @_dataclass
 class MapLayer:
@@ -61,45 +62,42 @@ def _get_viewport(
     halfsize = _profile.sprite_size/2
 
     # begin of map_x
-    if offset_x > 0:
+    if offset_x > -halfsize:
         start_mx = 0
-    elif offset_x < -_profile.sprite_size * map_h:
-        start_mx = int(abs(offset_x)) // _profile.sprite_size
+    elif offset_x > -(map_w * _profile.sprite_size - halfsize):
+        start_mx = int(abs(offset_x + halfsize)) // _profile.sprite_size + 1
     else:
         start_mx = map_w - 1
+
     # right of maptile
     _offset_x = offset_x + (map_w - 1) * _profile.sprite_size
 
     # end of map_x
-    if _profile.width - halfsize > _offset_x:
+    if _offset_x < _profile.width + halfsize:
         end_mx = map_w - 1
-    elif _offset_x >= _profile.width - halfsize and offset_x < _profile.width - halfsize:
-        end_mx = (map_w - 1) - int(abs(_profile.width - _offset_x)) // _profile.sprite_size
+    elif _offset_x < (_profile.width + (map_w - 1) * _profile.sprite_size - halfsize):
+        end_mx = map_w - (int(abs(_offset_x + halfsize - _profile.width)) // _profile.sprite_size + 1)
     else:
         end_mx = 0
 
     # begin of map_y
-    if halfsize < offset_y:
+    if offset_y > -halfsize:
         start_my = 0
-    elif offset_y <= halfsize and offset_y + map_h * _profile.sprite_size > 0:
-        start_my = int(abs(offset_y)) // _profile.sprite_size
+    elif offset_y > -(map_h * _profile.sprite_size - halfsize):
+        start_my = int(abs(offset_y + halfsize)) // _profile.sprite_size + 1
     else:
         start_my = map_h - 1
+
     # left of maptile
     _offset_y = offset_y + (map_h - 1) * _profile.sprite_size
 
     # end of map_y
-    # _offset_y = offset_y + (map_h - 1) * _profile.sprite_size
-    if _profile.height - halfsize > _offset_y:
+    if _offset_y < _profile.height + halfsize:
         end_my = map_h - 1
-    # elif offset_y <= halfsize and offset_y < _profile.height - halfsize:
-    elif _offset_y >= _profile.height - halfsize and offset_y < _profile.height - halfsize:
-        end_my = (map_h - 1) - int(abs(_profile.height - _offset_y)) // _profile.sprite_size
+    elif _offset_y < (_profile.height + (map_h - 1) * _profile.sprite_size - halfsize):
+        end_my = map_h - (int(abs(_offset_y + halfsize - _profile.height)) // _profile.sprite_size + 1)
     else:
         end_my = 0
-
-    print("\033[H\033[J", end="")
-    print(f"start_mx: {start_mx}, end_mx: {end_mx}, start_my: {start_my}, end_my: {end_my}, offset_x: {offset_x}, offset_y: {offset_y}")
 
     return (start_mx, end_mx, start_my, end_my)
 
@@ -183,8 +181,8 @@ class Tilemap:
         assert self.map_data
 
         self.update_viewport(-offset_x, -offset_y)
-        for x in range(self.viewport.get_width()):
-            for y in range(self.viewport.get_height()):
+        for x in range(self.viewport.get_width()+1):
+            for y in range(self.viewport.get_height()+1):
                 _x = x + self.viewport.start_x
                 _y = y + self.viewport.start_y
 

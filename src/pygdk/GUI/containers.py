@@ -121,14 +121,14 @@ class ContainerBase(_base.GUIBase):
             if (_vertical_scroll
                     and self.v_scrollBar_obj is None):
                 self.v_scrollBar_obj = _VerticalScrollBar(
-                    u, v, self.item_size, self.size, self.bar_style, self.padding, self.no_register)
+                    u, v, self.item_size, self.size, self.bar_style, self.padding, no_register=self.no_register)
             elif not _vertical_scroll:
                 self.v_scrollBar_obj = None
                 
             if (_horizontal_scroll
                     and self.h_scrollBar_obj is None):
                 self.h_scrollBar_obj = _HorizontalScrollBar(
-                    u, v, self.item_size, self.size, self.bar_style, self.padding, self.no_register)            
+                    u, v, self.item_size, self.size, self.bar_style, self.padding, no_register=self.no_register)            
             elif not _horizontal_scroll:
                 self.h_scrollBar_obj = None
 
