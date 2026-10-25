@@ -68,13 +68,22 @@ class SceneObject(Scene, _event.EventObject):
 
 class SceneManager:
     current_scene: _Optional[Scene] = None
-    scene_stack: list[Scene] = []
+    scene_stack: dict[str, Scene] = {}
 
     @staticmethod
-    def push_scene(scene: Scene):
+    def push_scene(scene_name: str, scene: Scene):
         if SceneManager.current_scene is None:
             SceneManager.current_scene = scene
-        SceneManager.scene_stack.append(scene)
+
+        if scene_name in SceneManager.scene_stack.keys():
+            raise Exception(f"[SceneManager.push_scene] duplicated scene name: {scene_name}")
+        SceneManager.scene_stack[scene_name] = scene
+
+    @staticmethod
+    def change_scene(scene_name: str):
+        if scene_name not in SceneManager.scene_stack.keys():
+            raise Exception(f"[SceneManager.change_scene] not found scene name: {scene_name}")
+        SceneManager.current_scene = SceneManager.scene_stack[scene_name]
 
     @staticmethod
     def update():

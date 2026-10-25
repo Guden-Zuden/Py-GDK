@@ -343,8 +343,8 @@ class GridContainer(ContainerBase):
             _index = 0
             for item in self.items:
                 item.pos = Vec2(x + self.scroll_h, y + self.scroll_v)
-                if item.pos.x + item.size.width > 0 and item.pos.x < self.size.width:
-                    item.draw(self.surface)
+                # if item.pos.x + item.size.width > 0 and item.pos.x < self.size.width:
+                #     item.draw(self.surface)
                 if (_index + 1) % self.grid_row == 0:
                     x = self.padding.left + self.border.width # reset
                     y += item.size.height + self.space

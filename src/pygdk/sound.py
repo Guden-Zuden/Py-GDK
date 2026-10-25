@@ -1,14 +1,13 @@
 import pygame as _pygame
-import pathlib
-from typing import Optional
+import pathlib as _pathlib
 
 from . import profile
 
 class AudioManager:
     """
     Default volume:
-        \tSE - 0.2\n
-        \tBGM - 0.2\n
+        \tSE - 0.1\n
+        \tBGM - 0.1\n
     Be careful with your ears.
     """
 
@@ -20,12 +19,12 @@ class AudioManager:
     __bgm_volume = 0.1
 
     @staticmethod
-    def load_se(name: str, filepath: str | pathlib.Path):
+    def load_se(name: str, filepath: str | _pathlib.Path):
         sound = _pygame.mixer.Sound(filepath)
         AudioManager.se_stack.append((name, sound))
 
     @staticmethod
-    def load_bgm(name: str, filepath: str | pathlib.Path):
+    def load_bgm(name: str, filepath: str | _pathlib.Path):
         sound = _pygame.mixer.Sound(filepath)
         AudioManager.bgm_stack.append((name, sound))
 
@@ -52,6 +51,15 @@ class AudioManager:
         AudioManager.playing_bgm_index = index
 
     @staticmethod
+    def stop_se(name: str):
+        try:
+            index = [name for name, sound in AudioManager.se_stack].index(name)
+            sound = AudioManager.se_stack[index][1]
+            sound.stop()
+        except ValueError:
+            print(f"[AudioManager.stop_se] Not found \"{name}\"")
+            
+    @staticmethod
     def stop_bgm():
         if AudioManager.playing_bgm_index == -1:
             print("[AudioManager.stop_bgm] No BGM is played yet.")
@@ -77,3 +85,12 @@ class AudioManager:
             print(f"[AudioManager.set_bgm_volume] invalid value: {value} > 1")
             return
         AudioManager.__bgm_volume = value
+
+load_se = AudioManager.load_se
+load_bgm = AudioManager.load_bgm
+play_se = AudioManager.play_se
+play_bgm = AudioManager.play_bgm
+stop_se = AudioManager.stop_se
+stop_bgm = AudioManager.stop_bgm
+set_se_volume = AudioManager.set_se_volume
+set_bgm_volume = AudioManager.set_bgm_volume

@@ -34,7 +34,7 @@ def run():
     assert profile.clock is not None
 
     profile._gdk_executed = True
-    for _layer in layer.LayerManager.layer_stack:
+    for _layer in layer.LayerManager.layer_stack.values():
         for _component in _layer._GUIComponent_stack:
             _component._regist_events()
 

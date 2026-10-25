@@ -10,15 +10,25 @@ import pytweening as _pytweening
 
 @_dataclass
 class AnimFrame:
-    index: int
+    sprite_index: int
     time: float
 @_dataclass
 class AnimEnd:
     time: float
 
 class EAnimData:
-    def __init__(self, frame_data: list[AnimFrame | AnimEnd]) -> None:
-        self.frame_datas: list[AnimFrame | AnimEnd] = frame_data
+    def __init__(self, frame_datas: list[AnimFrame | AnimEnd]) -> None:
+        # check whether frame data is empty.
+        if len(frame_datas) == 0:
+            raise Exception("frame data is empty.")
+        # check sorted time
+        if frame_datas != sorted(frame_datas, key=lambda frame_data: frame_data.time):
+            raise Exception("time of frame data is not sorted.")
+        # check AnimEnd
+        if type(frame_datas[-1]) is not AnimEnd:
+            raise Exception("AnimEnd must be set the end of frame_datas.")
+
+        self.frame_datas: list[AnimFrame | AnimEnd] = frame_datas
 
         self._timer = _time.Timer()
         self.current_index = 0
@@ -32,6 +42,7 @@ class EAnimData:
             return
         if self.frame_datas[self.current_index+1].time < self._timer.time:
             self.current_index += 1
+        #TODO フレーム落ち（ウィンドウを掴むなど）で遅れた場合、毎フレームインデックスを更新して追いつこうとするので、そこの改善必要
 
 class EAnimator:
     """Entity Animator"""
@@ -41,6 +52,7 @@ class EAnimator:
 
     def play(self, animation_name: str):
         self.current_anim = self.anim_datas[animation_name]
+        #TODO 呼び出されたときの挙動：最初からか途中からかどうか
 
     def update(self):
         if self.current_anim is None: return
@@ -73,6 +85,7 @@ class EasingInCubic(EasingBase):
         return (dx, dy)
 
 class GAnimBase:
+    """GUI Animation"""
     def __init__(self) -> None:
         self.start_x = 0.0
         self.start_y = 0.0
@@ -97,6 +110,7 @@ class GAnimBase:
     def update(self, gui_component: _GUI.base.GUIBase) -> None: ...
 
 class GAnim_MoveTo(GAnimBase):
+    """Move the object"""
     def __init__(
             self,
             dx: float, dy: float, dt: float,
@@ -117,10 +131,31 @@ class GAnim_MoveTo(GAnimBase):
 
         gui_component.pos.x = self.start_x + x
         gui_component.pos.y = self.start_y + y
+
+        print(gui_component, self.timer.time)
+
         if self.dt < self.timer.time:
             self.is_ended = True
             gui_component.pos.x = self.start_x + self.dx
             gui_component.pos.y = self.start_y + self.dy
+
+class GAnim_Play(GAnimBase):
+    def __init__(self, GUI_Animator: GAnimator, anim_name: str) -> None:
+        super().__init__()
+        self.GUI_Animator = GUI_Animator
+        self.anim_name = anim_name
+
+    def update(self, gui_component: _GUI.base.GUIBase):
+        self.timer.update()
+        
+        # if self.is_ended == False:
+        self.GUI_Animator.play(self.anim_name)
+
+        if (self.GUI_Animator.playing_anim_data is None
+            or self.GUI_Animator.playing_anim_data.current_anim is None):
+            return
+        if self.GUI_Animator.playing_anim_data.current_anim.is_ended:
+            self.is_ended = True
 
 class GAnimData:
     def __init__(self) -> None:
@@ -169,6 +204,10 @@ class GAnimData:
         self.anim_datas.append(GAnim_MoveTo(delta_x, delta_y, time, easing))
         if self.current_anim is None:
             self.current_anim = self.anim_datas[0]
+        return self
+
+    def play(self, GUI_Animator: GAnimator, anim_name: str):
+        self.anim_datas.append(GAnim_Play(GUI_Animator, anim_name))
         return self
 
 class GAnimator:

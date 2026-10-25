@@ -83,7 +83,7 @@ def on_windowResized(e):
     if profile.surface_fill_screen:
         core.recreate_surface(new_width, new_height)
 
-    for _layer in layer.LayerManager.layer_stack:
+    for _layer in layer.LayerManager.layer_stack.values():
         for gui_component in _layer._GUIComponent_stack:
             gui_component.pos = Vec2(
                 profile.width/2 + profile.width/2 * gui_component.u - gui_component.size.width/2,

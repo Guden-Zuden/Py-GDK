@@ -59,13 +59,23 @@ class LayerObject(_event.EventObject):
 
 class LayerManager:
     current_layer: _Optional[Layer] = None
-    layer_stack: list[Layer] = []
+    layer_stack: dict[str, Layer] = {}
 
     @staticmethod
-    def pushLayer(layer: Layer):
+    def pushLayer(layer_name: str, layer: Layer):
         if LayerManager.current_layer is None:
             LayerManager.current_layer = layer
-        LayerManager.layer_stack.append(layer)
+
+        if layer_name in LayerManager.layer_stack.keys():
+            raise Exception(f"[LayerManager.pushLayer] duplicated layer_name: {layer_name}")
+    
+        LayerManager.layer_stack[layer_name] = layer
+
+    @staticmethod
+    def changeLayer(layer_name: str):
+        if layer_name not in LayerManager.layer_stack.keys():
+            raise Exception(f"[LayerManager.changeLayer] Not found layer_name: {layer_name}")
+        LayerManager.current_layer = LayerManager.layer_stack[layer_name]
 
     @staticmethod
     def update():
