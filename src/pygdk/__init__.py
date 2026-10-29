@@ -1,3 +1,25 @@
+"""
+# Py-GDK
+
+---
+
+## Description
+Py-GDK(Python Game Developer Kits) is developed for making game.
+
+---
+
+## Features
+- profile - This includes global variables used in this package. Some options are here.
+- Layer - Layer manages GUI objects and draw them.
+- Scene - Scene manages tilemap, entity, and so on. (not equal scene.py)
+- event - event manages event dispatching.
+    - key - key objects
+    - mouse - mouse objects and functions
+- GUI - This includes GUI objects: Label, Button, ImageButton, and so on.
+- colors - There are colors.
+
+"""
+
 from .base import *
 from .GUI.base import *
 from .utils import *
