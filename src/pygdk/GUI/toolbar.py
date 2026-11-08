@@ -9,11 +9,19 @@ from .. import colors as _colors
 from . import base as _base
 from .. import animator as _animator
 
-class ToolBar(_base.GUIBase):
+class ToolBar(_base.Element):
     def __init__(
-            self, u: float, v: float, textAttributes: TextAttributes = _profile.default_textAttributes,
-            toolbar_background: _Optional[Background] = None, dropdownMenu_background: _Optional[Background] = None, bar_style: ScrollBarStyle = _profile.default_scrollbar_style,
-            space = 0,padding=_profile.default_padding, border: _base.Border = Border(0, _colors.WHITE), animator: _Optional[_animator.GAnimator] = None, no_register=False
+            self, 
+            u: float, 
+            v: float, 
+            textAttributes: TextAttributes = _profile.default_textAttributes,
+            toolbar_background: _Optional[Background] = None, 
+            dropdownMenu_background: _Optional[Background] = None, 
+            bar_style: ScrollBarStyle = _profile.default_scrollbar_style,
+            space = 0,
+            padding=_profile.default_padding, 
+            border: _base.Border = Border(0, _colors.WHITE), 
+            animator: _Optional[_animator.GAnimator] = None
             ) -> None:
         from . import HorizontalAlignContainer, VerticalAlignContainer
         super().__init__(u, v, _profile.width, textAttributes.FontSize + padding.top + padding.bottom, padding, border, animator, no_register)
@@ -27,13 +35,9 @@ class ToolBar(_base.GUIBase):
             lock_vertical_scroll = True,
             lock_horizontal_scroll = False,
             space = space,
-            border = border,
-            no_register = no_register
+            border = border
             )
-        self.add_inner(self.HC_ToolBar)
-        self.add_child(self.HC_ToolBar)
-        self.HC_ToolBar.sync_size_to(self)
-
+        self.set_child(self.HC_ToolBar)
         self.VC_DropDownMenu = VerticalAlignContainer(
             0,0,
             50,100,
@@ -42,11 +46,10 @@ class ToolBar(_base.GUIBase):
             lock_vertical_scroll = True,
             lock_horizontal_scroll = True,
             space = space,
-            border = border,
-            no_register = no_register
+            border = border
             )
-        self.VC_DropDownMenu.is_hide = True
-        self.add_child(self.VC_DropDownMenu)
+        self.VC_DropDownMenu.visible = False
+        self.set_child(self.VC_DropDownMenu)
 
         self.toolbar_properties: list[ToolBarItemProperty] = []
 
@@ -60,11 +63,11 @@ class ToolBar(_base.GUIBase):
             color = Color(0,0,0,0)
         )
         def on_click():
-            property = next((property for property in self.toolbar_properties if property.name == button.text), None)
+            property = next((property for property in self.toolbar_properties if property.name == button._text), None)
             if property:
                 self.on_clicked_toolbar_item(property)
-        button.event_func = on_click
-        button.set_size(button.text_obj.size.width, self.textAttributes.FontSize)
+        button.callback_clicked = on_click
+        button.size = Vec2(button.text_obj.size.width, self.textAttributes.FontSize)
         self.HC_ToolBar.push_item(button)
         self.toolbar_properties.append(toolbar_item_property)
 
@@ -73,7 +76,7 @@ class ToolBar(_base.GUIBase):
         from .. import event
 
         for item in self.VC_DropDownMenu.items:
-            item.is_hide = True # TODO: ISSUE: ボタンオブジェクトがイベントハンドラに残りメモリリーク的なことが起きている。
+            item.visible = False # TODO: ISSUE: ボタンオブジェクトがイベントハンドラに残りメモリリーク的なことが起きている。
 
         self.VC_DropDownMenu.items.clear()
         for property_item in property.pulldown_menu_items:
@@ -83,7 +86,7 @@ class ToolBar(_base.GUIBase):
                 text = property_item[0],
                 textAttributes = self.textAttributes, 
                 color = (0, 0, 0, 0),
-                event_func=property_item[1]
+                callback_clicked=property_item[1]
             )
             button.size.width = button.text_obj.size.width
             self.VC_DropDownMenu.push_item(
@@ -91,34 +94,29 @@ class ToolBar(_base.GUIBase):
             )
 
         for item in self.VC_DropDownMenu.items:
-            item.is_hide = False
+            item.visible = True
 
         index = self.toolbar_properties.index(property)
-        self.VC_DropDownMenu.set_pos(
-            *self.HC_ToolBar.items[index].pos
-        )
+        self.VC_DropDownMenu.pos = Vec2(*self.HC_ToolBar.items[index].pos)
         self.VC_DropDownMenu.pos.y += self.HC_ToolBar.items[index].size.height
-        self.VC_DropDownMenu.set_size(
+        self.VC_DropDownMenu.size = Vec2(
             self.VC_DropDownMenu.item_size.width,
             self.VC_DropDownMenu.item_size.height
         )
-        self.VC_DropDownMenu.is_hide = False
+        self.VC_DropDownMenu.visible = True
 
     def update(self) -> None:
-        if self.is_hide: return
+        if not self.should_update(): return
         super().update()
         self.HC_ToolBar.set_pos(*self.pos)
         self.HC_ToolBar.update()
         self.VC_DropDownMenu.update()
 
-    def draw(self, surface: _Optional[_pg.Surface] = None) -> None:
-        if self.is_hide: return
-        super().draw(surface)
-        self.HC_ToolBar.draw(self.surface)
-        self.VC_DropDownMenu.draw(surface)
+    def draw(self) -> None:
+        if not self.should_draw(): return
+        super().draw()
+        self.HC_ToolBar.draw()
+        self.VC_DropDownMenu.draw()
 
-    
-        if surface: self._flush(surface)
-        else: self._flush()
         _pg.draw.circle(_profile.window.surface, (0,255,255), self.VC_DropDownMenu.pos.tuple, 5)
         _pg.draw.circle(_profile.window.surface, (0,255,255), self.HC_ToolBar.pos.tuple, 5)

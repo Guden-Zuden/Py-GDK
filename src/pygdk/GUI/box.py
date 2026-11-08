@@ -7,39 +7,23 @@ from . import base as _base
 import pygame as _pg
 from typing import Optional as _Optional
 
-class Box(_base.GUIBase):
+class Box(_base.Element):
     def __init__(self, u: float, v: float, width: float, height: float,
                  color: gdk_color, padding = _profile.default_padding, border = Border(0, _colors.WHITE),
-                 child: _Optional[_base.GUIBase] = None, animator: _Optional[_animator.GAnimator] = None, no_register = False) -> None:
-        super().__init__(u, v, width, height, padding, border, animator, no_register)
+                 animator: _Optional[_animator.GAnimator] = None) -> None:
+        super().__init__(u, v, width, height, padding, border, animator)
         self.color = color if type(color) is Color else Color(*color)
-        self.border = border
-
-        self.child = child
-        if self.child:
-            self.child.pos = Vec2(
-                self.size.width/2 - self.child.size.width/2,
-                self.size.height/2 - self.child.size.height/2
-            )
 
     def update(self):
-        if self.is_hide: return
+        if not self.should_update(): return
         super().update()
-        if self.child: self.child.create_surface()
 
-    def draw(self, surface: _Optional[_pg.Surface] = None) -> None:
-        if self.is_hide: return
-        super().draw(surface)
+    def draw(self) -> None:
+        if not self.should_draw(): return
+        super().draw()
 
         _pg.draw.rect(self.surface, self.color, self.surface.get_rect())
+        self.reset_dirty()
 
-        if self.child:
-            self.child.pos = Vec2(
-                self.size.width/2 - self.child.size.width/2,
-                self.size.height/2 - self.child.size.height/2
-            )
-
-            self.child.draw(self.surface)
-
-        if surface: self._flush(surface)
-        else: self._flush()
+    def set_color(self, color: gdk_color):
+        self.color = color

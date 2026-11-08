@@ -159,6 +159,18 @@ def OnMousebuttonUp(button: mouse.MouseButtonType):
         return wrapper
     return decorator
 
+# mouse wheel
+def OnMousewheelScroll():
+    def decorator(func):
+        EventManager.register_mousewheelscroll(func)
+
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            return func(*args, **kwargs)
+
+        return wrapper
+    return decorator
+
 class EventType(Flag):
     OnUpdate = auto()
     OnWindowResized = auto()
@@ -167,9 +179,7 @@ class EventType(Flag):
     OnMousebuttonDown = auto()
     OnMousebuttonUp = auto()
     OnMousemove = auto()
-    OnMousewheelUp = auto()
-    OnMousewheelDown = auto()
-
+    OnMousewheelScroll = auto()
 
 @dataclass
 class HandlerBase:
@@ -217,12 +227,15 @@ class EventManager:
     @staticmethod
     def link_instance(instance: Any):
         '''
-        Called by EventObject
+        Called by EventObject.
+        
         '''
         for _event_type, _handler in EventManager._handlers:
             owner_name = _handler.func.__qualname__.rsplit(".", 1)[0]
 
+            # Check whether the instance's class inherits from the handler's owner class.
             if any(mro.__qualname__ == owner_name for mro in instance.__class__.__mro__):
+                # Link the instance if it is not already linked to the handler.
                 if not any(existing_instance is instance for existing_instance in _handler.instances):
                     _handler.instances.append(instance)
 
@@ -256,12 +269,8 @@ class EventManager:
         EventManager._register_handler(EventType.OnMousebuttonUp, MousebuttonHandler(func, button.buttonType))
 
     @staticmethod
-    def register_mousewheelup(func: Callable[..., None]):
-        EventManager._register_handler(EventType.OnMousewheelUp, Handler(func))
-
-    @staticmethod
-    def register_mousewheeldown(func: Callable[..., None]):
-        EventManager._register_handler(EventType.OnMousewheelDown, Handler(func))
+    def register_mousewheelscroll(func: Callable[..., None]):
+        EventManager._register_handler(EventType.OnMousewheelScroll, Handler(func))
 
     # ===== Register ===== end
 
@@ -312,12 +321,8 @@ class EventManager:
                              if event_type == EventType.OnMousebuttonUp and handler.mousebutton == e.button] # pyright: ignore
 
             if e.type == _pygame.MOUSEWHEEL:
-                if e.y > 0:
-                    handlers += [handler for event_type, handler in EventManager._handlers
-                                 if event_type == EventType.OnMousewheelUp]
-                elif e.y < 0:
-                    handlers += [handler for event_type, handler in EventManager._handlers
-                                 if event_type == EventType.OnMousewheelDown]
+                handlers += [handler for event_type, handler in EventManager._handlers
+                             if event_type == EventType.OnMousewheelScroll]
 
             for handler in handlers:
                 if handler.instances != []:

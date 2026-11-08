@@ -36,7 +36,8 @@ def run():
     profile._gdk_executed = True
     for _layer in layer.LayerManager.layer_stack.values():
         for _component in _layer._GUIComponent_stack:
-            _component._regist_events()
+            # _component._regist_events()
+            pass
 
     while True:
         with BenchMark("core"):
@@ -59,6 +60,7 @@ def run():
             with BenchMark("layer"):
                 GUI.base._updateMouseStatus()
                 GUI.base.GUIBase._reset_g_flag()
+                GUI.base.Frame._reset_g_flag()
 
                 layer.LayerManager.update()
                 layer.LayerManager.draw()

@@ -19,20 +19,20 @@ from .label import (
 from ..time import BenchMark as _BenchMark
 from .. import animator as _animator
 
-class ContainerBase(_base.GUIBase):
+class ContainerBase(_base.Element):
     def __init__(self, u: float, v: float, width: float, height: float, background: _Optional[_base.Background] = None,
-                 padding = _profile.default_padding, items: _Optional[list[_base.GUIBase]] = None, bar_style: _base.ScrollBarStyle = _profile.default_scrollbar_style,
+                 padding = _profile.default_padding, items: _Optional[list[_base.Element]] = None, bar_style: _base.ScrollBarStyle = _profile.default_scrollbar_style,
                  lock_vertical_scroll = False, lock_horizontal_scroll = False,
-                 space: float = 0, border: Border = Border(0, _colors.WHITE), animator: _Optional[_animator.GAnimator] = None, no_register = False) -> None:
-        super().__init__(u, v, width, height, padding, border, animator, no_register)
+                 space: float = 0, border: Border = Border(0, _colors.WHITE), animator: _Optional[_animator.GAnimator] = None) -> None:
+        super().__init__(u, v, width, height, padding, border, animator)
 
         self.background = background
         if items:
-            self.items = items
+            self.items: list[_base.Element] = items
             for item in self.items:
-                self.add_child(item)
+                self.set_child(item)
         else:
-            self.items = []
+            self.items: list[_base.Element] = []
 
         self.space = space
         self.bar_style = bar_style
@@ -49,10 +49,11 @@ class ContainerBase(_base.GUIBase):
         self.v_scrollBar_obj: _Optional[_VerticalScrollBar] = None
         self.h_scrollBar_obj: _Optional[_HorizontalScrollBar] = None
 
-        if not no_register:
-            _event.EventManager.register_mousewheeldown(type(self).on_mousewheeldown)
-            _event.EventManager.register_mousewheelup(type(self).on_mousewheelup)
-            _event.EventManager.link_instance(self)
+        self.callback_mousewheelscrolled = self.on_mousewheelscroll
+        # if not no_register:
+        #     _event.EventManager.register_mousewheeldown(type(self).on_mousewheeldown)
+        #     _event.EventManager.register_mousewheelup(type(self).on_mousewheelup)
+        #     _event.EventManager.link_instance(self)
 
     def adjust_size(self):
         width = abs(self.item_size.width - self.size.width)
@@ -66,19 +67,8 @@ class ContainerBase(_base.GUIBase):
             self.scroll_v = 0
         elif self.scroll_v < -height:
             self.scroll_v = -height
-        
-    def on_mousewheeldown(self, e):
-        if not self.hovered: return
-        delta: int = e.y * _profile.lines_per_scroll
-        if _event.getMod().isShift():
-            self.scroll_h += delta
-        else:
-            self.scroll_v += delta
-        self.adjust_size()
-        self._calc_positions()
 
-    def on_mousewheelup(self, e):
-        if not self.hovered: return
+    def on_mousewheelscroll(self, e):
         delta: int = e.y * _profile.lines_per_scroll
         if _event.getMod().isShift():
             self.scroll_h += delta
@@ -86,9 +76,10 @@ class ContainerBase(_base.GUIBase):
             self.scroll_v += delta
         self.adjust_size()
         self._calc_positions()
+        self.set_dirty()
 
     def update(self):
-        if self.is_hide: return
+        if not self.should_update(): return
         with _BenchMark(f"{self}.update:item.update()"):
             for item in self.items:
                 item.update()
@@ -112,24 +103,29 @@ class ContainerBase(_base.GUIBase):
             if self.lock_horizontal_scroll:
                 self.scroll_h = 0
 
-            if self.size.is_dirty():
-                # self._calc_size()
-                self.size.reset()
-
             # make scroll bar
-            u, v = _base._posTouv(self.pos, self.size.width, self.size.height)
+            # u, v = _base._pos2uv(self.pos, self.size.width, self.size.height)
             if (_vertical_scroll
                     and self.v_scrollBar_obj is None):
                 self.v_scrollBar_obj = _VerticalScrollBar(
-                    u, v, self.item_size, self.size, self.bar_style, self.padding, no_register=self.no_register)
+                    0, 0, self.item_size, self.size, self.bar_style, self._padding)
+                self.v_scrollBar_obj.pos = Vec2(0, 0)
+                self.set_child(self.v_scrollBar_obj)
+
             elif not _vertical_scroll:
+                if self.v_scrollBar_obj:
+                    self.rm_child(self.v_scrollBar_obj)
                 self.v_scrollBar_obj = None
                 
             if (_horizontal_scroll
                     and self.h_scrollBar_obj is None):
                 self.h_scrollBar_obj = _HorizontalScrollBar(
-                    u, v, self.item_size, self.size, self.bar_style, self.padding, no_register=self.no_register)            
+                    0, 0, self.item_size, self.size, self.bar_style, self._padding)
+                self.h_scrollBar_obj.pos = Vec2(0, 0)
+                self.set_child(self.h_scrollBar_obj)   
             elif not _horizontal_scroll:
+                if self.h_scrollBar_obj:
+                    self.rm_child(self.h_scrollBar_obj)
                 self.h_scrollBar_obj = None
 
             # background image position
@@ -152,9 +148,9 @@ class ContainerBase(_base.GUIBase):
                 self.h_scrollBar_obj.scroll_h = self.scroll_h # pyright: ignore
                 self.h_scrollBar_obj.update()
         
-    def draw(self, surface: _Optional[_pg.Surface] = None):
-        if self.is_hide: return
-        super().draw(surface)
+    def draw(self):
+        if not self.should_draw(): return
+        super().draw()
         if self.background and self.background.isColor():
             _pg.draw.rect(
                 self.surface, self.background.color,# pyright: ignore
@@ -162,18 +158,26 @@ class ContainerBase(_base.GUIBase):
         elif self.background and self.background.isImage():
             self.background.image.draw(self.surface) # pyright: ignore
 
-    def push_item(self, item: _base.GUIBase):
+    def push_item(self, item: _base.Element):
         self.items.append(item)
-        self.add_child(item)
+        self.set_child(item)
         self._calc_positions()
         self._calc_size()
 
-    def set_items(self, items: list[_base.GUIBase]):
+    def set_items(self, items: list[_base.Element]):
+        for item in self.items:
+            self.rm_child(item)
+
         self.items = items
-        self.children.clear()
         for item in items:
             if item not in self.children:
-                self.add_child(item)
+                self.set_child(item)
+        self._calc_positions()
+        self._calc_size()
+
+    def rm_item(self, item: _base.Element):
+        self.items.remove(item)
+        self.rm_child(item)
         self._calc_positions()
         self._calc_size()
 
@@ -183,32 +187,29 @@ class ContainerBase(_base.GUIBase):
 # containers
 class VerticalAlignContainer(ContainerBase):
     def __init__(self, u: float, v: float, width: float, height: float, background: _Optional[Background] = None,
-                 padding = _profile.default_padding, items: _Optional[list[_base.GUIBase]] = None, bar_style: _base.ScrollBarStyle = _profile.default_scrollbar_style,
+                 padding = _profile.default_padding, items: _Optional[list[_base.Element]] = None, bar_style: _base.ScrollBarStyle = _profile.default_scrollbar_style,
                  lock_vertical_scroll = False, lock_horizontal_scroll = False,
                  space: float = 0, alignment: Alignment = Alignment.LEFT, border: Border = Border(0, _colors.WHITE), 
-                 animator: _Optional[_animator.GAnimator] = None, no_register = False) -> None:
-        super().__init__(u, v, width, height, background, padding, items, bar_style, lock_vertical_scroll, lock_horizontal_scroll, space, border, animator, no_register)
+                 animator: _Optional[_animator.GAnimator] = None) -> None:
+        super().__init__(u, v, width, height, background, padding, items, bar_style, lock_vertical_scroll, lock_horizontal_scroll, space, border, animator)
         self.alignment = alignment
         self._calc_size()
         self._calc_positions()
 
     def update(self):
-        if self.is_hide: return
+        if not self.should_update(): return
         super().update()
 
-    def draw(self, surface: _Optional[_pg.Surface] = None):
-        if self.is_hide: return
-        super().draw(surface)
+    def draw(self):
+        if not self.should_draw(): return
+        super().draw()
 
         for item in self.items:
             if item.pos.y + item.size.height > 0 and item.pos.y < self.size.height:
-                item.draw(self.surface)
+                item.draw()
 
-        if self.v_scrollBar_obj: self.v_scrollBar_obj.draw(self.surface)
-        if self.h_scrollBar_obj: self.h_scrollBar_obj.draw(self.surface)
-
-        if surface: self._flush(surface)
-        else: self._flush()
+        if self.v_scrollBar_obj: self.v_scrollBar_obj.draw()
+        if self.h_scrollBar_obj: self.h_scrollBar_obj.draw()
 
     def _calc_size(self):
         self.item_size.width = 0
@@ -219,61 +220,58 @@ class VerticalAlignContainer(ContainerBase):
         for item in self.items:
             self.item_size.height += item.size.height
         self.item_size.height += (len(self.items) - 1) * self.space
-        self.item_size.height += self.padding.top + self.padding.bottom
+        self.item_size.height += self._padding.top + self._padding.bottom
 
     def _calc_positions(self):
-        x = self.padding.left + self.border.width
-        y = self.padding.top + self.border.width
+        x = self._padding.left + self._border.width
+        y = self._padding.top + self._border.width
 
         for item in self.items:
-            item.set_pos(x + self.scroll_h, y + self.scroll_v)
+            item.pos = Vec2(x + self.scroll_h, y + self.scroll_v)
             if self.alignment == Alignment.CENTER:
                 item.pos.x = self.size.width/2 - item.size.width/2
             elif self.alignment == Alignment.RIGHT:
-                item.pos.x = self.size.width - item.size.width - self.padding.right
+                item.pos.x = self.size.width - item.size.width - self._padding.right
             y += item.size.height + self.space
 
 class HorizontalAlignContainer(ContainerBase):
     def __init__(self, u: float, v: float, width: float, height: float, background: _Optional[Background] = None,
-                 padding = _profile.default_padding, items: _Optional[list[_base.GUIBase]] = None, bar_style: _base.ScrollBarStyle = _profile.default_scrollbar_style,
+                 padding = _profile.default_padding, items: _Optional[list[_base.Element]] = None, bar_style: _base.ScrollBarStyle = _profile.default_scrollbar_style,
                  lock_vertical_scroll = False, lock_horizontal_scroll = False,
-                 space: float = 0, border: Border = Border(0, _colors.WHITE), animator: _Optional[_animator.GAnimator] = None, no_register = False) -> None:
-        super().__init__(u, v, width, height, background, padding, items, bar_style, lock_vertical_scroll, lock_horizontal_scroll, space, border, animator, no_register)
+                 space: float = 0, border: Border = Border(0, _colors.WHITE), animator: _Optional[_animator.GAnimator] = None) -> None:
+        super().__init__(u, v, width, height, background, padding, items, bar_style, lock_vertical_scroll, lock_horizontal_scroll, space, border, animator)
         self._calc_size()
         self._calc_positions()
 
     def update(self):
-        if self.is_hide: return
+        if not self.should_update(): return
         super().update()
 
-    def draw(self, surface: _Optional[_pg.Surface] = None):
-        if self.is_hide: return
-        super().draw(surface)
+    def draw(self):
+        if not self.should_draw(): return
+        super().draw()
 
         for item in self.items:
             if item.pos.x + item.size.width > 0 and item.pos.x < self.size.width:
-                item.draw(self.surface)
+                item.draw()
 
-        if self.v_scrollBar_obj: self.v_scrollBar_obj.draw(self.surface)
-        if self.h_scrollBar_obj: self.h_scrollBar_obj.draw(self.surface)
-
-        if surface: self._flush(surface)
-        else: self._flush()
+        if self.v_scrollBar_obj: self.v_scrollBar_obj.draw()
+        if self.h_scrollBar_obj: self.h_scrollBar_obj.draw()
 
     def _calc_size(self):
         self.item_size.width = 0
         for item in self.items:
             self.item_size.width += item.size.width
         self.item_size.width += (len(self.items) - 1) * self.space
-        self.item_size.width += self.padding.left + self.padding.right
+        self.item_size.width += self._padding.left + self._padding.right
 
         self.item_size.height = 0
         if len(self.items) != 0:
             self.item_size.height = max([item.size.height for item in self.items])
 
     def _calc_positions(self):
-        x = self.padding.left + self.border.width
-        y = self.padding.top + self.border.width
+        x = self._padding.left + self._border.width
+        y = self._padding.top + self._border.width
 
         for item in self.items:
             item.pos = Vec2(x + self.scroll_h, y + self.scroll_v)
@@ -283,36 +281,33 @@ class HorizontalAlignContainer(ContainerBase):
 class GridContainer(ContainerBase):
     def __init__(self, u: float, v: float, width: float, height: float, background: _Optional[Background] = None,
                  grid_col: int = -1, grid_row: int = -1,
-                 padding = _profile.default_padding, items: _Optional[list[_base.GUIBase]] = None, bar_style: _event.ScrollBarStyle = _profile.default_scrollbar_style, 
+                 padding = _profile.default_padding, items: _Optional[list[_base.Element]] = None, bar_style: _event.ScrollBarStyle = _profile.default_scrollbar_style, 
                  lock_vertical_scroll = False, lock_horizontal_scroll = False, 
-                 space: float = 0, border: Border = Border(0, _colors.WHITE), animator: _Optional[_animator.GAnimator] = None, no_register=False) -> None:
+                 space: float = 0, border: Border = Border(0, _colors.WHITE), animator: _Optional[_animator.GAnimator] = None) -> None:
         if grid_col < 1 or grid_row < 1:
             raise Exception("Invalid number. It must be more than 1.")
-        super().__init__(u, v, width, height, background, padding, items, bar_style, lock_vertical_scroll, lock_horizontal_scroll, space, border, animator, no_register)
+        super().__init__(u, v, width, height, background, padding, items, bar_style, lock_vertical_scroll, lock_horizontal_scroll, space, border, animator)
         self.grid_col, self.grid_row = grid_col, grid_row
 
         self._calc_size()
         self._calc_positions()
 
     def update(self):
-        if self.is_hide: return
+        if not self.should_update(): return
         super().update()
 
-    def draw(self, surface: _Optional[_pg.Surface] = None):
-        if self.is_hide: return
-        super().draw(surface)
+    def draw(self):
+        if not self.should_draw(): return
+        super().draw()
 
         _index = 0
         for item in self.items:
             if item.pos.x + item.size.width > 0 and item.pos.x < self.size.width:
-                item.draw(self.surface)
+                item.draw()
             _index += 1
 
         if self.v_scrollBar_obj: self.v_scrollBar_obj.draw(self.surface)
         if self.h_scrollBar_obj: self.h_scrollBar_obj.draw(self.surface)
-
-        if surface: self._flush(surface)
-        else: self._flush()
 
     def _calc_size(self):
         def separate_items(_list: list, _n: int):
@@ -321,7 +316,7 @@ class GridContainer(ContainerBase):
         if len(self.items) == 0: return
         x_size = max(
             [
-                sum([obj.size.width for obj in h_objs]) + (len(h_objs) - 1) * self.space + self.padding.left + self.padding.right
+                sum([obj.size.width for obj in h_objs]) + (len(h_objs) - 1) * self.space + self._padding.left + self._padding.right
                 for h_objs in separate_items(self.items, self.grid_row)
             ]
         )
@@ -330,15 +325,15 @@ class GridContainer(ContainerBase):
                 max([obj.size.height for obj in h_objs])
                 for h_objs in separate_items(self.items, self.grid_row)
             ]
-        ) + (self.grid_col - 1) * self.space + self.padding.top + self.padding.bottom
+        ) + (self.grid_col - 1) * self.space + self._padding.top + self._padding.bottom
 
         self.item_size.width = x_size
         self.item_size.height = y_size
 
     def _calc_positions(self):
         with _BenchMark(f"{self}._calc_positions()"):
-            x = self.padding.left + self.border.width
-            y = self.padding.top + self.border.width
+            x = self._padding.left + self._border.width
+            y = self._padding.top + self._border.width
 
             _index = 0
             for item in self.items:
@@ -346,14 +341,14 @@ class GridContainer(ContainerBase):
                 # if item.pos.x + item.size.width > 0 and item.pos.x < self.size.width:
                 #     item.draw(self.surface)
                 if (_index + 1) % self.grid_row == 0:
-                    x = self.padding.left + self.border.width # reset
+                    x = self._padding.left + self._border.width # reset
                     y += item.size.height + self.space
                 else:
                     x += item.size.width + self.space
 
                 _index += 1
 
-class TabContainer(_base.GUIBase):
+class TabContainer(_base.Element):
     def __init__(self, u: float, v: float, width: float, height: float,
                  tab_background: Background,
                  selected_tab_background: Background,
@@ -362,9 +357,9 @@ class TabContainer(_base.GUIBase):
                  tab_textAttributes: TextAttributes = _profile.default_textAttributes,
                  tab_properties: list[TabProperty] = [],
                  padding=_profile.default_padding, border: _event.Border = Border(0, _colors.WHITE), 
-                 animator: _Optional[_animator.GAnimator] = None, no_register=False) -> None:
+                 animator: _Optional[_animator.GAnimator] = None) -> None:
         from . import ImageButton, Button, Label
-        super().__init__(u, v, width, height, padding, border, animator, no_register)
+        super().__init__(u, v, width, height, padding, border, animator)
 
         self.tab_background = tab_background
         self.selected_tab_background = selected_tab_background
@@ -375,18 +370,17 @@ class TabContainer(_base.GUIBase):
             items=[                                                                                    #pyright: ignore
                 Button(0,0, *Label(0,0, tabProperty.name, tab_textAttributes, padding=padding).get_size(),  
                        tabProperty.name, tab_textAttributes, tab_background.color, border, padding, # pyright: ignore
-                       event_func=lambda tab=tabProperty: self.on_click_tab(tab_properties.index(tab)))
+                       callback_clicked=lambda tab=tabProperty: self.on_click_tab(tab_properties.index(tab)))
                 if tab_background.isColor()
                 else ImageButton(0,0, Label(0,0, tabProperty.name, tab_textAttributes, padding=padding).size.width,
                             tabProperty.name, tab_textAttributes, tab_background.image, border, padding,
-                            event_func=lambda tab=tabProperty: self.on_click_tab(tab_properties.index(tab)))
+                            callback_clicked=lambda tab=tabProperty: self.on_click_tab(tab_properties.index(tab)))
                 for tabProperty in tab_properties
             ],
             bar_style=ScrollBarStyle(0),
             lock_vertical_scroll=True)
         self.HC_Tab.pos = Vec2(0,0)
-        self.add_child(self.HC_Tab)
-        self.add_inner(self.HC_Tab)
+        self.set_child(self.HC_Tab)
 
         self.tab_properties = tab_properties
 
@@ -397,26 +391,22 @@ class TabContainer(_base.GUIBase):
             bar_style=bar_style
         )
         self.VC_TabItems.pos = Vec2(0, self.HC_Tab.size.height)
-        self.add_child(self.VC_TabItems)
-        self.add_inner(self.VC_TabItems)
+        self.set_child(self.VC_TabItems)
         self._set_colors()
 
     def update(self) -> None:
-        if self.is_hide: return
+        if not self.should_update(): return
         super().update()
         self.HC_Tab.update()
         self.VC_TabItems.update()
         
-    def draw(self, surface: _Optional[_pg.Surface] = None):
-        if self.is_hide: return
-        super().draw(surface)
-        self.HC_Tab.draw(self.surface)
-        self.VC_TabItems.draw(self.surface)
+    def draw(self):
+        if not self.should_draw(): return
+        super().draw()
+        self.HC_Tab.draw()
+        self.VC_TabItems.draw()
 
-        if surface: self._flush(surface)
-        else: self._flush()
-
-    def on_click_tab(self, index):
+    def on_click_tab(self, index: int):
         self.current_tabIndex = index
         self.VC_TabItems.set_items(self.tab_properties[self.current_tabIndex].items)
         self._set_colors()
@@ -425,7 +415,7 @@ class TabContainer(_base.GUIBase):
         from . import Button, ImageButton
         for item in self.HC_Tab.items:
             if type(item) == Button and self.tab_background.color:
-                item.color = self.tab_background.color
+                item._color = self.tab_background.color
             elif type(item) == ImageButton and self.tab_background.image:
                 item.image_obj = self.tab_background.image
             else:
@@ -433,6 +423,6 @@ class TabContainer(_base.GUIBase):
 
         current_item = self.HC_Tab.items[self.current_tabIndex]
         if type(current_item) == Button and self.selected_tab_background.color:
-            current_item.color = self.selected_tab_background.color
+            current_item._color = self.selected_tab_background.color
         elif type(current_item) == ImageButton and self.selected_tab_background.image:
             current_item.image_obj = self.selected_tab_background.image

@@ -132,8 +132,6 @@ class GAnim_MoveTo(GAnimBase):
         gui_component.pos.x = self.start_x + x
         gui_component.pos.y = self.start_y + y
 
-        print(gui_component, self.timer.time)
-
         if self.dt < self.timer.time:
             self.end()
             gui_component.pos.x = self.start_x + self.dx
@@ -147,10 +145,6 @@ class GAnim_Play(GAnimBase):
 
     def update(self, gui_component: _GUI.base.GUIBase):
         self.timer.update()
-        print(self.GUI_Animator.playing_anim_data.current_anim if self.GUI_Animator.playing_anim_data else "self.GUI_Animator.playing_anim_data is None.")
-        if self.GUI_Animator.playing_anim_data is not None:
-            if self.GUI_Animator.playing_anim_data.current_anim:
-                print(self.GUI_Animator.playing_anim_data.current_anim.is_ended)
         
         # if self.is_ended == False:
         if self.GUI_Animator.playing_anim_data is None:

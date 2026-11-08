@@ -27,16 +27,17 @@ class Layer:
     ]
 
     def __init__(self) -> None:
-        self._GUIComponent_stack: list[_GUI.base.GUIBase] = []
+        self._GUIComponent_stack: list[_GUI.base.Element] = []
         self.docking_manager = _GUI.DockingManager(profile.width, profile.height)
 
-    def attach(self, *components: _GUI.base.GUIBase):
+    def attach(self, *components: _GUI.base.Element):
         for component in components:
             if any(issubclass(type(component), cls) for cls in Layer.PERMISSIONS):
                 self._GUIComponent_stack.append(component)
                 component.parent = self
                 if profile._gdk_executed: # 実行中にGUI componentが追加されたときにイベント登録
-                    component._regist_events()
+                    # component._regist_events()
+                    pass
             else:
                 raise AttachPermissionError(component, self)
     
@@ -50,8 +51,12 @@ class Layer:
         
     def draw(self):
         with _BenchMark(f"{self}.draw()"):
+            import pygame
             for component in self._GUIComponent_stack:
                 component.draw()
+                # component.surface
+                component.flush()
+                
 
 class LayerObject(_event.EventObject):
     """NOT YET. DO NOT USE."""

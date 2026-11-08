@@ -6,132 +6,115 @@ from functools import (
     wraps as _wraps
 )
 
+import logging as _logging
+logger = _logging.getLogger(__name__)
+
 from ..base import *
 from . import base as _base
 from .. import profile as _profile
 from .. import colors as _colors
 from .. import animator as _animator
+from .. import event as _event
 
-class Label(_base.GUIBase):
+class Label(_base.Element):
     def __init__(self, u: float, v: float, text: str, textAttributes = _profile.default_textAttributes, anchor: Anchor = Anchor.CENTER,
                  padding = _profile.default_padding, wrap_width: int = 0, border: Border = Border(0, _colors.WHITE), 
-                 animator: _Optional[_animator.GAnimator] = None, no_register = False) -> None:
-        self.text = text
-        self.wrap_width = wrap_width
-        self.textAttributes = textAttributes
-        self.anchor = anchor
-        
-        self._private_text = text
-        self._private_wrap_width = wrap_width
+                 animator: _Optional[_animator.GAnimator] = None) -> None:
+        self._text = text
+        self._wrap_width = wrap_width
+        self._textAttributes = textAttributes
+        self._anchor = anchor
 
-        self.font = _pg.sysfont.SysFont(*self.textAttributes.getFontStyle())
+        self.font = _pg.sysfont.SysFont(*self._textAttributes.getFontStyle())
         self.text_surface = self.font.render(
-            text, True, *self.textAttributes.getTextColors(), wraplength=wrap_width)
-        if self.textAttributes.OutlineColor:
+            text, True, *self._textAttributes.getTextColors(), wraplength=wrap_width)
+        if self._textAttributes.OutlineColor:
             self.outline_surface = self.font.render(
-                text, True, self.textAttributes.OutlineColor, wraplength=wrap_width)
+                text, True, self._textAttributes.OutlineColor, wraplength=wrap_width)
         else:
             self.outline_surface = None
             
-        super().__init__(u, v, self.text_surface.width, self.text_surface.height, padding, border, animator, no_register)
+        super().__init__(u, v, self.text_surface.width, self.text_surface.height, padding, border, animator)
         self._render_text()
         
         self.surface = _pg.Surface(
-            (self.textAttributes.OutlineWidth + self.size.width, 
-             self.textAttributes.OutlineWidth + self.size.height), flags=_pg.SRCALPHA)
-
-    def _isChanged(self):
-        if (self.text != self._private_text
-                or self.wrap_width != self._private_wrap_width):
-            return True
-        return False
+            (self._textAttributes.OutlineWidth + self.size.width, 
+             self._textAttributes.OutlineWidth + self.size.height), flags=_pg.SRCALPHA)
 
     def _render_text(self):
-        self.text_surface = _pg.sysfont.SysFont(*self.textAttributes.getFontStyle()).render(
-                self.text, True, *self.textAttributes.getTextColors(), wraplength=self.wrap_width)
-        if self.textAttributes.OutlineColor:
-            self.outline_surface = _pg.sysfont.SysFont(*self.textAttributes.getFontStyle()).render(
-                self.text, True, self.textAttributes.OutlineColor, wraplength=self.wrap_width)
+        self.text_surface = _pg.sysfont.SysFont(*self._textAttributes.getFontStyle()).render(
+                self._text, True, *self._textAttributes.getTextColors(), wraplength=self._wrap_width)
+        self.size = Vec2(*self.text_surface.size)
+        if self._textAttributes.OutlineColor:
+            self.outline_surface = _pg.sysfont.SysFont(*self._textAttributes.getFontStyle()).render(
+                self._text, True, self._textAttributes.OutlineColor, wraplength=self._wrap_width)
+            self.size += self._textAttributes.OutlineWidth*2
         else:
             self.outline_surface = None
 
         if self.parent is None:
-            self.pos = _base._uvTopos((self.u, self.v), self.size.width, self.size.height, self.anchor)
+            self.pos = _base._uv2pos((self.u, self.v), self.size.width, self.size.height, self._anchor)
 
     def update(self):
-        if self.is_hide: return
+        if not self.should_update(): return
         super().update()
-        if self._isChanged():
-            self._private_text = self.text
-            self._private_wrap_width = self.wrap_width
-
-            self._render_text()
-            self.size.width = self.text_surface.get_width()
-            self.size.height = self.text_surface.get_height()
-            self.surface = _pg.Surface(self.text_surface.get_size(), _pg.SRCALPHA)
+        if self.should_update():
             if self.parent is None:
-                self.pos = _base._uvTopos((self.u, self.v), self.size.width, self.size.height, self.anchor)
+                self.pos = _base._uv2pos((self.u, self.v), self.size.width, self.size.height, self._anchor)
 
-    def draw(self, surface: _Optional[_pg.Surface] = None):
-        if self.is_hide: return
-        super().draw(surface)
+    def draw(self):
+        if not self.should_draw(): return
+        self._render_text()
+        super().draw()
         pos = Vec2(self.surface.get_width()/2 - self.text_surface.get_width()/2,
                    self.surface.get_height()/2 - self.text_surface.get_height()/2)
 
-        if self.outline_surface and surface:
-            temp = int(self.textAttributes.OutlineWidth*2)
+        if self.outline_surface:
+            temp = int(self._textAttributes.OutlineWidth*2)
             for dx in range(-temp, temp + 1):
                 for dy in range(-temp, temp + 1):
                     self.surface.blit(self.outline_surface, 
-                                      (pos + Vec2(dx, dy)).pos) 
+                                      (pos + Vec2(dx, dy)).tuple) 
 
-        self.surface.blit(self.text_surface, pos.pos)
-        if surface: self._flush(surface)
-        else: self._flush()
+        self.surface.blit(self.text_surface, Vec2(0, 0).tuple)
+        self.reset_dirty()
+
+    def set_text(self, text: str):
+        self._text = text
+        self.set_dirty()
+    def set_wrap_width(self, wrap_width: int):
+        self._wrap_width = wrap_width
+        self.set_dirty()
+    def set_textAttributes(self, textAttributes: TextAttributes):
+        self._textAttributes = textAttributes
+        self.set_dirty()
+    def set_anchor(self, anchor: Anchor):
+        self._anchor = anchor
+        self.set_dirty()
 
 class LinkLabel(Label):
     def __init__(self, u: float, v: float, text: str, textAttributes = _profile.default_textAttributes, hovered_textAttributes: _Optional[TextAttributes] = None, anchor: Anchor = Anchor.CENTER,
                  padding = _profile.default_padding, wrap_width: int = 0, border: Border = Border(0, _colors.WHITE), 
-                 animator: _Optional[_animator.GAnimator] = None, no_register = False) -> None:
-        super().__init__(u, v, text, textAttributes, anchor, padding, wrap_width, border, animator, no_register)
+                 animator: _Optional[_animator.GAnimator] = None) -> None:
+        super().__init__(u, v, text, textAttributes, anchor, padding, wrap_width, border, animator)
         self.hovered_textAttributes = hovered_textAttributes
-        self._last_hovered = self.hovered
+        self._last_hovered = self._frame.hovering
 
     def _render_text(self):
-        if self.hovered and self.hovered_textAttributes:
+        if self._frame.hovering and self.hovered_textAttributes:
             textAttributes = self.hovered_textAttributes
         else:
-            textAttributes = self.textAttributes
+            textAttributes = self._textAttributes
 
         self.text_surface = _pg.sysfont.SysFont(*textAttributes.getFontStyle()).render(
-                self.text, True, *textAttributes.getTextColors(), wraplength=self.wrap_width)
+                self._text, True, *textAttributes.getTextColors(), wraplength=self._wrap_width)
         if textAttributes.OutlineColor:
             self.outline_surface = _pg.sysfont.SysFont(*textAttributes.getFontStyle()).render(
-                self.text, True, textAttributes.OutlineColor, wraplength=self.wrap_width)
+                self._text, True, textAttributes.OutlineColor, wraplength=self._wrap_width)
         else:
             self.outline_surface = None
 
         if self.parent is None:
-            self.pos = _base._uvTopos((self.u, self.v), self.size.width, self.size.height, self.anchor)
+            self.pos = _base._uv2pos((self.u, self.v), self.size.width, self.size.height, self._anchor)
 
-    def _isChanged(self):
-        flag = False
-        
-        if (self.text != self._private_text
-                or self.wrap_width != self._private_wrap_width
-                or self.hovered != self._last_hovered):
-            flag = True
-        self._last_hovered = self.hovered
-        
-        return flag
-
-    def OnClick(self):
-        def decorator(func):
-            self.event_func = func
-
-            @_wraps(func)
-            def wrapper(*args, **kwargs):
-                return func(*args, **kwargs)
-
-            return wrapper
-        return decorator
+    # @_base.Element.OnEnter()

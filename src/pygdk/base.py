@@ -20,55 +20,40 @@ type gdk_color = _pg.Color | tuple[int, int, int, int] | tuple[int, int, int]
 
 class NullSurface(_pg.Surface): ...
 
+class ElementState:
+    def __init__(self, value: Any):
+        self._value = value
+        self._changed = False
+
+    def reset(self):
+        """call after """
+        self._changed = True
+
+    def get(self): return self._value
+    def set(self, value: Any):
+        self._value = value
+        self._changed = True
+
 # definition position type
 class Vec2:
-    def __init__(self, x: int | float, y: int | float) -> None:
+    def __init__(self, x: int | float = 0, y: int | float = 0) -> None:
         from . import GUI as _GUI
-        self._x, self._y = x, y
-        self._dirty = False
+        self.x, self.y = x, y
         self._sync_components: list[_GUI.base.GUIBase] = []
-    
-    @property
-    def pos(self):
-        return (self.x, self.y)
-
-    @property
-    def x(self):
-        return self._x
-    @x.setter
-    def x(self, value):
-        self._x = value
-        self._dirty = True
-
-    @property
-    def y(self):
-        return self._y
-    @y.setter
-    def y(self, value):
-        self._y = value
-        self._dirty = True
 
     @property
     def width(self):
-        return self._x
+        return self.x
     @width.setter
     def width(self, value):
-        self._x = value
-        self._dirty = True
+        self.x = value
 
     @property
     def height(self):
-        return self._y
+        return self.y
     @height.setter
     def height(self, value):
-        self._y = value
-        self._dirty = True
-
-    def is_dirty(self):
-        return self._dirty
-    def reset(self):
-        """Reset dirty flag."""
-        self._dirty = False
+        self.y = value
 
     @property
     def tuple(self):
@@ -80,7 +65,7 @@ class Vec2:
         if distance == 0: return self
         return self / abs(distance)
 
-    def __add__(self, other: Vec2) -> Vec2:
+    def __add__(self, other: Vec2 | float | int) -> Vec2:
         if type(other) == float or type(other) == int:
             return Vec2(self.x + other, self.y + other)
         elif type(other) == Vec2:
@@ -88,7 +73,7 @@ class Vec2:
         else:
             raise TypeError("Only Vec2, float, or integer arguments are supported.")
     
-    def __sub__(self, other: Vec2) -> Vec2:
+    def __sub__(self, other: Vec2 | float | int) -> Vec2:
         if type(other) == float or type(other) == int:
             return Vec2(self.x - other, self.y - other)
         elif type(other) == Vec2:
@@ -128,6 +113,9 @@ class Vec2:
     def distance(self) -> float:
         v = (self.x ** 2 + self.y ** 2) ** (1/2)
         return v
+
+    def copy(self) -> Vec2:
+        return Vec2(self.x, self.y)
 
 class Padding:
     @overload
@@ -193,11 +181,35 @@ class Anchor(_Flag):
     LEFTBOTTOM  = 0b0110
     RIGHTBOTTOM = 0b0101
 
+class BorderType(_Enum):
+    INSIDE  = 1
+    CENTER  = 2
+    OUTSIDE = 3
+
 class Border:
-    def __init__(self, width: float, color: gdk_color) -> None:
+    """
+    ## properties
+    - `width`: border width
+    - `color`: border color
+    - `border_type`: type of border placement
+        - "inside": draw inside (resized surface)
+        - "center"(default): draw center (resized border surface by width/2)
+        - "outside": draw outside (resized border surface by width)
+    """
+    def __init__(
+            self,
+            width: float,
+            color: gdk_color,
+            border_type: BorderType = BorderType.CENTER) -> None:
         self.width = width
         self.color = color if type(color) is Color else Color(*color)
+        self.type = border_type
 
+@dataclass
+class FeedbackOption:
+    hover: bool = False
+    click: bool = False
+    
 @dataclass
 class TextAttributes:
     Font: str
@@ -259,7 +271,7 @@ class Background:
 class TabProperty:
     from . import GUI as _GUI
     name: str
-    items: list[_GUI.base.GUIBase]
+    items: list[_GUI.base.Element]
 
 @dataclass
 class ToolBarItemProperty:
@@ -276,7 +288,9 @@ __all__ = [
     "Direction",
     "DockingDirection",
     "Anchor",
+    "BorderType",
     "Border",
+    "FeedbackOption",
     "TextAttributes",
     "ScrollBarStyle",
     "Background",

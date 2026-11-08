@@ -18,7 +18,7 @@ class _Label(_GUI.Label):
         super().__init__(u, v, "no component", textAttributes, anchor, padding, wrap_width, border, no_register)
 
     def on_update(self):
-        self.text = self._component.__str__() + " " + self._component.size.__str__()
+        self._text = self._component.__str__() + " " + self._component.size.__str__()
 
 class GUIDebugger:
     def __init__(self, layer: _layer.Layer) -> None:

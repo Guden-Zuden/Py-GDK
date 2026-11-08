@@ -43,6 +43,7 @@ from . import scene
 
 # experimental
 from . import Debugger
+from .log import *
 
 import pygame
 import sys

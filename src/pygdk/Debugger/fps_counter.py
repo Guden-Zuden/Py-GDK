@@ -18,6 +18,6 @@ class FpsCounter(_GUI.Label):
         self.timer.update()
         self.frame_count += 1
         if self.timer.time > 1:
-            self.text = f"FPS: {self.frame_count/self.timer.time :.1f}\ndt: {self.timer.time/self.frame_count*(10**3) :.3f}ms"
+            self._text = f"FPS: {self.frame_count/self.timer.time :.1f}\ndt: {self.timer.time/self.frame_count*(10**3) :.3f}ms"
             self.frame_count = 0
             self.timer.reset()

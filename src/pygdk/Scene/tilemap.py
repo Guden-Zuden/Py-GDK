@@ -102,7 +102,6 @@ def _get_viewport(
     return (start_mx, end_mx, start_my, end_my)
 
 class Tilemap:
-    # TODO: viewport is wrong
     def __init__(self, sprite: _Optional[_sprite.Sprite] = None) -> None:
         self.x, self.y = 0, 0
 

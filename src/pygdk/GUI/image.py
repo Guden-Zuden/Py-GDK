@@ -11,10 +11,10 @@ from typing import (
     Optional as _Optional
 )
 
-class Image(base.GUIBase):
+class Image(base.Element):
     def __init__(self, u: float, v: float, img_filepath: str | pathlib.Path, width: float,
                  padding=profile.default_padding, border: base.Border = Border(0, colors.WHITE),
-                 child: _Optional[base.GUIBase] = None, animator: _Optional[_animator.GAnimator] = None, no_register = False) -> None:
+                 child: _Optional[base.GUIBase] = None, animator: _Optional[_animator.GAnimator] = None) -> None:
         try:
             _pg.Window.get_surface(profile.window.window)
             self.img_surface = _pg.image.load(img_filepath).convert_alpha()
@@ -26,7 +26,7 @@ class Image(base.GUIBase):
         self.displayed_img_surface = _pg.transform.smoothscale(self.img_surface, (width, height))
         
 
-        super().__init__(u, v, width, height, padding, border, animator, no_register)
+        super().__init__(u, v, width, height, padding, border, animator)
 
         self.child = child
         if self.child:
@@ -41,8 +41,8 @@ class Image(base.GUIBase):
         This method resizes the image while preserving its aspect ratio.\n
         Please call this method after changing width only. The height will be ignored.
         """
-        if not self.size.is_dirty():
-            return
+        # if not self.size.is_dirty():
+            # return
         self.size.height = self.img_surface.get_height() * self.size.width / self.img_surface.get_width()
         self.displayed_img_surface = _pg.transform.smoothscale(self.img_surface, (self.size).tuple)
 
@@ -51,29 +51,26 @@ class Image(base.GUIBase):
         _resize() is called in update(), but this method must be called after resizing.\n
         This method resizes the image without preserving its aspect ratio.
         """
-        if not self.size.is_dirty():
-            return
+        # if not self.size.is_dirty():
+            # return
         self.displayed_img_surface = _pg.transform.smoothscale(self.img_surface, (self.size).tuple)
 
     def update(self):
-        if self.is_hide: return
+        if not self.should_update(): return
         from ..time import BenchMark
         with BenchMark("image.update()"):
             super().update()
 
-    def draw(self, surface: _Optional[_pg.Surface] = None) -> None:
-        if self.is_hide: return
-        super().draw(surface)
+    def draw(self) -> None:
+        if not self.should_draw(): return
+        super().draw()
 
         self.surface.blit(self.displayed_img_surface)
 
-        if self.child:
-            self.child.pos = Vec2(
-                self.size.width/2 - self.child.size.width/2,
-                self.size.height/2 - self.child.size.height/2
-            )
+        # if self.child:
+        #     self.child.pos = Vec2(
+        #         self.size.width/2 - self.child.size.width/2,
+        #         self.size.height/2 - self.child.size.height/2
+        #     )
 
-            self.child.draw(self.surface)
-
-        if surface: self._flush(surface)
-        else: self._flush()
+        #     self.child.draw()
