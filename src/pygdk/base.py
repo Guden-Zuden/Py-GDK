@@ -12,6 +12,7 @@ import pygame as _pg
 from enum import (
     Flag as _Flag,
     Enum as _Enum,
+    auto as _auto,
 )
 
 from . import colors
@@ -278,6 +279,12 @@ class ToolBarItemProperty:
     name: str
     pulldown_menu_items: list[tuple[str, Callable]]
 
+# Colliders
+class ColliderType(_Enum):
+    SOLID = _auto()
+    TRIGGER = _auto()
+
+
 __all__ = [
     "gdk_color",
     "NullSurface",
@@ -296,4 +303,6 @@ __all__ = [
     "Background",
     "TabProperty",
     "ToolBarItemProperty",
+
+    "ColliderType",
 ]

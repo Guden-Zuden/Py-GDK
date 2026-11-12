@@ -1,18 +1,34 @@
+from typing import (
+    Optional as _Optional,
+    Callable as _Callable
+)
+import pygame as _pg
+
 from ..base import *
+from .. import profile as _profile
 from . import base as _base
 from .. import sprite as _sprite
 from .. import animator as _animator
 from .. import time as _time
 from .. import event as _event
 from . import attachments as _attachments
+from . import collider as _collider
 
 class Entity(_base.EntityBase):
     def __init__(
             self,
-            x: float, y: float,
-            width: float, height: float, movement_model: _attachments.MovementModelBase,
-            sprite: _sprite.Sprite, animator: _animator.EAnimator) -> None:
-        super().__init__(x, y, width, height, movement_model)
+            x: float, 
+            y: float,
+            width: float, 
+            height: float, 
+            movement_model: _attachments.MovementModelBase,
+            sprite: _sprite.Sprite, 
+            animator: _animator.EAnimator, 
+            collider: _Optional[_collider.Collider] = None,
+            callback_col_enter: _Optional[_Callable] = None,
+            callback_col_stay: _Optional[_Callable] = None,
+            callback_col_leave: _Optional[_Callable] = None,) -> None:
+        super().__init__(x, y, width, height, movement_model, collider, callback_col_enter, callback_col_stay, callback_col_leave)
         self.sprite = sprite
         self.animator = animator
 
@@ -23,3 +39,5 @@ class Entity(_base.EntityBase):
     def draw(self, view_position: Vec2):
         super().draw(view_position)
         self.sprite.draw(self.animator.get_index(), *(self.pos - view_position), anchor=Anchor.BOTTOM)
+        if self.colliders:
+            _pg.draw.rect(_profile.window.surface, (255,255,255), self.colliders.rect, 1)

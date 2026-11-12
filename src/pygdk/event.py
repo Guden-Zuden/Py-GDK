@@ -228,7 +228,6 @@ class EventManager:
     def link_instance(instance: Any):
         '''
         Called by EventObject.
-        
         '''
         for _event_type, _handler in EventManager._handlers:
             owner_name = _handler.func.__qualname__.rsplit(".", 1)[0]
