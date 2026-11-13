@@ -11,7 +11,8 @@ if TYPE_CHECKING:
 import pygame as _pg
 from typing import (
     Optional as _Optional,
-    Callable as _Callable
+    Callable as _Callable,
+    Sequence as _Sequence
 )
 
 class EntityBase():
@@ -22,7 +23,7 @@ class EntityBase():
             width: float, 
             height: float, 
             movement_model: _Optional[_attachments.MovementModelBase] = None,
-            collider: _Optional[_collider.Collider] = None,
+            colliders: _Sequence[_collider.Collider] = (),
             callback_col_enter: _Optional[_Callable] = None,
             callback_col_stay: _Optional[_Callable] = None,
             callback_col_leave: _Optional[_Callable] = None,
@@ -33,7 +34,8 @@ class EntityBase():
 
         self.size = Vec2(width, height)
         self.movement_model = movement_model
-        self.colliders: list[_collider.Collider] = collider
+        print(colliders)
+        self.colliders: list[_collider.Collider] = list(colliders)
 
         self.callback_col_enter: _Optional[_Callable] = callback_col_enter
         self.callback_col_stay: _Optional[_Callable] = callback_col_stay
@@ -47,12 +49,8 @@ class EntityBase():
             self.movement_model.update()
             vel = self.movement_model.velocity
             vel = self.movement_model.velocity.normalized * min(vel.distance(), self.movement_model.max_speed)
-            # self.pos += vel * self._timer.delta_time
-            # print(vel.distance())
-        # self.pos += self.velocity * abs(self.velocity.normalized) * self._timer.delta_time
         
         self._timer.reset()
-
 
     def draw(self, view_position: Vec2):
         pass

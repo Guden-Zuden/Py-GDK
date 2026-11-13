@@ -17,13 +17,21 @@ from .. import animator as _animator
 from .. import event as _event
 
 class Label(_base.Element):
-    def __init__(self, u: float, v: float, text: str, textAttributes = _profile.default_textAttributes, anchor: Anchor = Anchor.CENTER,
-                 padding = _profile.default_padding, wrap_width: int = 0, border: Border = Border(0, _colors.WHITE), 
-                 animator: _Optional[_animator.GAnimator] = None) -> None:
+    def __init__(
+            self, 
+            u: float, 
+            v: float, 
+            text: str, 
+            textAttributes = _profile.default_textAttributes, 
+            padding = _profile.default_padding, 
+            wrap_width: int = 0, 
+            border: Border = Border(0, _colors.WHITE), 
+            animator: _Optional[_animator.GAnimator] = None,
+            anchor: Anchor = Anchor.CENTER,
+            ) -> None:
         self._text = text
         self._wrap_width = wrap_width
         self._textAttributes = textAttributes
-        self._anchor = anchor
 
         self.font = _pg.sysfont.SysFont(*self._textAttributes.getFontStyle())
         self.text_surface = self.font.render(
@@ -34,7 +42,7 @@ class Label(_base.Element):
         else:
             self.outline_surface = None
             
-        super().__init__(u, v, self.text_surface.width, self.text_surface.height, padding, border, animator)
+        super().__init__(u, v, self.text_surface.width, self.text_surface.height, padding, border, animator, anchor=anchor)
         self._render_text()
         
         self.surface = _pg.Surface(
@@ -93,10 +101,20 @@ class Label(_base.Element):
         self.set_dirty()
 
 class LinkLabel(Label):
-    def __init__(self, u: float, v: float, text: str, textAttributes = _profile.default_textAttributes, hovered_textAttributes: _Optional[TextAttributes] = None, anchor: Anchor = Anchor.CENTER,
-                 padding = _profile.default_padding, wrap_width: int = 0, border: Border = Border(0, _colors.WHITE), 
-                 animator: _Optional[_animator.GAnimator] = None) -> None:
-        super().__init__(u, v, text, textAttributes, anchor, padding, wrap_width, border, animator)
+    def __init__(
+            self, 
+            u: float, 
+            v: float, 
+            text: str, 
+            textAttributes = _profile.default_textAttributes, 
+            hovered_textAttributes: _Optional[TextAttributes] = None, 
+            padding = _profile.default_padding, 
+            wrap_width: int = 0, 
+            border: Border = Border(0, _colors.WHITE), 
+            animator: _Optional[_animator.GAnimator] = None,
+            anchor: Anchor = Anchor.CENTER,
+            ) -> None:
+        super().__init__(u, v, text, textAttributes, anchor, padding, wrap_width, border, animator, FeedbackOption(True, True), anchor)
         self.hovered_textAttributes = hovered_textAttributes
         self._last_hovered = self._frame.hovering
 

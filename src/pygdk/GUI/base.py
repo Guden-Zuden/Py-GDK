@@ -62,6 +62,29 @@ def _uv2pos(uv: tuple[float, float], width: float, height: float, anchor: _Optio
 
     return pos
 
+def _uv2pos_elm(
+        uv: tuple[float, float], 
+        width: float, height: float, 
+        parent_width: float, parent_height: float, 
+        anchor: _Optional[Anchor] = None
+        ) -> Vec2:
+    pos = Vec2(
+        parent_width/2 + parent_width/2 * uv[0] - width/2,
+        parent_height/2 + parent_height/2 * uv[1] - height/2)
+    if anchor is None:
+        pass # do nothing
+    else:
+        if anchor & Anchor.LEFT:
+            pos.x += width/2
+        if anchor & Anchor.RIGHT:
+            pos.x -= width/2
+        if anchor & Anchor.TOP:
+            pos.y += height/2
+        if anchor & Anchor.BOTTOM:
+            pos.y -= height/2
+
+    return pos
+
 def _updateMouseStatus():
     from . import Button, ImageButton, LinkLabel
     if isinstance(GUIBase.g_hoveredObj, (Button, ImageButton, LinkLabel)):
@@ -85,7 +108,7 @@ class GUIBase(event.EventObject):
     
     def __init__(self, u: float, v: float, width: float, height: float,
                  padding = profile.default_padding, border: Border = Border(0, colors.WHITE),
-                 animator: _Optional["GAnimator"] = None, no_register = False) -> None:        
+                 animator: _Optional[GAnimator] = None, no_register = False) -> None:        
         self.u, self.v = u, v
         self.size = Vec2(width, height)
         self.pos = Vec2(
@@ -323,14 +346,20 @@ class Element:
             padding: Padding, 
             border: _Optional[Border] = None, 
             animator: _Optional["GAnimator"] = None,
-            feedback_option: _Optional[FeedbackOption] = None) -> None:
+            feedback_option: _Optional[FeedbackOption] = None,
+            anchor: _Optional[Anchor] = Anchor.CENTER) -> None:
         self._frame = Frame(self)
         
         self._uv = Vec2(u, v)
         self._pos = _uv2pos((u, v), width, height)
         self._size = Vec2(width, height)
+        self._anchor = anchor
 
         self.animator = animator
+        if feedback_option:
+            self.feedback_option = feedback_option
+        else:
+            self.feedback_option = FeedbackOption()
 
         self._padding = padding
         self._border = border
@@ -343,8 +372,6 @@ class Element:
         # properties
         self.visible = True
 
-        self.create_surface()
-
         # event callbacks
         self.callback_enter: _Optional[_Callable] = None
         self.callback_leave: _Optional[_Callable] = None
@@ -355,6 +382,11 @@ class Element:
 
         # dirty flags
         self._dirty = True
+
+        # feedbacks
+        self._feedback_color = Color(0, 0, 0, 40)
+
+        self.create_surface()
 
     def stick(self, target: Element, direction: Direction):
         """
@@ -444,7 +476,11 @@ class Element:
 
         for child in self.children:
             child.flush(self.surface)
-            child.surface
+
+        if self.feedback_option.hover and self._frame.hovering:
+            self.surface.blit(self._feedback_surface)
+        if self.feedback_option.click and self._frame.clicking:
+            self.surface.blit(self._feedback_surface)
 
         if surface is None:
             profile.window.surface.blit(self.surface, self.abs_pos.tuple)
@@ -468,6 +504,10 @@ class Element:
             self.surface = _pg.Surface(self.size.tuple, _pg.SRCALPHA)
         else: # no border, center and outside border
             self.surface = _pg.Surface(self.size.tuple, _pg.SRCALPHA)
+
+        # create feedback surface and fill
+        self._feedback_surface = _pg.Surface(self.size.tuple, _pg.SRCALPHA)
+        self._feedback_surface.fill(self._feedback_color)
 
         logger.debug(f"Surface was created: %s", self)
 
@@ -571,27 +611,45 @@ class Element:
         return self._uv
     @uv.setter
     def uv(self, value: Vec2):
-        """Uses window-relative coordinates; do not use to position child elements."""
+        """
+        If parent is element, uses element-relative coordinates.
+        If not, uses window-relative coordinates.
+        """
         self._uv = value.copy()
-        self._pos = _uv2pos(value.tuple, *self.size)
+        if issubclass(type(self.parent), Element):
+            self._pos = _uv2pos_elm(value.tuple, *self.size, *self.parent.size)
+        else:
+            self._pos = _uv2pos(value.tuple, *self.size)
         self.set_dirty()
     @property
     def u(self):
         return self._uv.x
     @u.setter
     def u(self, value: float):
-        """Uses window-relative coordinates; do not use to position child elements."""
+        """
+        If parent is element, uses element-relative coordinates.
+        If not, uses window-relative coordinates.
+        """
         self._uv.x = value
-        self._pos = _uv2pos(self._uv.tuple, *self.size)
+        if issubclass(type(self.parent), Element):
+            self._pos = _uv2pos_elm(value.tuple, *self.size, *self.parent.size)
+        else:
+            self._pos = _uv2pos(value.tuple, *self.size)
         self.set_dirty()
     @property
     def v(self):
         return self._uv.y
     @v.setter
     def v(self, value: float):
-        """Uses window-relative coordinates; do not use to position child elements."""
+        """
+        If parent is element, uses element-relative coordinates.
+        If not, uses window-relative coordinates.
+        """
         self._uv.y = value
-        self._pos = _uv2pos(self._uv.tuple, *self.size)
+        if issubclass(type(self.parent), Element):
+            self._pos = _uv2pos_elm(value.tuple, *self.size, *self.parent.size)
+        else:
+            self._pos = _uv2pos(value.tuple, *self.size)
         self.set_dirty()
 
     @property
@@ -617,6 +675,14 @@ class Element:
     @size.setter
     def size(self, value: Vec2):
         self._size = value.copy()
+        self.set_dirty()
+
+    @property
+    def anchor(self):
+        return self._anchor
+    @anchor.setter
+    def anchor(self, value: Anchor):
+        self._anchor = value
         self.set_dirty()
 
     # get methods
@@ -646,6 +712,16 @@ class Element:
         self.children.remove(element)
         element.parent = None
     
+    def _adjust_anchor(self):
+        abs_pos = self.abs_pos
+        if self.anchor & Anchor.LEFT:
+            self.x -= self.size.width/2
+        if self.anchor & Anchor.RIGHT:
+            self.x += self.size.width/2
+        if self.anchor & Anchor.TOP:
+            self.y -= self.size.height/2
+        if self.anchor & Anchor.BOTTOM:
+            self.y -= self.size.height/2
 
 class Frame(event.EventObject):
     """

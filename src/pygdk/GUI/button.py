@@ -20,8 +20,8 @@ from functools import wraps as _wraps
 class Button(_base.Element):
     def __init__(self, u: float, v: float, width: float, height: float,
                  text: str, textAttributes: TextAttributes = _profile.default_textAttributes, color: gdk_color = (0,0,0), border = _profile.default_border,
-                 padding = _profile.default_padding, callback_clicked: _Optional[_Callable] = None, animator: _Optional[_animator.GAnimator] = None, no_register = False) -> None:
-        super().__init__(u, v, width, height, padding, border, animator)
+                 padding = _profile.default_padding, callback_clicked: _Optional[_Callable] = None, animator: _Optional[_animator.GAnimator] = None) -> None:
+        super().__init__(u, v, width, height, padding, border, animator, FeedbackOption(True, True))
 
         self._text = text
         self._textAttributes = textAttributes
@@ -35,7 +35,7 @@ class Button(_base.Element):
         self.box_obj = _Box(u, v, *self.size.tuple, color, padding, border)
         self.box_obj.pos = Vec2(0, 0)
         self.box_obj.set_child(self.text_obj)
-        self.text_obj.pos = Vec2(0, 0)
+        self.text_obj.uv = Vec2(0, 0)
         self.set_child(self.box_obj)
         
         self.hovering_box_obj = _Box(u, v, *self.size.tuple, _colors.BLACK, padding, border)
