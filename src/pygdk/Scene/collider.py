@@ -143,6 +143,7 @@ class CollisionManager:
 
     def attach(self, collider: Collider) -> None:
         self.colliders.append(collider)
+        print(self.colliders)
 
     def _collect_collision_pairs(self):
         pairs: set[tuple[Collider, Collider]] = set() # [0] collide to [1]

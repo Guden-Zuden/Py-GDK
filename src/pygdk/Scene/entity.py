@@ -1,6 +1,7 @@
 from typing import (
     Optional as _Optional,
-    Callable as _Callable
+    Callable as _Callable,
+    Sequence as _Sequence
 )
 import pygame as _pg
 
@@ -23,8 +24,8 @@ class Entity(_base.EntityBase):
             height: float, 
             movement_model: _attachments.MovementModelBase,
             sprite: _sprite.Sprite, 
-            animator: _animator.EAnimator, 
-            collider: _Optional[_collider.Collider] = None,
+            animator: _Optional[_animator.EAnimator] = None, 
+            collider: _Sequence[_collider.Collider] = (),
             callback_col_enter: _Optional[_Callable] = None,
             callback_col_stay: _Optional[_Callable] = None,
             callback_col_leave: _Optional[_Callable] = None,) -> None:
@@ -34,10 +35,14 @@ class Entity(_base.EntityBase):
 
     def update(self):
         super().update()
-        self.animator.update()
+        if self.animator:
+            self.animator.update()
 
     def draw(self, view_position: Vec2):
         super().draw(view_position)
-        self.sprite.draw(self.animator.get_index(), *(self.pos - view_position), anchor=Anchor.BOTTOM)
+        if self.animator:
+            self.sprite.draw(self.animator.get_index(), *(self.pos - view_position), anchor=Anchor.BOTTOM)
+        else:
+            self.sprite.draw(0, *(self.pos - view_position), anchor=Anchor.BOTTOM)
         if self.colliders:
             _pg.draw.rect(_profile.window.surface, (255,255,255), self.colliders.rect, 1)
