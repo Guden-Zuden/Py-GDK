@@ -8,7 +8,8 @@ from .camera import (
     Camera
 )
 from .collider import (
-    Collider
+    Collider,
+    CollisionLayer,
 )
 
 from .attachments import (

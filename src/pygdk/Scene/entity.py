@@ -40,9 +40,15 @@ class Entity(_base.EntityBase):
 
     def draw(self, view_position: Vec2):
         super().draw(view_position)
-        if self.animator:
-            self.sprite.draw(self.animator.get_index(), *(self.pos - view_position), anchor=Anchor.BOTTOM)
-        else:
-            self.sprite.draw(0, *(self.pos - view_position), anchor=Anchor.BOTTOM)
+
+        screen_pos = self.pos - view_position
+
+        self.sprite.draw(
+            self.animator.get_index() if self.animator else 0,
+            # *(self.pos - view_position),
+            round(screen_pos.x), round(screen_pos.y),
+            anchor=Anchor.BOTTOM
+        )
+
         if self.colliders:
-            _pg.draw.rect(_profile.window.surface, (255,255,255), self.colliders.rect, 1)
+            _pg.draw.rect(_profile.window.surface, (255,255,255), self.get_rect().move(*(-self.pos)), 1) # pyright: ignore

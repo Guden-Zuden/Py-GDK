@@ -14,7 +14,6 @@ class Scene:
     PERMISSIONS: list[_Any] = [
         _Scene.Entity,
         _Scene.Collider,
-        _Scene.collider.CollisionManager,
         _Scene.Camera,
     ]
 
@@ -26,16 +25,15 @@ class Scene:
         self._tilemap = tilemap
         self._camera_stack: dict[str, Camera] = {}
         self._entity_stack: list[_Scene.EntityBase] = []
-        self._collision_stack: list[_Scene.collider.CollisionManager] = []
+
+        self.col_manager = _Scene.collider.CollisionManager()
 
     def attach(self, *entities: _Scene.EntityBase):
         from .Scene.camera import Camera
         for entity in entities:
             if any(issubclass(type(entity), cls) for cls in Scene.PERMISSIONS):
                 if issubclass(type(entity), Camera):
-                    self._camera_stack[entity.name] = entity
-                elif issubclass(type(entity), _Scene.collider.CollisionManager):
-                    self._collision_stack.append(entity)
+                    self._camera_stack[entity.name] = entity # pyright: ignore
                 else:
                     self._entity_stack.append(entity)
 
@@ -56,8 +54,7 @@ class Scene:
                 with _BenchMark(f"{entity}.update()"):
                     entity.update()
 
-            for collision in self._collision_stack:
-                collision.solve()
+            self.col_manager.update()
             
             if self.current_camera: self.current_camera.update()
         

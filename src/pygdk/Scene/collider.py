@@ -82,7 +82,7 @@ class Resolver:
             return
 
         # X axis
-        entity.pos.x += entity.velocity.x * dt
+        entity.pos.x += entity.movement_model.velocity.x * dt
 
         for other_col in other_cols:
             if other_col is current_col or not other_col.enabled:
@@ -105,7 +105,7 @@ class Resolver:
                     entity.velocity.x = 0
 
         # Y axis
-        entity.pos.y += entity.velocity.y * dt
+        entity.pos.y += entity.movement_model.velocity.y * dt
 
         for other_col in other_cols:
             if other_col is current_col or not other_col.enabled:
@@ -127,26 +127,28 @@ class Resolver:
                     )
                     entity.velocity.y = 0
 
-
-# Collision Manager Class
-class CollisionManager:
+# Collision Layer
+class CollisionLayer:
     """
-    Not implemented yet.
-    Call after scene updating, before scene draw.
+    Manages a collection of colliders and handles collision detection,
+    resolution, and collision event dispatching.
+
+    Collision events (enter, stay, exit) are tracked between frames.
+    Trigger colliders generate collision events without physical resolution,
+    while solid colliders are processed by the collision resolver.
     """
     def __init__(self) -> None:
-        self._timer = _time.Timer()
         self.colliders: list[Collider] = []
 
-        self._previous_pairs: set[tuple[Collider, Collider]] = set()
-        self._current_pairs: set[tuple[Collider, Collider]] = set()
+        self._prev_pairs: set[tuple[Collider, Collider]] = set()
+        self._curr_pairs: set[tuple[Collider, Collider]] = set()
 
-    def attach(self, collider: Collider) -> None:
-        self.colliders.append(collider)
-        print(self.colliders)
+    def attach(self, *colliders: Collider) -> None:
+        for collider in colliders:
+            self.colliders.append(collider)
 
     def _collect_collision_pairs(self):
-        pairs: set[tuple[Collider, Collider]] = set() # [0] collide to [1]
+        pairs: set[tuple[Collider, Collider]] = set() # [0] collides to [1]
 
         for i, col_a in enumerate(self.colliders):
             if not col_a.enabled or col_a.entity is None:
@@ -167,9 +169,9 @@ class CollisionManager:
                 if Detector.detect(col_a, col_b):
                     pairs.add((col_a, col_b))
 
-            return pairs
-
-    def _dispatch_collision_event(self, pair, event: str):
+        return pairs
+    
+    def _dispatch_collision_event(self, pair: tuple[Collider, Collider], event: str):
         col_a, col_b = pair
 
         for current, other in ((col_a, col_b), (col_b, col_a)):
@@ -185,16 +187,18 @@ class CollisionManager:
                     callback = entity.callback_col_stay
                 case "exit":
                     callback = entity.callback_col_exit
+                case _:
+                    raise Exception(f"wrong event: event")
 
             if callback is not None:
-                callback(other)
+                callback(other.entity)
 
     def _update_collision_events(self):
-        self._current_pairs = self._collect_collision_pairs()
+        self._curr_pairs = self._collect_collision_pairs()
 
-        entered = self._current_pairs - self._previous_pairs
-        stayed = self._current_pairs & self._previous_pairs
-        exited = self._previous_pairs - self._current_pairs
+        entered = self._curr_pairs - self._prev_pairs
+        stayed = self._curr_pairs & self._prev_pairs
+        exited = self._prev_pairs - self._curr_pairs
 
         for pair in entered:
             self._dispatch_collision_event(pair, "enter")
@@ -205,49 +209,34 @@ class CollisionManager:
         for pair in exited:
             self._dispatch_collision_event(pair, "exit")
 
-        self._previous_pairs = self._current_pairs
-
     def solve(self):
-        self._timer.update()
-        self._previous_pairs.clear()
-        self._previous_pairs = self._current_pairs
+        self._prev_pairs = self._curr_pairs
 
         for collider in self.colliders:
             if not collider.enabled:
                 continue
 
             if collider.collider_type == ColliderType.TRIGGER:
+                collider.entity.pos.x += collider.entity.movement_model.velocity.x * _time.dt
+                collider.entity.pos.y += collider.entity.movement_model.velocity.y * _time.dt
                 continue
 
             Resolver.resolve(
                 collider,
                 self.colliders,
-                self._timer.delta_time
+                _time.dt
             )
 
         self._update_collision_events()
 
-        self._timer.reset()
-
-
-"""
+# Collision Manager Class
+class CollisionManager:
     def __init__(self) -> None:
-        self._entity_stack: list[_entity.Entity] = []
+        self.collision_layers: dict[str, CollisionLayer] = {}
 
-    def append(self, entity: _entity.Entity):
-        if not issubclass(type(entity), _entity.Entity):
-            raise Exception(f"Invalid object: {entity} is not entity.")
-        self._entity_stack.append(entity)
+    def push(self, layer_name: str, collision_layer: CollisionLayer):
+        self.collision_layers[layer_name] = collision_layer
 
-    def collide(self, entity: _entity.Entity):
-        colliding_entities = [
-            other_ent for other_ent in self._entity_stack
-            if _pg.Rect.colliderect(
-                _pg.Rect(entity.pos.x, entity.pos.y, entity.size.width, entity.size.height),
-                _pg.Rect(other_ent.pos.x, other_ent.pos.y, other_ent.size.width, other_ent.size.height)
-            )
-        ]
-
-        entity.pos.x += entity.velocity.x
-
-"""
+    def update(self):
+        for layer_name, col_layer in self.collision_layers.items():
+            col_layer.solve()

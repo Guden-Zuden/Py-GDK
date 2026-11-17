@@ -33,20 +33,20 @@ class Button(_base.Element):
 
         self.text_obj = _Text(u, v, text, textAttributes, padding=padding)
         self.box_obj = _Box(u, v, *self.size.tuple, color, padding, border)
-        self.box_obj.pos = Vec2(0, 0)
+        self.box_obj.uv = Vec2(0, 0)
         self.box_obj.set_child(self.text_obj)
         self.text_obj.uv = Vec2(0, 0)
         self.set_child(self.box_obj)
         
         self.hovering_box_obj = _Box(u, v, *self.size.tuple, _colors.BLACK, padding, border)
         self.hovering_box_obj.color.a = int(self.hovering_box_obj.color.a * 0.2)
-        self.hovering_box_obj.pos = Vec2(0, 0)
+        self.hovering_box_obj.uv = Vec2(0, 0)
         self.hovering_box_obj.visible = False
         self.set_child(self.hovering_box_obj)
 
         self.clicking_box_obj = _Box(u, v, *self.size.tuple, _colors.BLACK, padding, border)
         self.clicking_box_obj.color.a = int(self.clicking_box_obj.color.a * 0.4)
-        self.clicking_box_obj.pos = Vec2(0, 0)
+        self.clicking_box_obj.uv = Vec2(0, 0)
         self.clicking_box_obj.visible = True
         self.set_child(self.clicking_box_obj)
 
@@ -94,17 +94,18 @@ class ImageButton(Button):
                  padding = profile.default_padding, callback_clicked: _Optional[_Callable] = None, animator: _Optional[_animator.GAnimator] = None, no_register = False) -> None:
         if image is None: raise Exception("image is None.")
         self.image_obj = image
-        super().__init__(u, v, width, self.image_obj.size.height, text, textAttributes, (0,0,0,0), border, padding, callback_clicked, animator, no_register)
+        super().__init__(u, v, width, self.image_obj.size.height, text, textAttributes, (0,0,0,0), border, padding, callback_clicked, animator)
+        super().set_child(self.image_obj)
+        self.image_obj.uv = Vec2(0, 0)
 
     def update(self):
         super().update()
-        self.image_obj.pos = self.pos
-        self.image_obj.set_border(self._border)
-        self.image_obj.set_padding(self._padding)
-        self.image_obj.resize()
-
+        if self.should_update() == False: return
         self.image_obj.update()
 
     def draw(self):
-        self.image_obj.draw()
+        if self.should_draw() == False: return
         super().draw()
+        self.image_obj.resize()
+        self.image_obj.draw()
+        self.reset_dirty()

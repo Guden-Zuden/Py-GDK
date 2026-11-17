@@ -21,26 +21,33 @@ type gdk_color = _pg.Color | tuple[int, int, int, int] | tuple[int, int, int]
 
 class NullSurface(_pg.Surface): ...
 
-class ElementState:
-    def __init__(self, value: Any):
-        self._value = value
-        self._changed = False
-
-    def reset(self):
-        """call after """
-        self._changed = True
-
-    def get(self): return self._value
-    def set(self, value: Any):
-        self._value = value
-        self._changed = True
-
 # definition position type
 class Vec2:
     def __init__(self, x: int | float = 0, y: int | float = 0) -> None:
         from . import GUI as _GUI
-        self.x, self.y = x, y
+        self._x, self._y = x, y
         self._sync_components: list[_GUI.base.GUIBase] = []
+        self._dirty = False
+
+    def _set_dirty(self): self._dirty = True
+    def get_dirty(self): return self._dirty
+    def reset_dirty(self): self._dirty = False
+
+    @property
+    def x(self):
+        return self._x
+    @x.setter
+    def x(self, value):
+        self._x = value
+        self._set_dirty()
+
+    @property
+    def y(self):
+        return self._y
+    @y.setter
+    def y(self, value):
+        self._y = value
+        self._set_dirty()
 
     @property
     def width(self):
@@ -65,6 +72,9 @@ class Vec2:
         distance = (self.x ** 2 + self.y ** 2) ** (1/2)
         if distance == 0: return self
         return self / abs(distance)
+
+    def __neg__(self) -> Vec2:
+        return Vec2(-self.x, -self.y)
 
     def __add__(self, other: Vec2 | float | int) -> Vec2:
         if type(other) == float or type(other) == int:

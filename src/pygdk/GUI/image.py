@@ -41,8 +41,6 @@ class Image(base.Element):
         This method resizes the image while preserving its aspect ratio.\n
         Please call this method after changing width only. The height will be ignored.
         """
-        # if not self.size.is_dirty():
-            # return
         self.size.height = self.img_surface.get_height() * self.size.width / self.img_surface.get_width()
         self.displayed_img_surface = _pg.transform.smoothscale(self.img_surface, (self.size).tuple)
 
@@ -51,8 +49,6 @@ class Image(base.Element):
         _resize() is called in update(), but this method must be called after resizing.\n
         This method resizes the image without preserving its aspect ratio.
         """
-        # if not self.size.is_dirty():
-            # return
         self.displayed_img_surface = _pg.transform.smoothscale(self.img_surface, (self.size).tuple)
 
     def update(self):
@@ -66,6 +62,7 @@ class Image(base.Element):
         super().draw()
 
         self.surface.blit(self.displayed_img_surface)
+        self.reset_dirty()
 
         # if self.child:
         #     self.child.pos = Vec2(

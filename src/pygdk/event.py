@@ -285,7 +285,7 @@ class EventManager:
             if handler.instances != []:
                 for instance in handler.instances:
                     handler.func(instance)
-            elif not '.' in handler.func.__qualname__:
+            else:
                 handler.func()
 
         for e in EventManager.eventQueue:

@@ -34,8 +34,8 @@ default_scrollbar_style = ScrollBarStyle()
 
 sprite_size: int = 32
 
-surface_size_locked = False
-"""If true, surface size cannot be changed."""
+# surface_size_locked = False
+# """If true, surface size cannot be changed."""
 surface_fill_screen = False
 """If false, surface size will be changed depending on the aspect ratio."""
 # surface_scale: int = 2
@@ -57,10 +57,10 @@ _directory = pathlib.Path(__file__).parent
 import ctypes as _ctypes
 SPI_GETSCROLLLINES = 0x0068
 lines = _ctypes.c_uint()
-success = _ctypes.windll.user32.SystemParametersInfoW(
+_success = _ctypes.windll.user32.SystemParametersInfoW(
     SPI_GETSCROLLLINES, 0, _ctypes.byref(lines), 0
 )
-lines_per_scroll = lines.value*32 if success else 3*32
+lines_per_scroll = lines.value*32 if _success else 3*32
 
 
 __all__ = [

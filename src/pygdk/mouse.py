@@ -1,5 +1,10 @@
+from typing import TYPE_CHECKING
+
 from .base import *
 from . import GUI
+from . import profile as _profile
+if TYPE_CHECKING:
+    from . import scene as _scene
 
 import pygame as _pg
 from pygame import constants as _cst
@@ -33,3 +38,9 @@ def get_pressed():
 
 def get_pos():
     return _pos
+
+def get_scene_pos(scene: _scene.Scene):
+    pos = get_pos()
+    if scene.current_camera:
+        pos += scene.current_camera.pos - Vec2(_profile.width/2, _profile.height/2)
+    return pos

@@ -27,6 +27,7 @@ class Label(_base.Element):
             wrap_width: int = 0, 
             border: Border = Border(0, _colors.WHITE), 
             animator: _Optional[_animator.GAnimator] = None,
+            feedback_option: _Optional[FeedbackOption] = None,
             anchor: Anchor = Anchor.CENTER,
             ) -> None:
         self._text = text
@@ -42,7 +43,7 @@ class Label(_base.Element):
         else:
             self.outline_surface = None
             
-        super().__init__(u, v, self.text_surface.width, self.text_surface.height, padding, border, animator, anchor=anchor)
+        super().__init__(u, v, self.text_surface.width, self.text_surface.height, padding, border, animator, feedback_option, anchor=anchor)
         self._render_text()
         
         self.surface = _pg.Surface(
@@ -60,15 +61,14 @@ class Label(_base.Element):
         else:
             self.outline_surface = None
 
-        if self.parent is None:
-            self.pos = _base._uv2pos((self.u, self.v), self.size.width, self.size.height, self._anchor)
+        # if self.parent is None:
+            # self.pos = _base._uv2pos((self.u, self.v), self.size.width, self.size.height, self.anchor)
 
     def update(self):
         if not self.should_update(): return
         super().update()
-        if self.should_update():
-            if self.parent is None:
-                self.pos = _base._uv2pos((self.u, self.v), self.size.width, self.size.height, self._anchor)
+        if self.parent is None:
+            self.pos = _base._uv2pos((self.u, self.v), self.size.width, self.size.height, self.anchor)
 
     def draw(self):
         if not self.should_draw(): return
@@ -114,7 +114,7 @@ class LinkLabel(Label):
             animator: _Optional[_animator.GAnimator] = None,
             anchor: Anchor = Anchor.CENTER,
             ) -> None:
-        super().__init__(u, v, text, textAttributes, anchor, padding, wrap_width, border, animator, FeedbackOption(True, True), anchor)
+        super().__init__(u, v, text, textAttributes, padding, wrap_width, border, animator, FeedbackOption(True, True), anchor)
         self.hovered_textAttributes = hovered_textAttributes
         self._last_hovered = self._frame.hovering
 

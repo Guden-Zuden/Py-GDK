@@ -33,8 +33,8 @@ if _TYPE_CHECKING:
     from ..animator import GAnimator
 
 def _pos2uv(pos: Vec2, width: float, height: float) -> Vec2:
-    u = 2 / profile.width * (pos.x + width - profile.width/2)
-    v = 2 / profile.height * (pos.y + height - profile.height/2)
+    u = (2 * pos.x - profile.width + width) / profile.width
+    v = (2 * pos.y - profile.height + height) / profile.height
     return Vec2(u, v)
 
 @_overload
@@ -87,241 +87,10 @@ def _uv2pos_elm(
 
 def _updateMouseStatus():
     from . import Button, ImageButton, LinkLabel
-    if isinstance(GUIBase.g_hoveredObj, (Button, ImageButton, LinkLabel)):
+    if Frame.g_hovering and isinstance(Frame.g_hovering.element, (Button, ImageButton, LinkLabel)):
         _pg.mouse.set_cursor(_pg.SYSTEM_CURSOR_HAND)
     else:
         _pg.mouse.set_cursor(_pg.SYSTEM_CURSOR_ARROW)
-
-######################################
-#############  GUI Base  #############
-######################################
-class GUIBase(event.EventObject):
-    # for debug =====
-    update_count = 0
-    draw_count   = 0
-    # ===============
-
-    g_hoveredObj: _Optional[GUIBase] = None
-    g_focusedObj: _Optional[GUIBase] = None
-
-    _debug_position_stack: list[Vec2] = []
-    
-    def __init__(self, u: float, v: float, width: float, height: float,
-                 padding = profile.default_padding, border: Border = Border(0, colors.WHITE),
-                 animator: _Optional[GAnimator] = None, no_register = False) -> None:        
-        self.u, self.v = u, v
-        self.size = Vec2(width, height)
-        self.pos = Vec2(
-            profile.width/2 + profile.width/2 * u - self.size.width/2,
-            profile.height/2 + profile.height/2 * v - self.size.height/2)
-        self.is_hide = False
-
-        self.padding = padding
-        self.border = border
-
-        self.animator = animator
-
-        self.hovered = False
-        self.clicked = False
-        self.focused = False
-
-        self.parent: _Optional[object] = None
-        self.children: list[GUIBase] = [] # event
-        self.inners: list[GUIBase] = []   # size
-
-        self.event_func: _Optional[_Callable] = None
-
-        self.no_register = no_register
-
-        if profile.is_show_gui_positions:
-            GUIBase._debug_position_stack.append(self.pos)
-
-        self.create_surface()
-
-    def _regist_events(self):
-        if not self.no_register:
-            print(f"{self} events registed.")
-            for component in self.children:
-                component._regist_events()
-            event.EventManager.register_update(type(self).on_hovered)
-            event.EventManager.register_mousebuttonup(mouse.left, type(self).on_executed)
-            event.EventManager.link_instance(self)
-
-    def create_surface(self):
-        self.surface = _pg.Surface((self.size).tuple, _pg.SRCALPHA)
-        self.border_surface = _pg.Surface((self.size).tuple, _pg.SRCALPHA)
-        for inner in self.inners:
-            inner.create_surface()
-        
-    def _centering(self):
-        self.pos.x -= self.size.width/2
-        self.pos.y -= self.size.height/2
-
-    def update(self) -> None:
-        if self.is_hide: return
-        GUIBase.update_count += 1
-
-        self.on_update()
-
-        if self.animator:
-            self.animator.update()
-
-        # if self.size.is_dirty():
-        self.create_surface()
-            # self.size.reset()
-        
-        if self.parent is None: return
-
-    def draw(self, surface: _Optional[_pg.Surface] = None) -> None:
-        if self.is_hide: return
-        GUIBase.draw_count += 1
-        if surface is None: surface = self.surface
-        self.on_draw(surface)
-        self.surface.fill((0,0,0,0))
-
-        if self.border.width > 0:
-            border_rect = surface.get_rect()
-
-            width = int(self.border.width)
-
-            if width > 0: _pg.draw.rect(self.border_surface, self.border.color, border_rect, width)
-
-    def _flush(self, surface: _Optional[_pg.Surface] = None):
-        """If surface is not specified, profile.surface will be used."""
-        assert profile.window
-        if surface is None:
-            surface = profile.window.surface
-
-        surface.blit(self.surface, (self.pos).tuple)
-        surface.blit(self.border_surface, (self.pos).tuple)
-
-    def stick(self, gui_obj: GUIBase, dir: Direction):
-        self.pos.x = gui_obj.pos.x + gui_obj.size.width/2 - self.size.width/2
-        self.pos.y = gui_obj.pos.y + gui_obj.size.height/2 - self.size.height/2
-
-        if dir & Direction.TOP:
-            self.pos.y = gui_obj.pos.y - self.size.height
-        elif dir & Direction.BOTTOM:
-            self.pos.y = gui_obj.pos.y + gui_obj.size.height
-
-        if dir & Direction.LEFT:
-            self.pos.x = gui_obj.pos.x - self.size.width
-        elif dir & Direction.RIGHT:
-            self.pos.x = gui_obj.pos.x + gui_obj.size.width
-        return self
-
-    def get_rect(self):
-        return _pg.Rect(
-            self.pos.x,
-            self.pos.y,
-            self.size.width,
-            self.size.height
-        )
-
-    def get_size(self):
-        return (self.size.width, self.size.height)
-
-    @staticmethod
-    def _reset_g_flag():
-        GUIBase.g_hoveredObj = None
-
-    def add_child(self, gui: GUIBase):
-        gui.parent = self
-        self.children.append(gui)
-
-    def add_inner(self, gui: GUIBase):
-        self.inners.append(gui)
-
-    def get_top(self):
-        gui = self
-
-        while isinstance(gui.parent, GUIBase):
-            gui = gui.parent
-
-        return gui
-
-    def get_parents(self):
-        parents: list[GUIBase] = []
-        gui = self
-
-        while isinstance(gui.parent, GUIBase):
-            gui = gui.parent
-            parents.append(gui)
-
-        return parents
-
-    # events
-    def on_hovered(self):
-        with _BenchMark(f"{self}.on_hovered()"):
-            if self.parent is None: return
-            if self.is_hide: return
-            from .. import layer
-            if (layer.LayerManager.current_layer and 
-                not self in layer.LayerManager.current_layer._GUIComponent_stack):
-                flag = True
-
-                for parent in self.get_parents():
-                    if parent in layer.LayerManager.current_layer._GUIComponent_stack:
-                        flag = False
-                if flag:
-                    self.hovered = False
-                    return
-
-            for child in self.children:
-                child.on_hovered()
-
-            mouse_pos = event.getMousePos()
-            rect = self.get_rect()
-
-            for parent in self.get_parents():
-                rect.x += parent.pos.x
-                rect.y += parent.pos.y
-
-            isCollide = _pg.Rect.collidepoint(rect, *mouse_pos)
-
-            if GUIBase.g_hoveredObj is None:
-                if isCollide:
-                    GUIBase.g_hoveredObj = self
-                    self.hovered = True
-                else:
-                    self.hovered = False
-            if self.hovered:
-                if mouse.get_pressed().left:
-                    self.clicked = True
-                else:
-                    self.clicked = False
-            else:
-                self.clicked = False
-            if not isCollide:
-                self.hovered = False
-
-    def on_executed(self, e):
-        if self.parent is None: return
-        if self.event_func and self.hovered:
-            self.event_func()
-
-    def on_update(self):
-        pass
-    def on_draw(self, surface: _pg.Surface):
-        pass
-
-    # setters
-    def set_pos(self, x: int | float, y: int | float):
-        self.pos = Vec2(x, y)
-
-    def set_uv(self, u: float, v: float):
-        self.u, self.v = u, v
-        self.pos = _uv2pos((u, v), self.size.width, self.size.height)
-
-    def set_size(self, width: float, height: float):
-        self.size.width, self.size.height = width, height
-
-    def sync_size_to(self, component: GUIBase):
-        self.size = component.size
-    #
-
-    def info(self):
-        return {self.__str__(): [child.info() for child in self.children]}
 
 class Element:
     """
@@ -347,7 +116,7 @@ class Element:
             border: _Optional[Border] = None, 
             animator: _Optional["GAnimator"] = None,
             feedback_option: _Optional[FeedbackOption] = None,
-            anchor: _Optional[Anchor] = Anchor.CENTER) -> None:
+            anchor: Anchor = Anchor.CENTER) -> None:
         self._frame = Frame(self)
         
         self._uv = Vec2(u, v)
@@ -423,8 +192,8 @@ class Element:
 
     def should_draw(self) -> bool:
         """if visible and dirty flag is true"""
-        return (self.visible
-                and self._dirty)
+        return ((self.visible and self._dirty)
+                 or self.size.get_dirty())
 
     def draw(self) -> None:
         """
@@ -432,7 +201,7 @@ class Element:
             Draw on self.surface
         """
         if self.visible == False: return
-        if self._dirty == False: return
+        if self.should_draw() == False: return
 
         self.create_surface()
         self.surface.fill((0,0,0,0))
@@ -471,23 +240,39 @@ class Element:
         assert profile.window
         if not self.should_flush(): return
 
+        abs_pos = self.abs_pos
+        if self.anchor & Anchor.LEFT:
+            abs_pos.x += self.size.width/2
+        if self.anchor & Anchor.RIGHT:
+            abs_pos.x -= self.size.width/2
+        if self.anchor & Anchor.TOP:
+            abs_pos.y += self.size.height/2
+        if self.anchor & Anchor.BOTTOM:
+            abs_pos.y -= self.size.height/2
+        
         if surface:
             surface.blit(self.surface, self._pos.tuple)
 
-        for child in self.children:
-            child.flush(self.surface)
-
-        if self.feedback_option.hover and self._frame.hovering:
-            self.surface.blit(self._feedback_surface)
-        if self.feedback_option.click and self._frame.clicking:
-            self.surface.blit(self._feedback_surface)
-
         if surface is None:
-            profile.window.surface.blit(self.surface, self.abs_pos.tuple)
+            # final draw
+            self.output_surface.fill((0, 0, 0, 0))
+
+            self.output_surface.blit(self.surface)
+
+            if self.feedback_option.hover and self._frame.hovering:
+                self.output_surface.blit(self._feedback_surface)
+            if self.feedback_option.click and self._frame.clicking:
+                self.output_surface.blit(self._feedback_surface)
+
+            for child in self.children:
+                child.flush(self.output_surface)
+
+            # show on the screen
+            profile.window.surface.blit(self.output_surface, abs_pos.tuple)
 
             if self._border:
                 profile.window.surface.blit(
-                    self.border_surface, (self.abs_pos - self._border.width).tuple)
+                    self.border_surface, (abs_pos - self._border.width).tuple)
 
     def create_surface(self):
         """
@@ -504,6 +289,9 @@ class Element:
             self.surface = _pg.Surface(self.size.tuple, _pg.SRCALPHA)
         else: # no border, center and outside border
             self.surface = _pg.Surface(self.size.tuple, _pg.SRCALPHA)
+
+        self.output_surface = self.surface.copy()
+        """Final result will be draw on this surface."""
 
         # create feedback surface and fill
         self._feedback_surface = _pg.Surface(self.size.tuple, _pg.SRCALPHA)
@@ -522,6 +310,8 @@ class Element:
     def reset_dirty(self):
         """(core)Call the end of drawing."""
         self._dirty = False
+        self.pos.reset_dirty()
+        self.size.reset_dirty()
 
     def on_update(self):
         """Called before update."""
@@ -536,7 +326,7 @@ class Element:
         def decorator(func: _Callable):
             @_wraps(func)
             def wrapper(*args, **kwargs):
-                logger.debug(f"OnEnter executed: %s", self)
+                logger.debug("OnEnter executed: %s", self)
                 return func(*args, **kwargs)
 
             self.callback_enter = wrapper
@@ -548,7 +338,7 @@ class Element:
         def decorator(func: _Callable):
             @_wraps(func)
             def wrapper(*args, **kwargs):
-                logger.debug(f"OnLeave executed: %s", self)
+                logger.debug("OnLeave executed: %s", self)
                 return func(*args, **kwargs)
 
             self.callback_leave = wrapper
@@ -560,7 +350,7 @@ class Element:
         def decorator(func: _Callable):
             @_wraps(func)
             def wrapper(*args, **kwargs):
-                logger.debug(f"OnMousewheelScroll executed: %s", self)
+                logger.debug("OnMousewheelScroll executed: %s", self)
                 return func(*args, **kwargs)
 
             self.callback_mousewheelscrolled = wrapper
@@ -573,7 +363,7 @@ class Element:
         def decorator(func: _Callable):
             @_wraps(func)
             def wrapper(*args, **kwargs):
-                logger.debug(f"OnHovered executed: %s", self)
+                logger.debug("OnHovered executed: %s", self)
                 return func(*args, **kwargs)
 
             self.callback_hovered = wrapper
@@ -585,7 +375,7 @@ class Element:
         def decorator(func):
             @_wraps(func)
             def wrapper(*args, **kwargs):
-                logger.debug(f"OnPressed executed: %s", self)
+                logger.debug("OnPressed executed: %s", self)
 
                 return func(*args, **kwargs)
 
@@ -632,9 +422,9 @@ class Element:
         """
         self._uv.x = value
         if issubclass(type(self.parent), Element):
-            self._pos = _uv2pos_elm(value.tuple, *self.size, *self.parent.size)
+            self._pos = _uv2pos_elm(self.uv.tuple, *self.size, *self.parent.size) # pyright: ignore
         else:
-            self._pos = _uv2pos(value.tuple, *self.size)
+            self._pos = _uv2pos(self.uv.tuple, *self.size)
         self.set_dirty()
     @property
     def v(self):
@@ -647,9 +437,9 @@ class Element:
         """
         self._uv.y = value
         if issubclass(type(self.parent), Element):
-            self._pos = _uv2pos_elm(value.tuple, *self.size, *self.parent.size)
+            self._pos = _uv2pos_elm(self.uv.tuple, *self.size, *self.parent.size) # pyright: ignore
         else:
-            self._pos = _uv2pos(value.tuple, *self.size)
+            self._pos = _uv2pos(self.uv.tuple, *self.size)
         self.set_dirty()
 
     @property
@@ -675,6 +465,7 @@ class Element:
     @size.setter
     def size(self, value: Vec2):
         self._size = value.copy()
+        self.uv = self.uv
         self.set_dirty()
 
     @property
@@ -711,17 +502,6 @@ class Element:
     def rm_child(self, element: Element):
         self.children.remove(element)
         element.parent = None
-    
-    def _adjust_anchor(self):
-        abs_pos = self.abs_pos
-        if self.anchor & Anchor.LEFT:
-            self.x -= self.size.width/2
-        if self.anchor & Anchor.RIGHT:
-            self.x += self.size.width/2
-        if self.anchor & Anchor.TOP:
-            self.y -= self.size.height/2
-        if self.anchor & Anchor.BOTTOM:
-            self.y -= self.size.height/2
 
 class Frame(event.EventObject):
     """
@@ -779,6 +559,7 @@ class Frame(event.EventObject):
 
 
 class PanelBase(Element):
+    """Not implemented yet."""
     def __init__(
             self, 
             u: float, 

@@ -8,13 +8,15 @@ __import__ = [
     "printTime",
     "FrameCounter",
     "ScopedTimer",
-    "Timer"
+    "Timer",
+    "_update_global_dt",
 ]
 
 def printTime(deltaTime: float):
     print(f"Time: {'{:.4f}'.format(deltaTime)} \t FPS: {'{:.4f}'.format(1/deltaTime)}")
 
 now: Callable[[], float] = perf_counter
+dt: float = 0.0
 
 @contextmanager
 def BenchMark(name):
@@ -29,7 +31,7 @@ def BenchMark(name):
 
     yield
     if _profile.is_show_benchmark_log:
-        dt = perf_counter() - start
+        dt = perf_counter() - start # pyright: ignore
 
         if perf_counter() - BenchMark.g_startTimes[name] >= 1: # pyright: ignore
             print(f"{name:<15}: {dt*1000:.6f}ms")
@@ -62,3 +64,13 @@ class Timer:
 
     def info(self):
         printTime(self.delta_time)
+
+def _update_global_dt():
+    """Call once each frame."""
+    global dt
+    # initial create attribute
+    if not hasattr(_update_global_dt, "g_timer"):
+        _update_global_dt.g_timer = Timer() # pyright: ignore
+
+    _update_global_dt.g_timer.update() # pyright: ignore
+    dt = _update_global_dt.g_timer.delta_time # pyright: ignore

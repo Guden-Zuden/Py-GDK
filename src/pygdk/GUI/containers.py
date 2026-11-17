@@ -19,6 +19,8 @@ from .label import (
 from ..time import BenchMark as _BenchMark
 from .. import animator as _animator
 
+# TODO container bug: Item size is weird. When the cursor is on the item, can't scroll the container.
+
 class ContainerBase(_base.Element):
     def __init__(self, u: float, v: float, width: float, height: float, background: _Optional[_base.Background] = None,
                  padding = _profile.default_padding, items: _Optional[list[_base.Element]] = None, bar_style: _base.ScrollBarStyle = _profile.default_scrollbar_style,
@@ -156,7 +158,8 @@ class ContainerBase(_base.Element):
                 self.surface, self.background.color,# pyright: ignore
                 _pg.Rect(0,0, *self.size))
         elif self.background and self.background.isImage():
-            self.background.image.draw(self.surface) # pyright: ignore
+            self.background.image.draw() # pyright: ignore
+        self.reset_dirty()
 
     def push_item(self, item: _base.Element):
         self.items.append(item)
@@ -204,12 +207,15 @@ class VerticalAlignContainer(ContainerBase):
         if not self.should_draw(): return
         super().draw()
 
+        print("selidsdsf")
+
         for item in self.items:
             if item.pos.y + item.size.height > 0 and item.pos.y < self.size.height:
                 item.draw()
 
         if self.v_scrollBar_obj: self.v_scrollBar_obj.draw()
         if self.h_scrollBar_obj: self.h_scrollBar_obj.draw()
+        self.reset_dirty()
 
     def _calc_size(self):
         self.item_size.width = 0
@@ -306,8 +312,8 @@ class GridContainer(ContainerBase):
                 item.draw()
             _index += 1
 
-        if self.v_scrollBar_obj: self.v_scrollBar_obj.draw(self.surface)
-        if self.h_scrollBar_obj: self.h_scrollBar_obj.draw(self.surface)
+        if self.v_scrollBar_obj: self.v_scrollBar_obj.draw()
+        if self.h_scrollBar_obj: self.h_scrollBar_obj.draw()
 
     def _calc_size(self):
         def separate_items(_list: list, _n: int):
@@ -368,7 +374,7 @@ class TabContainer(_base.Element):
         self.HC_Tab = HorizontalAlignContainer(
             0,0, width, tab_textAttributes.FontSize + padding.top + padding.bottom, tab_background, padding,
             items=[                                                                                    #pyright: ignore
-                Button(0,0, *Label(0,0, tabProperty.name, tab_textAttributes, padding=padding).get_size(),  
+                Button(0,0, *Label(0,0, tabProperty.name, tab_textAttributes, padding=padding).size,  
                        tabProperty.name, tab_textAttributes, tab_background.color, border, padding, # pyright: ignore
                        callback_clicked=lambda tab=tabProperty: self.on_click_tab(tab_properties.index(tab)))
                 if tab_background.isColor()
