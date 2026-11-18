@@ -9,7 +9,6 @@ from .. import profile as _profile
 from . import base as _base
 from .label import Label as _Text
 from .box import Box as _Box
-from .. import colors as _colors
 from .image import Image as _Image
 from .. import animator as _animator
 
@@ -22,6 +21,13 @@ class Button(_base.Element):
                  text: str, textAttributes: TextAttributes = _profile.default_textAttributes, color: gdk_color = (0,0,0), border = _profile.default_border,
                  padding = _profile.default_padding, callback_clicked: _Optional[_Callable] = None, animator: _Optional[_animator.GAnimator] = None) -> None:
         super().__init__(u, v, width, height, padding, border, animator, FeedbackOption(True, True))
+<<<<<<< HEAD
+        self._hover_feedback_color = Color(0, 0, 0, 51)
+        self._click_feedback_color = Color(0, 0, 0, 102)
+        self._hover_feedback_surface.fill(self._hover_feedback_color)
+        self._click_feedback_surface.fill(self._click_feedback_color)
+=======
+>>>>>>> ae538d05c1ce8f2e5ee51a797bd15b2b06e5c7aa
 
         self._text = text
         self._textAttributes = textAttributes
@@ -31,8 +37,15 @@ class Button(_base.Element):
 
         self.callback_clicked = callback_clicked
 
-        self.text_obj = _Text(u, v, text, textAttributes, padding=padding)
         self.box_obj = _Box(u, v, *self.size.tuple, color, padding, border)
+<<<<<<< HEAD
+        self.set_child(self.box_obj)
+        self.box_obj.uv = Vec2(0, 0)
+
+        self.text_obj = _Text(u, v, text, textAttributes, padding=padding)
+        self.set_child(self.text_obj)
+        self.text_obj.uv = Vec2(0, 0)
+=======
         self.box_obj.uv = Vec2(0, 0)
         self.box_obj.set_child(self.text_obj)
         self.text_obj.uv = Vec2(0, 0)
@@ -49,6 +62,7 @@ class Button(_base.Element):
         self.clicking_box_obj.uv = Vec2(0, 0)
         self.clicking_box_obj.visible = True
         self.set_child(self.clicking_box_obj)
+>>>>>>> ae538d05c1ce8f2e5ee51a797bd15b2b06e5c7aa
 
     def update(self):
         if not self.should_update(): return
@@ -58,6 +72,7 @@ class Button(_base.Element):
             self.text_obj.set_text(self._text)
             self.text_obj.set_textAttributes(self._textAttributes)
             self.text_obj.set_padding(self._padding)
+            self.text_obj.uv = Vec2(0, 0)
             self.text_obj.update()
 
             self.box_obj.set_border(self._border)
@@ -66,25 +81,17 @@ class Button(_base.Element):
             self.box_obj.size = self.size
             self.box_obj.update()
 
-            self.hovering_box_obj.set_border(self._border)
-            self.hovering_box_obj.set_padding(self._padding)
-            self.hovering_box_obj.size = self.size
-            self.hovering_box_obj.update()
-
-            self.clicking_box_obj.set_border(self._border)
-            self.clicking_box_obj.set_padding(self._padding)
-            self.clicking_box_obj.size = self.size
-            self.clicking_box_obj.update()
+    def _get_baseline_offset(self) -> float:
+        return (
+            (self.size.height - self.text_obj.size.height) / 2
+            + self.text_obj._get_baseline_offset()
+        )
 
     def draw(self):
         if not self.should_draw(): return
         super().draw()
         self.text_obj.draw()
         self.box_obj.draw()
-        if self._frame.clicking:
-            self.clicking_box_obj.draw()
-        elif self._frame.hovering:
-            self.hovering_box_obj.draw()
         self.reset_dirty()
 
 class ImageButton(Button):

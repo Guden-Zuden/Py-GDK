@@ -51,18 +51,27 @@ class Label(_base.Element):
              self._textAttributes.OutlineWidth + self.size.height), flags=_pg.SRCALPHA)
 
     def _render_text(self):
-        self.text_surface = _pg.sysfont.SysFont(*self._textAttributes.getFontStyle()).render(
+        self.font = _pg.sysfont.SysFont(*self._textAttributes.getFontStyle())
+        self.text_surface = self.font.render(
                 self._text, True, *self._textAttributes.getTextColors(), wraplength=self._wrap_width)
         self.size = Vec2(*self.text_surface.size)
         if self._textAttributes.OutlineColor:
-            self.outline_surface = _pg.sysfont.SysFont(*self._textAttributes.getFontStyle()).render(
+            self.outline_surface = self.font.render(
                 self._text, True, self._textAttributes.OutlineColor, wraplength=self._wrap_width)
             self.size += self._textAttributes.OutlineWidth*2
         else:
             self.outline_surface = None
 
+<<<<<<< HEAD
+    def _get_baseline_offset(self) -> float:
+        return (
+            (self.surface.get_height() - self.text_surface.get_height()) / 2
+            + self.font.get_ascent()
+        )
+=======
         # if self.parent is None:
             # self.pos = _base._uv2pos((self.u, self.v), self.size.width, self.size.height, self.anchor)
+>>>>>>> ae538d05c1ce8f2e5ee51a797bd15b2b06e5c7aa
 
     def update(self):
         if not self.should_update(): return
@@ -74,8 +83,10 @@ class Label(_base.Element):
         if not self.should_draw(): return
         self._render_text()
         super().draw()
-        pos = Vec2(self.surface.get_width()/2 - self.text_surface.get_width()/2,
-                   self.surface.get_height()/2 - self.text_surface.get_height()/2)
+        pos = Vec2(
+            self.surface.get_width()/2 - self.text_surface.get_width()/2,
+            (self.surface.get_height() - self.text_surface.get_height()) / 2,
+        )
 
         if self.outline_surface:
             temp = int(self._textAttributes.OutlineWidth*2)
@@ -84,7 +95,7 @@ class Label(_base.Element):
                     self.surface.blit(self.outline_surface, 
                                       (pos + Vec2(dx, dy)).tuple) 
 
-        self.surface.blit(self.text_surface, Vec2(0, 0).tuple)
+        self.surface.blit(self.text_surface, pos.tuple)
         self.reset_dirty()
 
     def set_text(self, text: str):
@@ -124,10 +135,11 @@ class LinkLabel(Label):
         else:
             textAttributes = self._textAttributes
 
-        self.text_surface = _pg.sysfont.SysFont(*textAttributes.getFontStyle()).render(
+        self.font = _pg.sysfont.SysFont(*textAttributes.getFontStyle())
+        self.text_surface = self.font.render(
                 self._text, True, *textAttributes.getTextColors(), wraplength=self._wrap_width)
         if textAttributes.OutlineColor:
-            self.outline_surface = _pg.sysfont.SysFont(*textAttributes.getFontStyle()).render(
+            self.outline_surface = self.font.render(
                 self._text, True, textAttributes.OutlineColor, wraplength=self._wrap_width)
         else:
             self.outline_surface = None

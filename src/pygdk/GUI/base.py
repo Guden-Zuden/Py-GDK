@@ -35,6 +35,14 @@ if _TYPE_CHECKING:
 def _pos2uv(pos: Vec2, width: float, height: float) -> Vec2:
     u = (2 * pos.x - profile.width + width) / profile.width
     v = (2 * pos.y - profile.height + height) / profile.height
+<<<<<<< HEAD
+    return Vec2(u, v)
+
+def _pos2uv_elm(pos: Vec2, width: float, height: float, parent_width: float, parent_height: float) -> Vec2:
+    u = (2 * pos.x - parent_width + width) / parent_width
+    v = (2 * pos.y - parent_height + height) / parent_height
+=======
+>>>>>>> ae538d05c1ce8f2e5ee51a797bd15b2b06e5c7aa
     return Vec2(u, v)
 
 @_overload
@@ -153,7 +161,13 @@ class Element:
         self._dirty = True
 
         # feedbacks
+<<<<<<< HEAD
+        self._feedback_color = Color(0, 0, 0, 60)
+        self._hover_feedback_color = self._feedback_color
+        self._click_feedback_color = self._feedback_color
+=======
         self._feedback_color = Color(0, 0, 0, 40)
+>>>>>>> ae538d05c1ce8f2e5ee51a797bd15b2b06e5c7aa
 
         self.create_surface()
 
@@ -230,6 +244,24 @@ class Element:
     def should_flush(self):
         return (self.visible)
 
+    def _get_baseline_offset(self) -> _Optional[float]:
+        return None
+
+    def _flush_into(self, surface: _pg.Surface, parent_pos: Vec2):
+        if not self.should_flush():
+            return
+
+        pos = parent_pos + self._pos
+        surface.blit(self.surface, pos.tuple)
+
+        for child in self.children:
+            child._flush_into(surface, pos)
+
+        if self.feedback_option.hover and self._frame.hovering:
+            surface.blit(self._hover_feedback_surface, pos.tuple)
+        if self.feedback_option.click and self._frame.clicking:
+            surface.blit(self._click_feedback_surface, pos.tuple)
+
     def flush(self, surface: _Optional[_pg.Surface] = None):
         """
         #### Description
@@ -240,6 +272,13 @@ class Element:
         assert profile.window
         if not self.should_flush(): return
 
+<<<<<<< HEAD
+        if surface is not None:
+            self._flush_into(surface, Vec2(0, 0))
+            return
+
+=======
+>>>>>>> ae538d05c1ce8f2e5ee51a797bd15b2b06e5c7aa
         abs_pos = self.abs_pos
         if self.anchor & Anchor.LEFT:
             abs_pos.x += self.size.width/2
@@ -250,15 +289,28 @@ class Element:
         if self.anchor & Anchor.BOTTOM:
             abs_pos.y -= self.size.height/2
         
+<<<<<<< HEAD
+=======
         if surface:
             surface.blit(self.surface, self._pos.tuple)
 
+>>>>>>> ae538d05c1ce8f2e5ee51a797bd15b2b06e5c7aa
         if surface is None:
             # final draw
             self.output_surface.fill((0, 0, 0, 0))
 
             self.output_surface.blit(self.surface)
 
+<<<<<<< HEAD
+            for child in self.children:
+                child.flush(self.output_surface)
+                child.surface
+
+            if self.feedback_option.hover and self._frame.hovering:
+                self.output_surface.blit(self._hover_feedback_surface)
+            if self.feedback_option.click and self._frame.clicking:
+                self.output_surface.blit(self._click_feedback_surface)
+=======
             if self.feedback_option.hover and self._frame.hovering:
                 self.output_surface.blit(self._feedback_surface)
             if self.feedback_option.click and self._frame.clicking:
@@ -266,6 +318,7 @@ class Element:
 
             for child in self.children:
                 child.flush(self.output_surface)
+>>>>>>> ae538d05c1ce8f2e5ee51a797bd15b2b06e5c7aa
 
             # show on the screen
             profile.window.surface.blit(self.output_surface, abs_pos.tuple)
@@ -293,9 +346,17 @@ class Element:
         self.output_surface = self.surface.copy()
         """Final result will be draw on this surface."""
 
+<<<<<<< HEAD
+        # Keep hover and click feedback independent so either can be tuned separately.
+        self._hover_feedback_surface = _pg.Surface(self.size.tuple, _pg.SRCALPHA)
+        self._hover_feedback_surface.fill(self._hover_feedback_color)
+        self._click_feedback_surface = _pg.Surface(self.size.tuple, _pg.SRCALPHA)
+        self._click_feedback_surface.fill(self._click_feedback_color)
+=======
         # create feedback surface and fill
         self._feedback_surface = _pg.Surface(self.size.tuple, _pg.SRCALPHA)
         self._feedback_surface.fill(self._feedback_color)
+>>>>>>> ae538d05c1ce8f2e5ee51a797bd15b2b06e5c7aa
 
         logger.debug(f"Surface was created: %s", self)
 
@@ -448,7 +509,10 @@ class Element:
     @pos.setter
     def pos(self, value: Vec2):
         self._pos = value.copy()
-        self._uv = _pos2uv(value, *self.size)
+        if isinstance(self.parent, Element):
+            self._uv = _pos2uv_elm(value, *self.size, *self.parent.size)
+        else:
+            self._uv = _pos2uv(value, *self.size)
         self.set_dirty()
         
     @property
@@ -548,8 +612,13 @@ class Frame(event.EventObject):
     @event.OnMousewheelScroll()
     def on_mousewheelscroll(self, e):
         if Frame.g_hovering is not self: return
-        if self.element.callback_mousewheelscrolled:
-            self.element.callback_mousewheelscrolled(e)
+        element: _Optional[Element] = self.element
+        while element is not None:
+            if element.callback_mousewheelscrolled:
+                element.callback_mousewheelscrolled(e)
+                return
+            parent = element.parent
+            element = parent if isinstance(parent, Element) else None
 
     @event.OnMousebuttonUp(mouse.left)
     def on_mousebuttonup(self, e):

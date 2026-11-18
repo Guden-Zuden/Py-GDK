@@ -4,16 +4,25 @@ from . import profile
 
 import pygame as _pygame
 import sys as _sys
-from enum import Flag, auto
-from dataclasses import dataclass, field
-from typing import Callable, Any, Self
-
+from enum import (
+    Flag as _Flag, 
+    auto as _auto
+    )
+from dataclasses import (
+    dataclass as _dataclass, 
+    field as _field
+    )
+from typing import (
+    Callable as _Callable, 
+    Any as _Any, 
+    Self as _Self
+    )
 # TODO: Not complete yet. temporary.
 
 # ===== Permissions =====
-class InputPermission(Flag):
-    WASD = auto()
-    Arrows = auto()
+class InputPermission(_Flag):
+    WASD = _auto()
+    Arrows = _auto()
 
 # ===== Global value in this file =====
 pressedKeys: _pygame.key.ScancodeWrapper = _pygame.key.ScancodeWrapper()
@@ -35,7 +44,7 @@ def _updateMousePos():
     mouse._pos = profile.window.get_mousePos()
 
 # ===== Dataclasses =====
-@dataclass
+@_dataclass
 class KeyEventData:
     keyData: key.KeyType
     pressed: bool
@@ -65,7 +74,7 @@ class KeyEventData:
             return self.mods & _pygame.KMOD_LALT > 0
         return self.mods & _pygame.KMOD_ALT > 0
     
-@dataclass
+@_dataclass
 class KeyModData:
     flag: int
 
@@ -80,127 +89,112 @@ class KeyModData:
 
 # ===== Event =====
 
-from functools import wraps
+from functools import update_wrapper as _update_wrapper
+
+class EventCallable:
+    def __init__(self, func: _Callable) -> None:
+        self.owner = None
+        self.func = func
+        _update_wrapper(self, func, updated=())
+
+    def __set_name__(self, owner, name):
+        self.owner = owner
+        self.name = name
+
+    def __get__(self, instance, owner=None):
+        if instance is None:
+            return self.func
+        return self.func.__get__(instance, owner)
+
+    def __call__(self, *args, **kwargs):
+        return self.func(*args, **kwargs)
 
 def OnUpdate():
     def decorator(func):
-        EventManager.register_update(func)
-
-        @wraps(func)
-        def wrapper(*args, **kwargs):
-            return func(*args, **kwargs)
-        
-        return wrapper
+        event_func = EventCallable(func)
+        EventManager.register_update(event_func)
+        return event_func
     return decorator
 
 def OnWindowResized():
     def decorator(func):
-        EventManager.register_windowresized(func)
-
-        @wraps(func)
-        def wrapper(*args, **kwargs):
-            return func(*args, **kwargs)
-        
-        return wrapper
+        event_func = EventCallable(func)
+        EventManager.register_windowresized(event_func)
+        return event_func
     return decorator
 
 def OnKeydown(key: key.KeyType):
     def decorator(func):
-        EventManager.register_keydown(key, func)
-
-        @wraps(func)
-        def wrapper(*args, **kwargs):
-            return func(*args, **kwargs)
-
-        return wrapper
+        event_func = EventCallable(func)
+        EventManager.register_keydown(key, event_func)
+        return event_func
     return decorator
 
 def OnKeyup(key: key.KeyType):
     def decorator(func):
-        EventManager.register_keyup(key, func)
-
-        @wraps(func)
-        def wrapper(*args, **kwargs):
-            return func(*args, **kwargs)
-        
-        return wrapper
+        event_func = EventCallable(func)
+        EventManager.register_keyup(key, event_func)
+        return event_func
     return decorator
 
 def OnMousemove():
     def decorator(func):
-        EventManager.register_mousemove(func)
-
-        @wraps(func)
-        def wrapper(*args, **kwargs):
-            return func(*args, **kwargs)
-        
-        return wrapper
+        event_func = EventCallable(func)
+        EventManager.register_mousemove(event_func)
+        return event_func
     return decorator
 
 def OnMousebuttonDown(button: mouse.MouseButtonType):
     def decorator(func):
-        EventManager.register_mousebuttondown(button, func)
-    
-        @wraps(func)
-        def wrapper(*args, **kwargs):
-            return func(*args, **kwargs)
-        
-        return wrapper
+        event_func = EventCallable(func)
+        EventManager.register_mousebuttondown(button, event_func)
+        return event_func
     return decorator
 
 def OnMousebuttonUp(button: mouse.MouseButtonType):
     def decorator(func):
-        EventManager.register_mousebuttonup(button, func)
-        
-        @wraps(func)
-        def wrapper(*args, **kwargs):
-            return func(*args, **kwargs)
-        
-        return wrapper
+        event_func = EventCallable(func)
+        EventManager.register_mousebuttonup(button, event_func)
+        return event_func
     return decorator
 
 # mouse wheel
 def OnMousewheelScroll():
     def decorator(func):
-        EventManager.register_mousewheelscroll(func)
-
-        @wraps(func)
-        def wrapper(*args, **kwargs):
-            return func(*args, **kwargs)
-
-        return wrapper
+        event_func = EventCallable(func)
+        EventManager.register_mousewheelscroll(event_func)
+        return event_func
     return decorator
 
-class EventType(Flag):
-    OnUpdate = auto()
-    OnWindowResized = auto()
-    OnKeydown = auto()
-    OnKeyup = auto()
-    OnMousebuttonDown = auto()
-    OnMousebuttonUp = auto()
-    OnMousemove = auto()
-    OnMousewheelScroll = auto()
+class EventType(_Flag):
+    OnUpdate = _auto()
+    OnWindowResized = _auto()
+    OnKeydown = _auto()
+    OnKeyup = _auto()
+    OnMousebuttonDown = _auto()
+    OnMousebuttonUp = _auto()
+    OnMousemove = _auto()
+    OnMousewheelScroll = _auto()
 
-@dataclass
+@_dataclass
 class HandlerBase:
-    func: Callable[..., None]
-    instances: list[Any] = field(default_factory=list, init=False)
+    func: EventCallable
+    instances: list[_Any] = _field(default_factory=list, init=False)
 
-@dataclass
+@_dataclass
 class Handler(HandlerBase):
     pass
 
-@dataclass
+@_dataclass
 class KeyHandler(HandlerBase):
     key: int
 
-@dataclass
+@_dataclass
 class MousebuttonHandler(HandlerBase):
     mousebutton: int
 
-
 class EventObject:
-    def __new__(cls: type[Self], *args, **kwargs) -> Self:
+    def __new__(cls: type[_Self], *args, **kwargs) -> _Self:
         instance = super().__new__(cls)
         EventManager.link_instance(instance)
         return instance
@@ -210,11 +204,12 @@ class EventManager:
 
     @staticmethod
     def _handler_key(event_type: EventType, handler: Handler | KeyHandler | MousebuttonHandler):
+        """"""
         if isinstance(handler, KeyHandler):
-            return (event_type, handler.func, handler.key)
+            return (event_type, handler.func.func, handler.key)
         if isinstance(handler, MousebuttonHandler):
-            return (event_type, handler.func, handler.mousebutton)
-        return (event_type, handler.func, None)
+            return (event_type, handler.func.func, handler.mousebutton)
+        return (event_type, handler.func.func, None)
 
     @staticmethod
     def _register_handler(event_type: EventType, handler: Handler | KeyHandler | MousebuttonHandler):
@@ -225,50 +220,48 @@ class EventManager:
         EventManager._handlers.append((event_type, handler))
 
     @staticmethod
-    def link_instance(instance: Any):
+    def link_instance(instance: _Any):
         '''
         Called by EventObject.
         '''
         for _event_type, _handler in EventManager._handlers:
-            owner_name = _handler.func.__qualname__.rsplit(".", 1)[0]
-
-            # Check whether the instance's class inherits from the handler's owner class.
-            if any(mro.__qualname__ == owner_name for mro in instance.__class__.__mro__):
+            owner = _handler.func.owner
+            if owner is not None and isinstance(instance, owner):
                 # Link the instance if it is not already linked to the handler.
                 if not any(existing_instance is instance for existing_instance in _handler.instances):
                     _handler.instances.append(instance)
 
     # ===== Register =====
     @staticmethod
-    def register_update(func: Callable[..., None]):
+    def register_update(func: EventCallable):
         EventManager._register_handler(EventType.OnUpdate, Handler(func))
 
     @staticmethod
-    def register_windowresized(func: Callable[..., None]):
+    def register_windowresized(func: EventCallable):
         EventManager._register_handler(EventType.OnWindowResized, Handler(func))
 
     @staticmethod
-    def register_keydown(key: key.KeyType, func: Callable[..., None]):
+    def register_keydown(key: key.KeyType, func: EventCallable):
         EventManager._register_handler(EventType.OnKeydown, KeyHandler(func, key.keyCode))
 
     @staticmethod
-    def register_keyup(key: key.KeyType, func: Callable[..., None]):
+    def register_keyup(key: key.KeyType, func: EventCallable):
         EventManager._register_handler(EventType.OnKeyup, KeyHandler(func, key.keyCode))
 
     @staticmethod
-    def register_mousemove(func: Callable[..., None]):
+    def register_mousemove(func: EventCallable):
         EventManager._register_handler(EventType.OnMousemove, Handler(func))
 
     @staticmethod
-    def register_mousebuttondown(button: mouse.MouseButtonType, func: Callable[..., None]):
+    def register_mousebuttondown(button: mouse.MouseButtonType, func: EventCallable):
         EventManager._register_handler(EventType.OnMousebuttonDown, MousebuttonHandler(func, button.buttonType))
 
     @staticmethod
-    def register_mousebuttonup(button: mouse.MouseButtonType, func: Callable[..., None]):
+    def register_mousebuttonup(button: mouse.MouseButtonType, func: EventCallable):
         EventManager._register_handler(EventType.OnMousebuttonUp, MousebuttonHandler(func, button.buttonType))
 
     @staticmethod
-    def register_mousewheelscroll(func: Callable[..., None]):
+    def register_mousewheelscroll(func: EventCallable):
         EventManager._register_handler(EventType.OnMousewheelScroll, Handler(func))
 
     # ===== Register ===== end
@@ -282,11 +275,17 @@ class EventManager:
         # OnUpdate
         for handler in [handler for event_type, handler in EventManager._handlers
                         if event_type == EventType.OnUpdate]:
-            if handler.instances != []:
+            if handler.func.owner is not None:
                 for instance in handler.instances:
+<<<<<<< HEAD
+                    handler.func.func(instance)
+            else:
+                handler.func.func()
+=======
                     handler.func(instance)
             else:
                 handler.func()
+>>>>>>> ae538d05c1ce8f2e5ee51a797bd15b2b06e5c7aa
 
         for e in EventManager.eventQueue:
             handlers: list[HandlerBase] = []
@@ -324,11 +323,11 @@ class EventManager:
                              if event_type == EventType.OnMousewheelScroll]
 
             for handler in handlers:
-                if handler.instances != []:
+                if handler.func.owner is not None:
                     for instance in handler.instances:
-                        handler.func(instance, e)
-                elif not '.' in handler.func.__qualname__:
-                    handler.func(e)
+                        handler.func.func(instance, e)
+                else:
+                    handler.func.func(e)
 
 # ===== User Function ======
 def getKey(key_data: key.KeyType) -> KeyEventData:

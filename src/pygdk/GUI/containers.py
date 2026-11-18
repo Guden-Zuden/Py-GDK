@@ -177,6 +177,7 @@ class ContainerBase(_base.Element):
                 self.set_child(item)
         self._calc_positions()
         self._calc_size()
+        self.set_dirty()
 
     def rm_item(self, item: _base.Element):
         self.items.remove(item)
@@ -274,12 +275,42 @@ class HorizontalAlignContainer(ContainerBase):
         self.item_size.height = 0
         if len(self.items) != 0:
             self.item_size.height = max([item.size.height for item in self.items])
+            baseline_offsets = [
+                (item, item._get_baseline_offset())
+                for item in self.items
+            ]
+            baseline_offsets = [
+                (item, offset)
+                for item, offset in baseline_offsets
+                if offset is not None
+            ]
+            if baseline_offsets:
+                baseline = max(offset for _, offset in baseline_offsets)
+                descent = max(
+                    item.size.height - offset
+                    for item, offset in baseline_offsets
+                )
+                self.item_size.height = max(
+                    self.item_size.height,
+                    baseline + descent,
+                )
 
     def _calc_positions(self):
         x = self._padding.left + self._border.width
-        y = self._padding.top + self._border.width
+        top = self._padding.top + self._border.width
+        baseline_offsets = [
+            item._get_baseline_offset()
+            for item in self.items
+        ]
+        baseline = max(
+            (offset for offset in baseline_offsets if offset is not None),
+            default=None,
+        )
 
-        for item in self.items:
+        for item, offset in zip(self.items, baseline_offsets):
+            y = top
+            if baseline is not None and offset is not None:
+                y += baseline - offset
             item.pos = Vec2(x + self.scroll_h, y + self.scroll_v)
             x += item.size.width + self.space
 
@@ -371,7 +402,36 @@ class TabContainer(_base.Element):
         self.selected_tab_background = selected_tab_background
         self.tabitems_background = tabitems_background
 
+        tab_buttons: list[_base.Element] = []
+        for tab_property in tab_properties:
+            label = Label(0, 0, tab_property.name, tab_textAttributes, padding=padding)
+            button_width = label.size.width + padding.left + padding.right
+            button_height = label.size.height + padding.top + padding.bottom
+            callback = lambda tab=tab_property: self.on_click_tab(tab_properties.index(tab))
+
+            if tab_background.isColor():
+                tab_button = Button(
+                    0, 0, button_width, button_height, tab_property.name,
+                    tab_textAttributes, tab_background.color, border, padding,
+                    callback_clicked=callback,
+                )
+            else:
+                tab_button = ImageButton(
+                    0, 0, button_width, tab_property.name,
+                    tab_textAttributes, copy.copy(tab_background.image), border, padding,
+                    callback_clicked=callback,
+                )
+            tab_buttons.append(tab_button)
+
+        tab_height = max(
+            (button.size.height for button in tab_buttons),
+            default=tab_textAttributes.FontSize,
+        ) + padding.top + padding.bottom
         self.HC_Tab = HorizontalAlignContainer(
+<<<<<<< HEAD
+            0, 0, width, tab_height, tab_background, padding,
+            items=tab_buttons,
+=======
             0,0, width, tab_textAttributes.FontSize + padding.top + padding.bottom, tab_background, padding,
             items=[                                                                                    #pyright: ignore
                 Button(0,0, *Label(0,0, tabProperty.name, tab_textAttributes, padding=padding).size,  
@@ -383,10 +443,11 @@ class TabContainer(_base.Element):
                             callback_clicked=lambda tab=tabProperty: self.on_click_tab(tab_properties.index(tab)))
                 for tabProperty in tab_properties
             ],
+>>>>>>> ae538d05c1ce8f2e5ee51a797bd15b2b06e5c7aa
             bar_style=ScrollBarStyle(0),
             lock_vertical_scroll=True)
-        self.HC_Tab.pos = Vec2(0,0)
         self.set_child(self.HC_Tab)
+        self.HC_Tab.pos = Vec2(0,0)
 
         self.tab_properties = tab_properties
 
@@ -396,39 +457,46 @@ class TabContainer(_base.Element):
             self.tab_properties[self.current_tabIndex].items,
             bar_style=bar_style
         )
-        self.VC_TabItems.pos = Vec2(0, self.HC_Tab.size.height)
         self.set_child(self.VC_TabItems)
+        self.VC_TabItems.pos = Vec2(0, self.HC_Tab.size.height)
         self._set_colors()
 
     def update(self) -> None:
         if not self.should_update(): return
-        super().update()
         self.HC_Tab.update()
         self.VC_TabItems.update()
+        super().update()
         
     def draw(self):
         if not self.should_draw(): return
         super().draw()
         self.HC_Tab.draw()
         self.VC_TabItems.draw()
+        self.reset_dirty()
 
     def on_click_tab(self, index: int):
         self.current_tabIndex = index
         self.VC_TabItems.set_items(self.tab_properties[self.current_tabIndex].items)
         self._set_colors()
+        self.set_dirty()
 
     def _set_colors(self):
         from . import Button, ImageButton
         for item in self.HC_Tab.items:
             if type(item) == Button and self.tab_background.color:
                 item._color = self.tab_background.color
+                item.set_dirty()
             elif type(item) == ImageButton and self.tab_background.image:
                 item.image_obj = self.tab_background.image
+                item.set_dirty()
             else:
                 raise Exception("Unexcepted Error!")
 
         current_item = self.HC_Tab.items[self.current_tabIndex]
         if type(current_item) == Button and self.selected_tab_background.color:
             current_item._color = self.selected_tab_background.color
+            current_item.set_dirty()
         elif type(current_item) == ImageButton and self.selected_tab_background.image:
             current_item.image_obj = self.selected_tab_background.image
+            current_item.set_dirty()
+        self.HC_Tab.set_dirty()

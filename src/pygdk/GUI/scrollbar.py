@@ -41,29 +41,39 @@ class VerticalScrollBar(ScrollBarBase):
 
     def update(self) -> None:
         super().update()
-        self.start_pos = Vec2(self.size.width, 0)
-        self.start_pos.x -= self.bar_style.width/2 # 太さの補正
-        self.start_pos.y -= self.field_size.height / self.item_size.height * self.scroll_v
+        start_pos = Vec2(
+            self.size.width - self.bar_style.width / 2,
+            -self.field_size.height / self.item_size.height * self.scroll_v,
+        )
+        end_pos = start_pos + Vec2(
+            0,
+            self.field_size.height / self.item_size.height * self.field_size.height,
+        )
+        if start_pos.tuple != self.start_pos.tuple or end_pos.tuple != self.end_pos.tuple:
+            self.set_dirty()
+        self.start_pos = start_pos
+        self.end_pos = end_pos
 
-        self.end_pos = _copy.copy(self.start_pos)
-        self.end_pos.y += self.field_size.height / self.item_size.height * self.field_size.height
 
     def draw(self):
+        if not self.should_draw(): return
         super().draw()
 
         if not self.bar_style.rounded:
             _pg.draw.line(self.surface, self.bar_style.color, 
                             (self.start_pos).tuple, (self.end_pos).tuple, self.bar_style.width)
         else:
-            # 補正
-            self.start_pos.y += self.bar_style.width/2
-            self.end_pos.y -= self.bar_style.width/2
+            start_pos = self.start_pos.copy()
+            end_pos = self.end_pos.copy()
+            start_pos.y += self.bar_style.width/2
+            end_pos.y -= self.bar_style.width/2
             _pg.draw.line(self.surface, self.bar_style.color,
-                          (self.start_pos).tuple, (self.end_pos).tuple, self.bar_style.width)
+                          start_pos.tuple, end_pos.tuple, self.bar_style.width)
             _pg.draw.circle(self.surface, self.bar_style.color, # start edge
-                            (self.start_pos).tuple, self.bar_style.width/2)
+                            start_pos.tuple, self.bar_style.width/2)
             _pg.draw.circle(self.surface, self.bar_style.color, # end edge
-                            (self.end_pos).tuple, self.bar_style.width/2)
+                            end_pos.tuple, self.bar_style.width/2)
+        self.reset_dirty()
 
 class HorizontalScrollBar(ScrollBarBase):
     def __init__(self,
@@ -81,12 +91,18 @@ class HorizontalScrollBar(ScrollBarBase):
     def update(self) -> None:
         if not self.should_update(): return
         super().update()
-        self.start_pos = Vec2(0, self.size.height)
-        self.start_pos.y -= self.bar_style.width/2 # 太さの補正
-        self.start_pos.x -= self.field_size.width / self.item_size.width * self.scroll_h
-        
-        self.end_pos = _copy.copy(self.start_pos)
-        self.end_pos.x += self.field_size.width / self.item_size.width * self.field_size.width
+        start_pos = Vec2(
+            -self.field_size.width / self.item_size.width * self.scroll_h,
+            self.size.height - self.bar_style.width / 2,
+        )
+        end_pos = start_pos + Vec2(
+            self.field_size.width / self.item_size.width * self.field_size.width,
+            0,
+        )
+        if start_pos.tuple != self.start_pos.tuple or end_pos.tuple != self.end_pos.tuple:
+            self.set_dirty()
+        self.start_pos = start_pos
+        self.end_pos = end_pos
 
     def draw(self):
         if not self.should_draw(): return
@@ -96,13 +112,15 @@ class HorizontalScrollBar(ScrollBarBase):
             _pg.draw.line(self.surface, self.bar_style.color, 
                             (self.start_pos).tuple, (self.end_pos).tuple, self.bar_style.width)
         else:
-            # 補正
-            self.start_pos.y += self.bar_style.width/2
-            self.end_pos.y -= self.bar_style.width/2
+            start_pos = self.start_pos.copy()
+            end_pos = self.end_pos.copy()
+            start_pos.y += self.bar_style.width/2
+            end_pos.y -= self.bar_style.width/2
             _pg.draw.line(self.surface, self.bar_style.color,
-                          (self.start_pos).tuple, (self.end_pos).tuple, self.bar_style.width)
+                          start_pos.tuple, end_pos.tuple, self.bar_style.width)
             _pg.draw.circle(self.surface, self.bar_style.color, # start edge
-                            (self.start_pos).tuple, self.bar_style.width/2)
+                            start_pos.tuple, self.bar_style.width/2)
             _pg.draw.circle(self.surface, self.bar_style.color, # end edge
-                            (self.end_pos).tuple, self.bar_style.width/2)
+                            end_pos.tuple, self.bar_style.width/2)
+        self.reset_dirty()
             

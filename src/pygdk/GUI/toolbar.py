@@ -1,4 +1,3 @@
-import pygame as _pg
 from typing import (
     Optional as _Optional
 )
@@ -24,7 +23,8 @@ class ToolBar(_base.Element):
             animator: _Optional[_animator.GAnimator] = None
             ) -> None:
         from . import HorizontalAlignContainer, VerticalAlignContainer
-        super().__init__(u, v, _profile.width, textAttributes.FontSize + padding.top + padding.bottom, padding, border, animator, no_register)
+        super().__init__(u, v, _profile.width, textAttributes.FontSize + padding.top + padding.bottom, padding, border, animator)
+        self.pos.y += self.size.height / 2
         self.textAttributes = textAttributes
         self.HC_ToolBar = HorizontalAlignContainer(
             0,0,
@@ -38,6 +38,7 @@ class ToolBar(_base.Element):
             border = border
             )
         self.set_child(self.HC_ToolBar)
+        self.HC_ToolBar.pos = Vec2(0, 0)
         self.VC_DropDownMenu = VerticalAlignContainer(
             0,0,
             50,100,
@@ -107,16 +108,13 @@ class ToolBar(_base.Element):
 
     def update(self) -> None:
         if not self.should_update(): return
-        super().update()
-        self.HC_ToolBar.set_pos(*self.pos)
         self.HC_ToolBar.update()
         self.VC_DropDownMenu.update()
+        super().update()
 
     def draw(self) -> None:
         if not self.should_draw(): return
         super().draw()
         self.HC_ToolBar.draw()
         self.VC_DropDownMenu.draw()
-
-        _pg.draw.circle(_profile.window.surface, (0,255,255), self.VC_DropDownMenu.pos.tuple, 5)
-        _pg.draw.circle(_profile.window.surface, (0,255,255), self.HC_ToolBar.pos.tuple, 5)
+        self.reset_dirty()
