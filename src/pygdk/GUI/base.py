@@ -35,14 +35,11 @@ if _TYPE_CHECKING:
 def _pos2uv(pos: Vec2, width: float, height: float) -> Vec2:
     u = (2 * pos.x - profile.width + width) / profile.width
     v = (2 * pos.y - profile.height + height) / profile.height
-<<<<<<< HEAD
     return Vec2(u, v)
 
 def _pos2uv_elm(pos: Vec2, width: float, height: float, parent_width: float, parent_height: float) -> Vec2:
     u = (2 * pos.x - parent_width + width) / parent_width
     v = (2 * pos.y - parent_height + height) / parent_height
-=======
->>>>>>> ae538d05c1ce8f2e5ee51a797bd15b2b06e5c7aa
     return Vec2(u, v)
 
 @_overload
@@ -143,6 +140,10 @@ class Element:
 
         self.parent: _Optional[object] = None
         self.children: list[Element] = []
+        self._stick_target: _Optional[Element] = None
+        self._stick_direction: _Optional[Direction] = None
+        self._stick_target_layout_signature: _Optional[tuple[object, ...]] = None
+        self._stick_parent_layout_signature: _Optional[tuple[object, ...]] = None
 
         # TODO: hovered, --clicked-- pressed and focused states should be implemented?
         
@@ -161,35 +162,108 @@ class Element:
         self._dirty = True
 
         # feedbacks
-<<<<<<< HEAD
         self._feedback_color = Color(0, 0, 0, 60)
         self._hover_feedback_color = self._feedback_color
         self._click_feedback_color = self._feedback_color
-=======
-        self._feedback_color = Color(0, 0, 0, 40)
->>>>>>> ae538d05c1ce8f2e5ee51a797bd15b2b06e5c7aa
 
         self.create_surface()
 
-    def stick(self, target: Element, direction: Direction):
+    def stick(self, target: Element, direction: Direction) -> _Self:
         """
-        Stick to target element.
+        Keep this element positioned relative to target.
         """
-        self.pos = Vec2(
-            target.pos.x + target.size.width/2 - self.size.width/2,
-            target.pos.y + target.size.height/2 - self.size.height/2)
+        if target is self or self in target.get_parents():
+            raise ValueError("An element cannot stick to itself or one of its children.")
 
-        if direction & Direction.TOP:
-            self.pos.y = target.pos.y - self.size.height
-        elif direction & Direction.BOTTOM:
-            self.pos.y = target.pos.y + target.size.height
+        current: _Optional[Element] = target
+        visited: set[Element] = set()
+        while current is not None and current not in visited:
+            if current is self:
+                raise ValueError("Sticking elements cannot form a cycle.")
+            visited.add(current)
+            current = current._stick_target
 
-        if direction & Direction.LEFT:
-            self.pos.x = target.pos.x - self.size.width
-        elif direction & Direction.RIGHT:
-            self.pos.x = target.pos.x + target.size.width
+        self._stick_target = target
+        self._stick_direction = direction
+        self._stick_target_layout_signature = target._layout_signature()
+        self._stick_parent_layout_signature = (
+            self.parent._layout_signature()
+            if isinstance(self.parent, Element)
+            else None
+        )
+        self._apply_stick()
 
         return self
+
+    def _layout_signature(self) -> tuple[object, ...]:
+        signature: list[object] = [(profile.width, profile.height)]
+        parent = self.parent
+        while isinstance(parent, Element):
+            signature.append((id(parent), parent.size.tuple))
+            parent = parent.parent
+        return tuple(signature)
+
+    def _abs_pos_from_uv(self) -> Vec2:
+        if isinstance(self.parent, Element):
+            pos = _uv2pos_elm(
+                self.uv.tuple,
+                self.size.width,
+                self.size.height,
+                self.parent.size.width,
+                self.parent.size.height,
+            )
+            return self.parent._abs_pos_from_uv() + pos
+        return _uv2pos(
+            self.uv.tuple,
+            self.size.width,
+            self.size.height,
+            self.anchor,
+        )
+
+    def _apply_stick(self) -> None:
+        target = self._stick_target
+        direction = self._stick_direction
+        if target is None or direction is None:
+            return
+
+        target_signature = target._layout_signature()
+        target_pos = (
+            target._abs_pos_from_uv()
+            if target_signature != self._stick_target_layout_signature
+            else target.abs_pos
+        )
+        self._stick_target_layout_signature = target_signature
+
+        pos = Vec2(
+            target_pos.x + target.size.width / 2 - self.size.width / 2,
+            target_pos.y + target.size.height / 2 - self.size.height / 2,
+        )
+
+        if direction & Direction.TOP:
+            pos.y = target_pos.y - self.size.height
+        elif direction & Direction.BOTTOM:
+            pos.y = target_pos.y + target.size.height
+
+        if direction & Direction.LEFT:
+            pos.x = target_pos.x - self.size.width
+        elif direction & Direction.RIGHT:
+            pos.x = target_pos.x + target.size.width
+
+        parent = self.parent
+        if isinstance(parent, Element):
+            parent_signature = parent._layout_signature()
+            parent_pos = (
+                parent._abs_pos_from_uv()
+                if parent_signature != self._stick_parent_layout_signature
+                else parent.abs_pos
+            )
+            pos -= parent_pos
+            self._stick_parent_layout_signature = parent_signature
+        else:
+            self._stick_parent_layout_signature = None
+
+        if self.pos.tuple != pos.tuple:
+            self.pos = pos
 
     def should_update(self) -> bool:
         """if visible is true"""
@@ -203,6 +277,8 @@ class Element:
 
         if self.animator:
             self.animator.update()
+
+        self._apply_stick()
 
     def should_draw(self) -> bool:
         """if visible and dirty flag is true"""
@@ -272,13 +348,10 @@ class Element:
         assert profile.window
         if not self.should_flush(): return
 
-<<<<<<< HEAD
         if surface is not None:
             self._flush_into(surface, Vec2(0, 0))
             return
 
-=======
->>>>>>> ae538d05c1ce8f2e5ee51a797bd15b2b06e5c7aa
         abs_pos = self.abs_pos
         if self.anchor & Anchor.LEFT:
             abs_pos.x += self.size.width/2
@@ -289,19 +362,12 @@ class Element:
         if self.anchor & Anchor.BOTTOM:
             abs_pos.y -= self.size.height/2
         
-<<<<<<< HEAD
-=======
-        if surface:
-            surface.blit(self.surface, self._pos.tuple)
-
->>>>>>> ae538d05c1ce8f2e5ee51a797bd15b2b06e5c7aa
         if surface is None:
             # final draw
             self.output_surface.fill((0, 0, 0, 0))
 
             self.output_surface.blit(self.surface)
 
-<<<<<<< HEAD
             for child in self.children:
                 child.flush(self.output_surface)
                 child.surface
@@ -310,15 +376,6 @@ class Element:
                 self.output_surface.blit(self._hover_feedback_surface)
             if self.feedback_option.click and self._frame.clicking:
                 self.output_surface.blit(self._click_feedback_surface)
-=======
-            if self.feedback_option.hover and self._frame.hovering:
-                self.output_surface.blit(self._feedback_surface)
-            if self.feedback_option.click and self._frame.clicking:
-                self.output_surface.blit(self._feedback_surface)
-
-            for child in self.children:
-                child.flush(self.output_surface)
->>>>>>> ae538d05c1ce8f2e5ee51a797bd15b2b06e5c7aa
 
             # show on the screen
             profile.window.surface.blit(self.output_surface, abs_pos.tuple)
@@ -346,17 +403,11 @@ class Element:
         self.output_surface = self.surface.copy()
         """Final result will be draw on this surface."""
 
-<<<<<<< HEAD
         # Keep hover and click feedback independent so either can be tuned separately.
         self._hover_feedback_surface = _pg.Surface(self.size.tuple, _pg.SRCALPHA)
         self._hover_feedback_surface.fill(self._hover_feedback_color)
         self._click_feedback_surface = _pg.Surface(self.size.tuple, _pg.SRCALPHA)
         self._click_feedback_surface.fill(self._click_feedback_color)
-=======
-        # create feedback surface and fill
-        self._feedback_surface = _pg.Surface(self.size.tuple, _pg.SRCALPHA)
-        self._feedback_surface.fill(self._feedback_color)
->>>>>>> ae538d05c1ce8f2e5ee51a797bd15b2b06e5c7aa
 
         logger.debug(f"Surface was created: %s", self)
 

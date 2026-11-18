@@ -149,14 +149,40 @@ class CollisionLayer:
 
     def _collect_collision_pairs(self):
         pairs: set[tuple[Collider, Collider]] = set() # [0] collides to [1]
-
-        for i, col_a in enumerate(self.colliders):
-            if not col_a.enabled or col_a.entity is None:
+        colliders: list[tuple[int, Collider, _pg.Rect]] = []
+        for index, collider in enumerate(self.colliders):
+            if not collider.enabled or collider.entity is None:
                 continue
 
-            for col_b in self.colliders[i + 1:]:
-                if not col_b.enabled or col_b.entity is None:
-                    continue
+            rect = collider.rect
+            if rect.width > 0 and rect.height > 0:
+                colliders.append((index, collider, rect))
+
+        if len(colliders) < 2 or not any(
+            collider.collider_type == ColliderType.TRIGGER
+            for _, collider, _ in colliders
+        ):
+            return pairs
+
+        x_span = (
+            max(rect.right for _, _, rect in colliders)
+            - min(rect.left for _, _, rect in colliders)
+        )
+        y_span = (
+            max(rect.bottom for _, _, rect in colliders)
+            - min(rect.top for _, _, rect in colliders)
+        )
+        use_x_axis = x_span >= y_span
+        colliders.sort(key=lambda item: item[2].left if use_x_axis else item[2].top)
+
+        for i, (index_a, col_a, rect_a) in enumerate(colliders):
+            axis_end = rect_a.right if use_x_axis else rect_a.bottom
+
+            for j in range(i + 1, len(colliders)):
+                index_b, col_b, rect_b = colliders[j]
+                axis_start = rect_b.left if use_x_axis else rect_b.top
+                if axis_start >= axis_end:
+                    break
 
                 if col_a is col_b:
                     continue
@@ -167,7 +193,10 @@ class CollisionLayer:
                     continue
 
                 if Detector.detect(col_a, col_b):
-                    pairs.add((col_a, col_b))
+                    if index_a < index_b:
+                        pairs.add((col_a, col_b))
+                    else:
+                        pairs.add((col_b, col_a))
 
         return pairs
     

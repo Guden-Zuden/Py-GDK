@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import pygame as _pg
 from typing import Optional as _Optional
+from collections.abc import Sequence as _Sequence
 import copy
 
 from ..base import *
@@ -23,14 +24,14 @@ from .. import animator as _animator
 
 class ContainerBase(_base.Element):
     def __init__(self, u: float, v: float, width: float, height: float, background: _Optional[_base.Background] = None,
-                 padding = _profile.default_padding, items: _Optional[list[_base.Element]] = None, bar_style: _base.ScrollBarStyle = _profile.default_scrollbar_style,
+                 padding = _profile.default_padding, items: _Optional[_Sequence[_base.Element]] = None, bar_style: _base.ScrollBarStyle = _profile.default_scrollbar_style,
                  lock_vertical_scroll = False, lock_horizontal_scroll = False,
-                 space: float = 0, border: Border = Border(0, _colors.WHITE), animator: _Optional[_animator.GAnimator] = None) -> None:
+                 space: float = 0, border: _Optional[Border] = Border(0, _colors.WHITE), animator: _Optional[_animator.GAnimator] = None) -> None:
         super().__init__(u, v, width, height, padding, border, animator)
 
         self.background = background
-        if items:
-            self.items: list[_base.Element] = items
+        if items is not None:
+            self.items: list[_base.Element] = list(items)
             for item in self.items:
                 self.set_child(item)
         else:
@@ -167,17 +168,20 @@ class ContainerBase(_base.Element):
         self._calc_positions()
         self._calc_size()
 
-    def set_items(self, items: list[_base.Element]):
+    def set_items(self, items: _Sequence[_base.Element]):
         for item in self.items:
             self.rm_child(item)
 
-        self.items = items
-        for item in items:
+        self.items = list(items)
+        for item in self.items:
             if item not in self.children:
                 self.set_child(item)
         self._calc_positions()
         self._calc_size()
         self.set_dirty()
+
+    def _get_border_width(self) -> float:
+        return self._border.width if self._border is not None else 0
 
     def rm_item(self, item: _base.Element):
         self.items.remove(item)
@@ -191,9 +195,9 @@ class ContainerBase(_base.Element):
 # containers
 class VerticalAlignContainer(ContainerBase):
     def __init__(self, u: float, v: float, width: float, height: float, background: _Optional[Background] = None,
-                 padding = _profile.default_padding, items: _Optional[list[_base.Element]] = None, bar_style: _base.ScrollBarStyle = _profile.default_scrollbar_style,
+                 padding = _profile.default_padding, items: _Optional[_Sequence[_base.Element]] = None, bar_style: _base.ScrollBarStyle = _profile.default_scrollbar_style,
                  lock_vertical_scroll = False, lock_horizontal_scroll = False,
-                 space: float = 0, alignment: Alignment = Alignment.LEFT, border: Border = Border(0, _colors.WHITE), 
+                 space: float = 0, alignment: Alignment = Alignment.LEFT, border: _Optional[Border] = Border(0, _colors.WHITE),
                  animator: _Optional[_animator.GAnimator] = None) -> None:
         super().__init__(u, v, width, height, background, padding, items, bar_style, lock_vertical_scroll, lock_horizontal_scroll, space, border, animator)
         self.alignment = alignment
@@ -207,8 +211,6 @@ class VerticalAlignContainer(ContainerBase):
     def draw(self):
         if not self.should_draw(): return
         super().draw()
-
-        print("selidsdsf")
 
         for item in self.items:
             if item.pos.y + item.size.height > 0 and item.pos.y < self.size.height:
@@ -230,8 +232,9 @@ class VerticalAlignContainer(ContainerBase):
         self.item_size.height += self._padding.top + self._padding.bottom
 
     def _calc_positions(self):
-        x = self._padding.left + self._border.width
-        y = self._padding.top + self._border.width
+        border_width = self._get_border_width()
+        x = self._padding.left + border_width
+        y = self._padding.top + border_width
 
         for item in self.items:
             item.pos = Vec2(x + self.scroll_h, y + self.scroll_v)
@@ -243,9 +246,9 @@ class VerticalAlignContainer(ContainerBase):
 
 class HorizontalAlignContainer(ContainerBase):
     def __init__(self, u: float, v: float, width: float, height: float, background: _Optional[Background] = None,
-                 padding = _profile.default_padding, items: _Optional[list[_base.Element]] = None, bar_style: _base.ScrollBarStyle = _profile.default_scrollbar_style,
+                 padding = _profile.default_padding, items: _Optional[_Sequence[_base.Element]] = None, bar_style: _base.ScrollBarStyle = _profile.default_scrollbar_style,
                  lock_vertical_scroll = False, lock_horizontal_scroll = False,
-                 space: float = 0, border: Border = Border(0, _colors.WHITE), animator: _Optional[_animator.GAnimator] = None) -> None:
+                 space: float = 0, border: _Optional[Border] = Border(0, _colors.WHITE), animator: _Optional[_animator.GAnimator] = None) -> None:
         super().__init__(u, v, width, height, background, padding, items, bar_style, lock_vertical_scroll, lock_horizontal_scroll, space, border, animator)
         self._calc_size()
         self._calc_positions()
@@ -296,8 +299,9 @@ class HorizontalAlignContainer(ContainerBase):
                 )
 
     def _calc_positions(self):
-        x = self._padding.left + self._border.width
-        top = self._padding.top + self._border.width
+        border_width = self._get_border_width()
+        x = self._padding.left + border_width
+        top = self._padding.top + border_width
         baseline_offsets = [
             item._get_baseline_offset()
             for item in self.items
@@ -318,9 +322,9 @@ class HorizontalAlignContainer(ContainerBase):
 class GridContainer(ContainerBase):
     def __init__(self, u: float, v: float, width: float, height: float, background: _Optional[Background] = None,
                  grid_col: int = -1, grid_row: int = -1,
-                 padding = _profile.default_padding, items: _Optional[list[_base.Element]] = None, bar_style: _event.ScrollBarStyle = _profile.default_scrollbar_style, 
+                 padding = _profile.default_padding, items: _Optional[_Sequence[_base.Element]] = None, bar_style: _event.ScrollBarStyle = _profile.default_scrollbar_style,
                  lock_vertical_scroll = False, lock_horizontal_scroll = False, 
-                 space: float = 0, border: Border = Border(0, _colors.WHITE), animator: _Optional[_animator.GAnimator] = None) -> None:
+                 space: float = 0, border: _Optional[Border] = Border(0, _colors.WHITE), animator: _Optional[_animator.GAnimator] = None) -> None:
         if grid_col < 1 or grid_row < 1:
             raise Exception("Invalid number. It must be more than 1.")
         super().__init__(u, v, width, height, background, padding, items, bar_style, lock_vertical_scroll, lock_horizontal_scroll, space, border, animator)
@@ -369,8 +373,9 @@ class GridContainer(ContainerBase):
 
     def _calc_positions(self):
         with _BenchMark(f"{self}._calc_positions()"):
-            x = self._padding.left + self._border.width
-            y = self._padding.top + self._border.width
+            border_width = self._get_border_width()
+            x = self._padding.left + border_width
+            y = self._padding.top + border_width
 
             _index = 0
             for item in self.items:
@@ -378,7 +383,7 @@ class GridContainer(ContainerBase):
                 # if item.pos.x + item.size.width > 0 and item.pos.x < self.size.width:
                 #     item.draw(self.surface)
                 if (_index + 1) % self.grid_row == 0:
-                    x = self._padding.left + self._border.width # reset
+                    x = self._padding.left + border_width # reset
                     y += item.size.height + self.space
                 else:
                     x += item.size.width + self.space
@@ -393,7 +398,7 @@ class TabContainer(_base.Element):
                  bar_style: ScrollBarStyle = _profile.default_scrollbar_style,
                  tab_textAttributes: TextAttributes = _profile.default_textAttributes,
                  tab_properties: list[TabProperty] = [],
-                 padding=_profile.default_padding, border: _event.Border = Border(0, _colors.WHITE), 
+                 padding=_profile.default_padding, border: _Optional[_event.Border] = Border(0, _colors.WHITE),
                  animator: _Optional[_animator.GAnimator] = None) -> None:
         from . import ImageButton, Button, Label
         super().__init__(u, v, width, height, padding, border, animator)
@@ -401,6 +406,7 @@ class TabContainer(_base.Element):
         self.tab_background = tab_background
         self.selected_tab_background = selected_tab_background
         self.tabitems_background = tabitems_background
+        button_border = border if border is not None else Border(0, _colors.WHITE)
 
         tab_buttons: list[_base.Element] = []
         for tab_property in tab_properties:
@@ -410,15 +416,21 @@ class TabContainer(_base.Element):
             callback = lambda tab=tab_property: self.on_click_tab(tab_properties.index(tab))
 
             if tab_background.isColor():
+                background_color = tab_background.color
+                if background_color is None:
+                    raise ValueError("A color tab background must have a color")
                 tab_button = Button(
                     0, 0, button_width, button_height, tab_property.name,
-                    tab_textAttributes, tab_background.color, border, padding,
+                    tab_textAttributes, background_color, button_border, padding,
                     callback_clicked=callback,
                 )
             else:
+                background_image = tab_background.image
+                if background_image is None:
+                    raise ValueError("An image tab background must have an image")
                 tab_button = ImageButton(
                     0, 0, button_width, tab_property.name,
-                    tab_textAttributes, copy.copy(tab_background.image), border, padding,
+                    tab_textAttributes, copy.copy(background_image), button_border, padding,
                     callback_clicked=callback,
                 )
             tab_buttons.append(tab_button)
@@ -428,22 +440,8 @@ class TabContainer(_base.Element):
             default=tab_textAttributes.FontSize,
         ) + padding.top + padding.bottom
         self.HC_Tab = HorizontalAlignContainer(
-<<<<<<< HEAD
             0, 0, width, tab_height, tab_background, padding,
             items=tab_buttons,
-=======
-            0,0, width, tab_textAttributes.FontSize + padding.top + padding.bottom, tab_background, padding,
-            items=[                                                                                    #pyright: ignore
-                Button(0,0, *Label(0,0, tabProperty.name, tab_textAttributes, padding=padding).size,  
-                       tabProperty.name, tab_textAttributes, tab_background.color, border, padding, # pyright: ignore
-                       callback_clicked=lambda tab=tabProperty: self.on_click_tab(tab_properties.index(tab)))
-                if tab_background.isColor()
-                else ImageButton(0,0, Label(0,0, tabProperty.name, tab_textAttributes, padding=padding).size.width,
-                            tabProperty.name, tab_textAttributes, tab_background.image, border, padding,
-                            callback_clicked=lambda tab=tabProperty: self.on_click_tab(tab_properties.index(tab)))
-                for tabProperty in tab_properties
-            ],
->>>>>>> ae538d05c1ce8f2e5ee51a797bd15b2b06e5c7aa
             bar_style=ScrollBarStyle(0),
             lock_vertical_scroll=True)
         self.set_child(self.HC_Tab)
@@ -482,21 +480,26 @@ class TabContainer(_base.Element):
 
     def _set_colors(self):
         from . import Button, ImageButton
+        background_color = self.tab_background.color
+        background_image = self.tab_background.image
+        selected_color = self.selected_tab_background.color
+        selected_image = self.selected_tab_background.image
+
         for item in self.HC_Tab.items:
-            if type(item) == Button and self.tab_background.color:
-                item._color = self.tab_background.color
+            if type(item) == Button and background_color is not None:
+                item._color = background_color
                 item.set_dirty()
-            elif type(item) == ImageButton and self.tab_background.image:
-                item.image_obj = self.tab_background.image
+            elif type(item) == ImageButton and background_image is not None:
+                item.image_obj = background_image
                 item.set_dirty()
             else:
-                raise Exception("Unexcepted Error!")
+                raise ValueError("Tab background does not match the tab button type")
 
         current_item = self.HC_Tab.items[self.current_tabIndex]
-        if type(current_item) == Button and self.selected_tab_background.color:
-            current_item._color = self.selected_tab_background.color
+        if type(current_item) == Button and selected_color is not None:
+            current_item._color = selected_color
             current_item.set_dirty()
-        elif type(current_item) == ImageButton and self.selected_tab_background.image:
-            current_item.image_obj = self.selected_tab_background.image
+        elif type(current_item) == ImageButton and selected_image is not None:
+            current_item.image_obj = selected_image
             current_item.set_dirty()
         self.HC_Tab.set_dirty()

@@ -21,13 +21,10 @@ class Button(_base.Element):
                  text: str, textAttributes: TextAttributes = _profile.default_textAttributes, color: gdk_color = (0,0,0), border = _profile.default_border,
                  padding = _profile.default_padding, callback_clicked: _Optional[_Callable] = None, animator: _Optional[_animator.GAnimator] = None) -> None:
         super().__init__(u, v, width, height, padding, border, animator, FeedbackOption(True, True))
-<<<<<<< HEAD
         self._hover_feedback_color = Color(0, 0, 0, 51)
         self._click_feedback_color = Color(0, 0, 0, 102)
         self._hover_feedback_surface.fill(self._hover_feedback_color)
         self._click_feedback_surface.fill(self._click_feedback_color)
-=======
->>>>>>> ae538d05c1ce8f2e5ee51a797bd15b2b06e5c7aa
 
         self._text = text
         self._textAttributes = textAttributes
@@ -38,31 +35,12 @@ class Button(_base.Element):
         self.callback_clicked = callback_clicked
 
         self.box_obj = _Box(u, v, *self.size.tuple, color, padding, border)
-<<<<<<< HEAD
         self.set_child(self.box_obj)
         self.box_obj.uv = Vec2(0, 0)
 
         self.text_obj = _Text(u, v, text, textAttributes, padding=padding)
         self.set_child(self.text_obj)
         self.text_obj.uv = Vec2(0, 0)
-=======
-        self.box_obj.uv = Vec2(0, 0)
-        self.box_obj.set_child(self.text_obj)
-        self.text_obj.uv = Vec2(0, 0)
-        self.set_child(self.box_obj)
-        
-        self.hovering_box_obj = _Box(u, v, *self.size.tuple, _colors.BLACK, padding, border)
-        self.hovering_box_obj.color.a = int(self.hovering_box_obj.color.a * 0.2)
-        self.hovering_box_obj.uv = Vec2(0, 0)
-        self.hovering_box_obj.visible = False
-        self.set_child(self.hovering_box_obj)
-
-        self.clicking_box_obj = _Box(u, v, *self.size.tuple, _colors.BLACK, padding, border)
-        self.clicking_box_obj.color.a = int(self.clicking_box_obj.color.a * 0.4)
-        self.clicking_box_obj.uv = Vec2(0, 0)
-        self.clicking_box_obj.visible = True
-        self.set_child(self.clicking_box_obj)
->>>>>>> ae538d05c1ce8f2e5ee51a797bd15b2b06e5c7aa
 
     def update(self):
         if not self.should_update(): return
