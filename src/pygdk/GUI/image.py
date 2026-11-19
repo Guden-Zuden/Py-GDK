@@ -14,7 +14,7 @@ from typing import (
 class Image(base.Element):
     def __init__(self, u: float, v: float, img_filepath: str | pathlib.Path, width: float,
                  padding=profile.default_padding, border: base.Border = Border(0, colors.WHITE),
-                 child: _Optional[base.GUIBase] = None, animator: _Optional[_animator.GAnimator] = None) -> None:
+                 animator: _Optional[_animator.GAnimator] = None) -> None:
         try:
             _pg.Window.get_surface(profile.window.window)
             self.img_surface = _pg.image.load(img_filepath).convert_alpha()
@@ -27,13 +27,6 @@ class Image(base.Element):
         
 
         super().__init__(u, v, width, height, padding, border, animator)
-
-        self.child = child
-        if self.child:
-            self.child.pos = Vec2(
-                self.size.width/2 - self.child.size.width/2,
-                self.size.height/2 - self.child.size.height/2
-            )
 
     def resize(self):
         """
@@ -64,10 +57,7 @@ class Image(base.Element):
         self.surface.blit(self.displayed_img_surface)
         self.reset_dirty()
 
-        # if self.child:
-        #     self.child.pos = Vec2(
-        #         self.size.width/2 - self.child.size.width/2,
-        #         self.size.height/2 - self.child.size.height/2
-        #     )
-
-        #     self.child.draw()
+    def set_image(self, surface: _pg.Surface):
+        self.img_surface = surface
+        self.resize()
+        self.set_dirty()

@@ -14,9 +14,9 @@ def createLayer(layer_name: str):
 def changeLayer(layer_name: str):
     _layer.LayerManager.changeLayer(layer_name)
 
-def createScene(layer_name: str):
+def createScene(scene_name: str):
     new_scene = _scene.Scene()
-    _scene.SceneManager.push_scene(layer_name, new_scene)
+    _scene.SceneManager.push_scene(scene_name, new_scene)
     return new_scene
 
 def changeScene(scene_name: str):

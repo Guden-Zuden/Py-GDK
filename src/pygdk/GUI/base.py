@@ -622,6 +622,7 @@ class Frame(event.EventObject):
     """
     Frame manages mouse events and other events.
     """
+    _event_phase = event.EventPhase.Element
     g_hovering: _Optional[Frame] = None
     @staticmethod
     def _reset_g_flag():
@@ -667,15 +668,22 @@ class Frame(event.EventObject):
         while element is not None:
             if element.callback_mousewheelscrolled:
                 element.callback_mousewheelscrolled(e)
+                e.stop_propagation()
                 return
             parent = element.parent
             element = parent if isinstance(parent, Element) else None
+
+    @event.OnMousebuttonDown(mouse.left)
+    def on_mousebuttondown(self, e):
+        if Frame.g_hovering is not self: return
+        e.stop_propagation()
 
     @event.OnMousebuttonUp(mouse.left)
     def on_mousebuttonup(self, e):
         if Frame.g_hovering is not self: return
         if self.element.callback_clicked:
             self.element.callback_clicked()
+        e.stop_propagation()
 
 
 class PanelBase(Element):

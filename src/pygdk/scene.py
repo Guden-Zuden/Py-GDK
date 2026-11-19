@@ -70,6 +70,7 @@ class Scene:
             if self.current_camera: self.current_camera.draw(_view_position)
 
 class SceneObject(Scene, _event.EventObject):
+    """Not implemented."""
     pass
 
 class SceneManager:
