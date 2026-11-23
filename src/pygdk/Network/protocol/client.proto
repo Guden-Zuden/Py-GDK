@@ -1,0 +1,11 @@
+syntax = "proto3";
+
+package pygdk.client;
+
+import "common.proto";
+
+message ClientState {
+    string curr_scene_name = 1;
+    common.Vec2f view_position = 2;
+    common.Vec2i view_size = 3;
+}

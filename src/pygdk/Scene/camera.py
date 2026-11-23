@@ -4,6 +4,7 @@ from .. import profile as _profile
 from .. import scene as _scene
 from .. import time as _time
 from . import entity as _entity
+from .. import constants as _constants
 
 import pygame as _pg
 from typing import (
@@ -11,6 +12,7 @@ from typing import (
 )
 
 class Camera(_base.EntityBase):
+    TYPE = _constants.TYPE_CAMERA
     def __init__(self, name: str, x: float, y: float, smoothing: float = 1.0) -> None:
         super().__init__(x, y, 0, 0)
         self.name = name

@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+package pygdk.scene;
+
+import "common.proto";
+
+message EntityState {
+    string type = 1;
+    int32 id = 2;
+    common.Vec2f position = 3;
+    common.Vec2f velocity = 4;
+    string current_anim = 5;
+    int32 anim_index = 6;
+}
+
+message SceneState {
+    repeated EntityState entitystates = 1;
+}

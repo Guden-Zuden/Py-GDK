@@ -4,6 +4,7 @@ from ..base import *
 from .. import profile as _profile
 from ..time import Timer as _Timer
 from . import attachments as _attachments
+from .. import constants as _constants
 
 if TYPE_CHECKING:
     from . import collider as _collider
@@ -24,6 +25,8 @@ from logging import (
 logger = _getLogger(__name__)
 
 class EntityBase():
+    TYPE = _constants.TYPE_ENTITYBASE
+
     def __init__(
             self, 
             x: float, 

@@ -14,8 +14,11 @@ from .. import time as _time
 from .. import event as _event
 from . import attachments as _attachments
 from . import collider as _collider
+from .. import constants as _constants
 
 class Entity(_base.EntityBase):
+    TYPE = _constants.TYPE_ENTITY
+
     def __init__(
             self,
             x: float, 
