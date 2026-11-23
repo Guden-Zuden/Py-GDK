@@ -50,6 +50,7 @@ _gdk_executed = False
 # === For debug ===
 is_show_benchmark_log: bool = False
 is_show_gui_positions: bool = False
+is_show_colliders: bool = False
 
 import pathlib
 _directory = pathlib.Path(__file__).parent
@@ -81,10 +82,10 @@ __all__ = [
     "default_border",
     "default_scrollbar_style",
     "sprite_size",
-    "surface_size_locked",
     "surface_fill_screen",
     "resizable",
     "is_show_benchmark_log",
     "is_show_gui_positions",
+    "is_show_colliders",
     "lines_per_scroll",
 ]

@@ -50,5 +50,14 @@ class Entity(_base.EntityBase):
             anchor=Anchor.BOTTOM
         )
 
-        if self.colliders:
-            _pg.draw.rect(_profile.window.surface, (255,255,255), self.get_rect().move(*(-self.pos)), 1) # pyright: ignore
+        if self.colliders and _profile.is_show_colliders:
+            collider_rect = self.get_rect().move(
+                round(-view_position.x),
+                round(-view_position.y),
+            )
+            _pg.draw.rect(
+                _profile.window.surface,  # pyright: ignore
+                (255, 255, 255),
+                collider_rect,
+                1,
+            )

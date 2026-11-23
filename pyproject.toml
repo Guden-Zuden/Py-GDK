@@ -8,5 +8,6 @@ version = "1.0.0dev1"
 name = "pygdk"
 dependencies = [
     "pygame-ce >= 2.5.7",
-    "pytweening >= 1.2.0"
+    "pytweening >= 1.2.0",
+    "protobuf >= 7.36.2"
 ]
