@@ -326,17 +326,31 @@ class Element:
     def _flush_into(self, surface: _pg.Surface, parent_pos: Vec2):
         if not self.should_flush():
             return
-
+        
         pos = parent_pos + self._pos
-        surface.blit(self.surface, pos.tuple)
 
-        for child in self.children:
-            child._flush_into(surface, pos)
+        # save previous clip
+        pre_clip = surface.get_clip()
 
-        if self.feedback_option.hover and self._frame.hovering:
-            surface.blit(self._hover_feedback_surface, pos.tuple)
-        if self.feedback_option.click and self._frame.clicking:
-            surface.blit(self._click_feedback_surface, pos.tuple)
+        try:
+            surface.blit(self.surface, pos.tuple)
+
+            own_rect = _pg.Rect(
+                *pos.tuple,
+                *self.size
+            )
+            surface.set_clip(pre_clip.clip(own_rect))
+
+            for child in self.children:
+                child._flush_into(surface, pos)
+
+            if self.feedback_option.hover and self._frame.hovering:
+                surface.blit(self._hover_feedback_surface, pos.tuple)
+            if self.feedback_option.click and self._frame.clicking:
+                surface.blit(self._click_feedback_surface, pos.tuple)
+        finally:
+            # Restore previous clip
+            surface.set_clip(pre_clip)
 
     def flush(self, surface: _Optional[_pg.Surface] = None):
         """
@@ -663,12 +677,28 @@ class Frame(event.EventObject):
 
     @event.OnMousewheelScroll()
     def on_mousewheelscroll(self, e):
+        """
+        Mouse wheel events behave slightly differently from other events.
+
+        When a mouse wheel event occurs, it propagates to parent elements.
+        If a scrollable element has scrolling locked, the event is passed
+        to its parent instead.
+        """
         if Frame.g_hovering is not self: return
         element: _Optional[Element] = self.element
+        is_shift = event.getMod().isShift()
+
         while element is not None:
             if element.callback_mousewheelscrolled:
-                element.callback_mousewheelscrolled(e)
+                if (is_shift == False and getattr(element, "lock_vertical_scroll", False)
+                    or is_shift == True and getattr(element, "lock_horizontal_scroll", False)):
+                    logger.debug("CONTINUE")
+                    parent = element.parent
+                    element = parent if isinstance(parent, Element) else None
+                    continue
+
                 e.stop_propagation()
+                element.callback_mousewheelscrolled(e)
                 return
             parent = element.parent
             element = parent if isinstance(parent, Element) else None
