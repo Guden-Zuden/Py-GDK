@@ -692,7 +692,6 @@ class Frame(event.EventObject):
             if element.callback_mousewheelscrolled:
                 if (is_shift == False and getattr(element, "lock_vertical_scroll", False)
                     or is_shift == True and getattr(element, "lock_horizontal_scroll", False)):
-                    logger.debug("CONTINUE")
                     parent = element.parent
                     element = parent if isinstance(parent, Element) else None
                     continue
